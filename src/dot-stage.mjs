@@ -244,6 +244,7 @@ outgoingLight+=mirrorC/(vec3(1.)+mirrorC*.8)*stageReflectionGain*within;
       if (lastMode === 'scroll' && previousCompanionZ !== null) root.position.z += (target.z - previousCompanionZ) * .92;
       previousCompanionZ = target.z;
       if (Math.sign(target.x) !== Math.sign(sideEnd) && Math.abs(target.x - sideEnd) > 1) { sideStart = root.position.x; sideEnd = target.x; sideStartTime = time; }
+      else { sideEnd = target.x; } // Follow viewport-safe destinations as the scroll camera zooms.
       const sideP = ease((time - sideStartTime) / 2.6);
       target.x = T.MathUtils.lerp(sideStart, sideEnd, sideP); target.y += .48 * Math.sin(sideP * Math.PI);
       keepAheadOfView(target, 4.25);

@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {PRODUCT_IDS} from './games-rules.mjs';
+import {productFinish,makeProductMaterial} from './product-finishes.mjs';
 
 const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
 const ease=t=>t*t*t*(t*(6*t-15)+10);
@@ -18,12 +19,13 @@ function mergeParts(parts) {
 /** Uses the actual supplied S11 product volumes; faults are explicitly teaching demonstrations. */
 export function createProductCarousel({root,camera,box,label,line,materials,onRepair,onTurn,onFeedback}) {
   const platter=new T.Group();platter.name='四产品 / 连续机械转盘';root.add(platter);
-  const metal=new T.MeshStandardMaterial({color:0x1a2230,metalness:.65,roughness:.4});
+  const metal=new T.MeshStandardMaterial({color:0x242b31,metalness:.18,roughness:.75});
+  const brushed=new T.MeshStandardMaterial({color:0x8d989f,metalness:.36,roughness:.58});
   const disc=new T.Mesh(new T.CylinderGeometry(4.9,4.9,.18,96),metal);disc.position.y=.1;disc.receiveShadow=true;root.add(disc);
-  const rim=new T.Mesh(new T.TorusGeometry(4.84,.025,8,128),materials.gold);rim.rotation.x=Math.PI/2;rim.position.y=.21;root.add(rim);
+  const rim=new T.Mesh(new T.TorusGeometry(4.84,.025,8,128),brushed);rim.rotation.x=Math.PI/2;rim.position.y=.21;root.add(rim);
   for(let j=0;j<48;j++){const a=j/48*Math.PI*2,len=j%4===0?.28:.13;line([[Math.sin(a)*(4.55-len),.205,Math.cos(a)*(4.55-len)],[Math.sin(a)*4.55,.205,Math.cos(a)*4.55]],materials.line,root);}
   const axis=new T.Mesh(new T.CylinderGeometry(.7,.7,.32,48),materials.dark);axis.position.y=.24;platter.add(axis);
-  const axisTop=new T.Mesh(new T.CylinderGeometry(.42,.42,.04,48),materials.gold);axisTop.position.y=.42;platter.add(axisTop);
+  const axisTop=new T.Mesh(new T.CylinderGeometry(.42,.42,.04,48),brushed);axisTop.position.y=.42;platter.add(axisTop);
   const models=[],loads=[],errors=[],mounts=[];
   const loadingLabels=[],identityLabels=[];
   let disposed=false,index=0,angle=0,targetAngle=0,turn=null,repair=null,done=[],active=false;
@@ -65,9 +67,9 @@ export function createProductCarousel({root,camera,box,label,line,materials,onRe
           part.applyMatrix4(new T.Matrix4().multiplyMatrices(normalization,o.matrixWorld));if(!part.attributes.normal)part.computeVertexNormals();part.computeBoundingBox();
           const b=part.boundingBox,mid=b.getCenter(V());
           const special=(k===0&&/right.*(elbow|wrist|hand)/i.test(lineage))||(k===2&&b.getSize(V()).z>.65&&mid.z<-.12)||(k===3&&/HBM4_stack_1(?:\D|$)/i.test(lineage));
-          const original=materialsIn[group.materialIndex]||materialsIn[0],color=original.color?.clone()||new T.Color(0x9aaabb);
-          const key=color.getHexString()+'_'+(original.metalness||0).toFixed(1)+'_'+special;
-          if(!bucket.has(key))bucket.set(key,{special,parts:[],material:new T.MeshStandardMaterial({color,metalness:Math.min(.75,original.metalness??.25),roughness:Math.max(.26,Math.min(.7,original.roughness??.45)),side:T.DoubleSide})});
+          const original=materialsIn[group.materialIndex]||materialsIn[0],finish=productFinish(id,original,{special});
+          const key=finish.key+'_'+special;
+          if(!bucket.has(key))bucket.set(key,{special,parts:[],material:makeProductMaterial(finish)});
           bucket.get(key).parts.push(part);geom.dispose();
         }
       });
