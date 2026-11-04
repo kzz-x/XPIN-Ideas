@@ -1,0 +1,30 @@
+/* The opening structure is assembled and retained in WebGL. HTML supplies the
+   final text/accessibility/hit targets at the same measured destinations. */
+body[data-phase="morph"] #portal,body[data-phase="chat"] #portal{background:transparent!important;border-color:transparent!important;box-shadow:none!important;overflow:visible}
+body[data-phase="morph"] #portal:before,body[data-phase="morph"] #portal:after,body[data-phase="chat"] #portal:before,body[data-phase="chat"] #portal:after,body[data-phase="morph"] #portal-frame,body[data-phase="chat"] #portal-frame{display:none!important}
+body[data-phase="morph"] #chat{visibility:hidden}
+#chat{background:transparent!important;box-shadow:none!important}
+body[data-phase="chat"] #chat{visibility:hidden}body[data-phase="chat"].assembly-ready #chat,body[data-phase="morph"].assembly-ready #chat{visibility:visible}
+body[data-phase="chat"] .chat-top,body[data-phase="morph"] .chat-top{border-color:transparent}
+body[data-phase="chat"] .chat-composer,body[data-phase="morph"] .chat-composer{background:transparent;border-color:transparent;box-shadow:none}
+body[data-phase="chat"] .chat-composer:before,body[data-phase="chat"] .chat-composer:after{display:none}
+body[data-phase="chat"] #send{background:transparent;border-color:transparent;color:#142638}
+body[data-phase="chat"] #send:hover{transform:none}
+#hold{background:#0a162c18!important;backdrop-filter:none!important;overflow:hidden}#hold:before{display:none!important}
+#hold .hold-label,#hold .hold-time,#hold .hold-key{position:relative;z-index:1;text-shadow:0 1px 5px #08142f}
+.process-card,.process-card.light{background:#1322360a!important;border:0;box-shadow:none;backdrop-filter:none;color:#f4f7fa}
+.process-card:not(.focused){padding:20px 24px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:12px}
+.process-card:not(.focused) .card-meta{padding:0;font-size:var(--thumb-meta,24px);line-height:1.2;color:#e6eff7;letter-spacing:.01em;overflow:hidden;white-space:nowrap}
+.process-card:not(.focused) .card-meta span:first-child{overflow:hidden;text-overflow:ellipsis}
+.process-card:not(.focused) h2{padding:0;margin:0;font-size:var(--thumb-title,32px);line-height:1.18;letter-spacing:0;font-weight:650;color:#f7fafc;text-shadow:0 1px 2px #09132280}
+.process-card:not(.focused) .card-image{width:100%;height:100%;min-height:0;object-fit:contain;margin:0;align-self:center;background:transparent}
+.process-card:not(.focused) .card-bottom{padding:0;font-size:var(--thumb-foot,27px);line-height:1.2;color:#f1f5f8;gap:10px}
+.process-card .card-arrow{font-size:inherit}
+.process-card .card-detail{background:#101c2bdc!important;backdrop-filter:blur(22px) saturate(.7);border:1px solid #b9d0dd65;color:#edf3f7}
+.card-detail p{font-size:17px;line-height:1.85;color:#e3ebf1}.card-detail .source-note{font-size:13px;line-height:1.7;color:#c6d6e2}.card-detail .detail-label{font-size:13px;color:#c7d9e6}
+.shelf-tag{font-size:20px;background:#152435b3;backdrop-filter:blur(14px);border-color:#d0e0e95a}
+#game-controls,#dot-bubble,#scroll-footer{background:#0f1c2cce;backdrop-filter:blur(18px) saturate(.7);border-color:#c5d7e24f}
+#game-instruction{font-size:13px}#game-controls button{font-size:12px}#dot-bubble{font-size:13px;max-width:250px}#scroll-footer,#scroll-footer button{font-size:12px}
+#seek{height:32px;appearance:none;background:transparent;padding:0;margin:0;touch-action:none}#seek::-webkit-slider-runnable-track{height:2px;background:#cadbe27a}#seek::-webkit-slider-thumb{appearance:none;width:9px;height:12px;margin-top:-5px;border:1px solid #f0f8fc;background:#aecada;box-shadow:0 1px 4px #0005}#seek::-moz-range-track{height:2px;background:#cadbe27a}#seek::-moz-range-thumb{width:9px;height:12px;border:1px solid #f0f8fc;background:#aecada;border-radius:0}
+@media(max-width:700px){.process-card .card-detail{padding:22px}.card-detail p{font-size:17px}.card-detail .source-note{font-size:13px}.card-detail .detail-label{font-size:12px}#dot-bubble{font-size:12px;max-width:180px}#game-instruction{font-size:12px}#game-controls button{font-size:11px}#scroll-footer,#scroll-footer button{font-size:11px}}
+@media(max-width:700px){.process-card:not(.focused){padding:14px 18px;gap:10px}.process-card:not(.focused) .card-meta span:first-child{max-width:100%}.support-card:not(.focused){grid-template-rows:auto minmax(0,1fr)}.support-card:not(.focused) .card-meta,.support-card:not(.focused) .card-bottom{display:none}.support-card:not(.focused) h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.hero-card:not(.focused) .card-meta{font-size:var(--thumb-meta)}.hero-card:not(.focused) .card-meta span:first-child{max-width:100%}.hero-card:not(.focused) .card-image{min-height:0}.hero-card:not(.focused) .card-bottom{font-size:var(--thumb-foot)}}

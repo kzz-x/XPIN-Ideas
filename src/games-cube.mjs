@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {frostedGlass} from './frosted-glass.mjs';
 import {wordGeometry} from './games-glyphs.mjs';
 import {WORDS} from './games-rules.mjs';
 
@@ -12,7 +13,7 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
   holder.position.set(-2.35, 1.92, 0);
   const cube = new T.Group(); holder.add(cube);
   const geo = new T.BoxGeometry(2.25,2.25,2.25);
-  const glassMaterial = new T.MeshPhysicalMaterial({color:0xd9edff, roughness:.18, metalness:0, transmission:.92, thickness:1.6, ior:1.25, clearcoat:1, clearcoatRoughness:.10, attenuationColor:0xc7e5ff, attenuationDistance:8, depthWrite:false, transparent:true, opacity:.92});
+  const glassMaterial = frostedGlass({color:0xdbe8ef,roughness:.36,transmission:.84,thickness:1.6,attenuationDistance:7});
   const glass = new T.Mesh(geo, glassMaterial); glass.name='Real transmissive glass shell'; glass.renderOrder=5; cube.add(glass);
   const frostUniforms = {opacity:{value:.20}};
   const frostMat = new T.ShaderMaterial({uniforms:frostUniforms, transparent:true, depthWrite:false, side:T.FrontSide,
@@ -61,10 +62,10 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
     const pos=V(1.12+(i%2)*2.2,.16,-1.65+Math.floor(i/2)*1.7);
     const tray=box(1.95,.14,1.20,materials.dark,pos.toArray(),root);
     line([[-.96,.08,-.58],[.96,.08,-.58],[.96,.08,.58],[-.96,.08,.58],[-.96,.08,-.58]],materials.line,tray);
-    label(tray,String(i+1).padStart(2,'0'),[-.80,.10,-.35],.25,.22,{surface:true,color:'#7d9bc3'});
+    const number=label(tray,String(i+1).padStart(2,'0'),[0,.12,0],.8,.5,{surface:true,color:'#cbdce9',font:70});
     const solid = new T.Mesh(wordGeometry(WORDS[i]),[materials.white,materials.side]);
     solid.name='Collected solid word '+WORDS[i];solid.scale.setScalar(.72);solid.rotation.x=-.70;solid.position.copy(pos).add(V(0,.40,.06));solid.visible=false;root.add(solid);
-    trays.push({root:tray,pos});collected.push(solid);
+    trays.push({root:tray,pos,number});collected.push(solid);
   }
   const velocity=new T.Vector2(),goal=new T.Quaternion();
   let initialized=false,face=0,alpha=0,dwell=0,dwellFace=-1,held=false,helpTurn=false,anim=null,done=[],active=false;
@@ -91,7 +92,7 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
     onCollect(index);
   }
   function setDone(values){
-    done=values.slice();
+    done=values.slice();trays.forEach((tray,i)=>tray.number.visible=!done.includes(i));
     for(let i=0;i<6;i++)if(!flights.some(f=>f.index===i)){
       collected[i].visible=done.includes(i);collected[i].position.copy(trays[i].pos).add(V(0,.40,.06));collected[i].rotation.set(-.70,0,0);collected[i].scale.setScalar(.72);
     }
@@ -113,7 +114,7 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
     word.quaternion.copy(q.clone().invert()).multiply(camera.quaternion);
     windowUniforms.inverseCube.value.copy(cube.matrixWorld).invert();
     glyphs.forEach((g,i)=>{g.visible=i===face&&alpha>.001;for(const m of g.material)m.opacity=i===face?alpha:0;});
-    glassMaterial.roughness=.065+(1-alpha)*.30;frostUniforms.opacity.value=.018+(1-alpha)*.26;
+    glassMaterial.roughness=.36+(1-alpha)*.11;frostUniforms.opacity.value=.045+(1-alpha)*.13;
     if(active&&!held&&!helpTurn&&!done.includes(face)&&alpha>.80&&scores[face]>.88&&face===best){
       if(dwellFace!==face){dwellFace=face;dwell=0;}else dwell+=dt;
       if(dwell>=.42){collect(face);dwell=0;}

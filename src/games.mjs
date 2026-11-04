@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {frostedGlass} from './frosted-glass.mjs';
 import {createWordCube} from './games-cube.mjs';
 import {createProductCarousel} from './games-products.mjs';
 import {orders} from './games-layout.mjs';
@@ -26,7 +27,9 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
     white:new T.MeshStandardMaterial({color:0xf5f4ec,roughness:.38,metalness:.08}),
     side:new T.MeshStandardMaterial({color:0x9b9fa4,roughness:.38,metalness:.32}),
     dark:new T.MeshStandardMaterial({color:0x171b22,roughness:.36,metalness:.48}),
-    glass:new T.MeshPhysicalMaterial({color:0xe4e9e8,roughness:.19,metalness:.12,clearcoat:.8,transparent:true,opacity:.84}),
+    glass:frostedGlass({color:0xe2edf3,roughness:.39,transmission:.91,thickness:.26,envMapIntensity:.18}),
+    ceramic:new T.MeshStandardMaterial({color:0xf1f3f4,roughness:.4,metalness:.10}),
+    silver:new T.MeshStandardMaterial({color:0xd2d8de,roughness:.34,metalness:.68}),
     blue:new T.MeshStandardMaterial({color:0x183bc1,roughness:.34,metalness:.18}),
     gold:new T.MeshStandardMaterial({color:0xc5ae7a,roughness:.31,metalness:.72}),
     green:new T.MeshStandardMaterial({color:0xb7f2d0,roughness:.32,metalness:.18,emissive:0x2f925b,emissiveIntensity:.12}),
@@ -65,7 +68,7 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
   }
   for(let i=0;i<5;i++){
     const root=new T.Group();root.name='卷轴互动 '+(i+1)+' / '+chapterNames[i];const p=chapterPositions?.[i]||{x:0,y:.15,z:-17-i*34};root.position.set(p.x||0,p.y||0,p.z||0);scene.add(root);roots.push(root);
-    label(root,`0${i+1} / 亲手试一试`,[0,.12,-5.95],3.8,.40,{surface:true,color:'#bdcfe9',weight:500});
+    label(root,`0${i+1} / 亲手试一试`,[0,.12,-5.95],5.2,.58,{surface:true,color:'#eef3f7',weight:600});
     line([[-5.5,.025,-5.40],[5.5,.025,-5.40]],materials.line,root);
     for(const x of [-5.45,5.45])for(const z of [-3.58,3.95])line([[x,.028,z],[x+(x<0?.24:-.24),.028,z]],materials.line,root);
   }
@@ -89,7 +92,7 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
   function resizeSocket(slot,w,h){
     slot.w=w;slot.h=h;slot.root.scale.set(1,1,1);slot.pad.geometry.dispose();slot.pad.geometry=new T.BoxGeometry(w,.09,h);
     slot.border.geometry.dispose();slot.border.geometry=new T.BufferGeometry().setFromPoints([V(-w/2,.096,-h/2),V(w/2,.096,-h/2),V(w/2,.096,h/2),V(-w/2,.096,h/2),V(-w/2,.096,-h/2)]);
-    slot.titleNode.position.z=-h/2-.47;slot.titleNode.userData.resize(w+.25,.42);
+    slot.titleNode.position.z=-h/2-.47;slot.titleNode.userData.resize(w+.25,.58);
   }
   function route(chapter,from,to,{color=0xe7c273,via=null}={}){
     const a=V(...from),b=V(...to),mid=via?V(...via):a.clone().lerp(b,.5);mid.y=.12;
@@ -107,8 +110,8 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
     const x=-4.65+k*1.86;
     socket(1,STEP_IDS[k],String(k+1).padStart(2,'0'),[x,.10,-.65],1.65,1.10);
     const p=card(1,STEP_IDS[k],STEP_NAMES[k],[-4.65+processOrder.indexOf(k)*1.86,1.10,2.3],{w:1.63,h:.94});
-    p.titleNode.position.y=-.19;
-    label(p.root,['GOAL','REFERENCE','TASK','ROUTE','MAKE','DELIVER'][k],[0,.32,.075],1.45,.20,{color:'#365a86',font:54,weight:400});
+    p.titleNode.position.y=0;p.titleNode.userData.resize(1.50,.40);
+    // The Chinese label carries the meaning; no unreadable miniature duplicate.
     if(k>0){const path=route(1,[x-1.86,.13,-.65],[x,.13,-.65]);path.bind=STEP_IDS[k];}
   }
   label(roots[1],'把每一步放到它应该在的位置',[0,.10,3.95],6.8,.50,{surface:true,color:'#c8d7ed',font:70});
@@ -169,12 +172,12 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
   }
 
   // 03: a gold semiconductor routes actual tool symbols to semantic use sockets.
-  const chip=new T.Group();chip.name='四路用途 / 金色芯片';chip.position.set(0,.34,-.60);roots[2].add(chip);
-  box(2.0,.30,1.7,materials.gold.clone(),[0,0,0],chip);box(1.65,.05,1.35,materials.dark,[0,.175,0],chip);
-  label(chip,'IDEA / CORE',[0,.21,0],1.5,.35,{surface:true,color:'#f4d691',font:70});
+  const chip=new T.Group();chip.name='四路用途 / 白色陶瓷芯片';chip.position.set(0,.34,-.60);roots[2].add(chip);
+  box(2.0,.30,1.7,materials.ceramic.clone(),[0,0,0],chip);box(1.65,.05,1.35,materials.dark,[0,.175,0],chip);
+  label(chip,'IDEA / CORE',[0,.21,0],1.7,.43,{surface:true,color:'#f3f6f8',font:70});
   for(let k=0;k<10;k++)for(const sign of [-1,1]){
-    box(.07,.07,.25,materials.gold,[-.76+k*.17,.02,sign*.96],chip);
-    box(.25,.07,.07,materials.gold,[sign*1.10,.02,-.68+k*.15],chip);
+    box(.07,.07,.25,materials.silver,[-.76+k*.17,.02,sign*.96],chip);
+    box(.25,.07,.07,materials.silver,[sign*1.10,.02,-.68+k*.15],chip);
   }
   const toolSlotPoints=[[-3.55,.10,-1.6],[3.55,.10,-1.6],[-3.55,.10,1.15],[3.55,.10,1.15]];
   const toolOrder=orders(state.layoutSeeds[2],TOOL_IDS,USE_IDS);
@@ -188,7 +191,7 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
   }
   function installLogo(piece,k){
     const fallback=label(piece.root,['</>','◉','S','Ae'][k],[0,.17,.081],.88,.66,{color:['#ff9165','#ffb266','#bbffc9','#bcaaff'][k],font:150,weight:700});
-    const names=['html.svg','blender.svg','seedance-user-reference.webp','ae.svg'];
+    const names=['html.svg','blender-icon.svg','seedance-user-reference.webp','ae.svg'];
     const load=new T.TextureLoader().loadAsync(new URL('../assets/game-logos/'+names[k],import.meta.url).href).then(tx=>{
       if(disposed){tx.dispose();return;}tx.colorSpace=T.SRGBColorSpace;
       const sourceW=tx.image.naturalWidth||tx.image.width||1,sourceH=tx.image.naturalHeight||tx.image.height||1,fit=Math.min(.76/sourceW,.63/sourceH),width=sourceW*fit,height=sourceH*fit;
@@ -210,6 +213,7 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
   let stampPiece,stampSlot,filmPiece,scenePiece,projectPiece;
   CARGO_IDS.forEach((id,k)=>{
     const slot=socket(4,id,cargoTargetNames[id],cargoSlotPos[id],id==='stamp'?2.15:2.55,id==='stamp'?1.05:1.55);
+    slot.titleNode.userData.resize(id==='stamp'?2.7:2.55,.52);
     if(id!=='stamp')slot.titleNode.position.z=-2.10;
     const x=-3.6+cargoOrder.cards.indexOf(id)*2.4;
     const piece=card(4,id,CARGO_NAMES[k],[x,1.25,3.15],{w:1.90,h:1.25,material:id==='stamp'?materials.gold:materials.dark,kind:id});
@@ -246,11 +250,11 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
       piece.body.visible=false;piece.border.visible=false;piece.titleNode.position.set(0,-.48,.20);
       const handle=new T.Mesh(new T.CylinderGeometry(.22,.28,.48,32),materials.dark);handle.rotation.x=Math.PI/2;handle.position.set(0,.10,.30);piece.root.add(handle);
       box(.95,.65,.15,materials.gold,[0,.1,.065],piece.root);
-      piece.extras={handle,lockedLabel:label(piece.root,'先完成三项',[0,-.94,.14],1.8,.29,{color:'#c6ceda',font:65})};
+      piece.extras={handle,lockedLabel:label(piece.root,'先完成三项',[0,-.94,.14],1.8,.40,{color:'#c6ceda',font:65})};
     }
   });
   const stamped=label(roots[4],'交付完成 ✓',[0,.23,.65],1.8,.40,{surface:true,color:'#c9edc2',font:92,weight:700});stamped.visible=false;
-  label(roots[4],'观看 · 互动 · 继续制作',[0,.08,-4.65],6.2,.50,{surface:true,color:'#c7d4e8',font:70});
+  label(roots[4],'观看 · 互动 · 继续制作',[0,.08,-7.70],8,.54,{surface:true,color:'#c7d4e8',font:70});
 
   const guideLine=line([V(),V()],new T.LineBasicMaterial({color:0xcee7ff,transparent:true,opacity:.8}),scene);guideLine.visible=false;guideLine.renderOrder=30;
   const guideDot=new T.Mesh(new T.SphereGeometry(.065,10,8),new T.MeshBasicMaterial({color:0xe5f3ff,toneMapped:false}));scene.add(guideDot);guideDot.visible=false;
@@ -460,7 +464,7 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
       const running=path.progress>.97&&active===path.chapter;path.glow.visible=running;
       if(running)path.glow.position.copy(path.curve.getPoint((time*.14)%1));
     }
-    const connected=state.done[2].length;chip.children[0].material.emissive.set(0xe9ba54);chip.children[0].material.emissiveIntensity=.06+connected*.045+(connected?Math.sin(time*1.6)*.025:0);
+    const connected=state.done[2].length;chip.children[0].material.emissive.set(0xe6f0f8);chip.children[0].material.emissiveIntensity=.06+connected*.045+(connected?Math.sin(time*1.6)*.025:0);
     if(filmPiece.done){filmPiece.extras.run.geometry.setDrawRange(0,2);filmPiece.extras.run.scale.x=(time*.12)%1;filmPiece.extras.screen.material.emissive?.set(0x4b71d1);filmPiece.extras.screen.material.emissiveIntensity=.14+Math.sin(time*.9)*.04;}
     if(scenePiece.done&&!drag)scenePiece.extras.shape.rotation.y+=dt*.18;
     projectPiece.extras.open=T.MathUtils.damp(projectPiece.extras.open,projectPiece.done?1:0,3.5,dt);

@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {ParticlePhysics,curlField} from '../src/particle-physics.mjs';
+function system(){const s=new ParticlePhysics(120);for(let i=0;i<s.count;i++){s.origin.set([Math.sin(i)*6,Math.cos(i)*2,Math.sin(i*.4)*.2],i*3);s.target.set([(i%12-6)*1.3,(Math.floor(i/12)-5)*2.4,.1],i*3);s.release[i]=(i%30)/30;}s.reset();return s;}
+test('curl field preserves local volume instead of radial contraction',()=>{const h=1e-4,field=(p)=>curlField(...p,2.3,[0,0,0]);for(let i=0;i<20;i++){const p=[Math.sin(i)*4,Math.cos(i)*3,i*.2];let div=0;for(let a=0;a<3;a++){const lo=[...p],hi=[...p];lo[a]-=h;hi[a]+=h;div+=(field(hi)[a]-field(lo)[a])/(2*h);}assert.ok(Math.abs(div)<1e-6);}});
+test('equal elapsed time produces matching physical trajectories at 30 and 120 Hz',()=>{const a=system(),b=system();for(let i=0;i<120;i++)a.advance(1/30);for(let i=0;i<480;i++)b.advance(1/120);assert.equal(a.steps,b.steps);assert.deepEqual(a.position,b.position);assert.deepEqual(a.velocity,b.velocity);});
+test('particles remain attached before release then travel with nonzero out-of-plane velocity',()=>{const a=system();a.advance(.04);assert.deepEqual(a.position.slice(60,63),a.origin.slice(60,63));assert.ok(a.velocity[2]!==0);for(let i=0;i<100;i++)a.advance(1/60);assert.ok(a.snapshot().maxTargetError>2);assert.ok(Math.abs(a.position[2])>.1);});
+test('all fragments settle on their actual UI targets, including tall mobile layouts',()=>{const a=system();for(let i=0;i<900;i++)a.advance(1/120);assert.equal(a.snapshot().settled,120);assert.equal(a.snapshot().maxTargetError,0);assert.ok([...a.position].every(Number.isFinite));assert.ok(a.position[1]<-7.5);});

@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {CSS3DRenderer} from 'three/addons/renderers/CSS3DRenderer.js';
-import {createOpening,OPENING_TIMING} from './opening.mjs';
+import {createOpening,OPENING_TIMING} from './opening-r08.mjs';
+import {glassEnvironment} from './frosted-glass.mjs';
 import {createDotStage} from './dot-stage-r07.mjs';
 import {createChatPresentation,createCinemaControls} from './chat-r07.mjs';
 import {createDotForeground} from './dot-foreground.mjs';
@@ -35,7 +36,7 @@ function setPhase(phase){ui.phase=phase;ui.phaseAt=time;document.body.dataset.ph
 function setBubble(text,duration=5){if(!text)return;$('dot-bubble-text').textContent=text;ui.bubbleUntil=time+duration;}
 async function init(){
   renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;
-  scene=new T.Scene();scene.background=new T.Color('#0b0c0e');scene.fog=new T.Fog('#0b0c0e',48,100);camera=new T.PerspectiveCamera(innerWidth<700?48:42,innerWidth/innerHeight,.05,220);camera.position.set(3,18,22);camera.lookAt(0,0,-3);
+  scene=new T.Scene();glassEnvironment(scene);scene.background=new T.Color('#0b0c0e');scene.fog=new T.Fog('#0b0c0e',48,100);camera=new T.PerspectiveCamera(innerWidth<700?48:42,innerWidth/innerHeight,.05,220);camera.position.set(3,18,22);camera.lookAt(0,0,-3);
   scene.add(new T.HemisphereLight(0xf0f1f3,0x222327,1.35));key=new T.DirectionalLight(0xfffdf8,3.0);key.position.set(-6,18,12);key.castShadow=true;key.shadow.mapSize.set(1536,1536);key.shadow.camera.left=-18;key.shadow.camera.right=18;key.shadow.camera.top=21;key.shadow.camera.bottom=-21;key.shadow.camera.near=.1;key.shadow.camera.far=65;key.shadow.bias=-.0007;key.shadow.normalBias=.035;keyTarget=new T.Object3D();scene.add(keyTarget);key.target=keyTarget;scene.add(key);const fill=new T.DirectionalLight(0xbfc7d0,.6);fill.position.set(-12,8,-12);scene.add(fill);
   quality=createRenderQuality({renderer,key,width:innerWidth,height:innerHeight});
   css=new CSS3DRenderer({element:$('spatial')});css.setSize(innerWidth,innerHeight);
@@ -55,6 +56,7 @@ async function init(){
   // the first scroll shadow/material upload consumes half of the short exit.
   $('loading-status').textContent='正在准备舞台与卷轴的连续画面';
   resize();
+  portalLayout(0);await opening.prepare(renderer);
   dot.update({time:0,dt:0,mode:'stage',stageTime:2,pixelRatio:renderer.getPixelRatio()});
   const stageMask=dot.stageCamera.layers.mask;dot.stageCamera.layers.enable(2);
   await dot.source.renderer.compileAsync(dot.stageGroup,dot.stageCamera);dot.stageCamera.layers.mask=stageMask;dot.renderStage();
@@ -72,7 +74,7 @@ window.addEventListener('resize',resize);
 const codeCtx=$('code').getContext('2d');
 const sourceLines=['const idea = observe({ subject, frame, light });','await create.space({ depth: true, continuity: 1 });','timeline.connect(reference, intention, result);','for (const part of thought) {','  geometry.extrude(part.outline, { precision: 0.001 });','  motion.follow(curve, ease.inOut);','  material.respond(light, atmosphere);','}','await render({ camera, scene, sound });','frame.read();  // 让每一个选择，都能被看见','return experience({ watch, interact, continue });'];
 function drawCode(age){const ctx=codeCtx,w=ctx.canvas.width,h=ctx.canvas.height;ctx.fillStyle='#05090f';ctx.fillRect(0,0,w,h);const ratio=w/1200;for(let layer=0;layer<3;layer++){const fade=1-smooth((age-(2.65-layer*.15))/1.55);ctx.save();ctx.translate(w*(.06+layer*.32),h*(.10+layer*.12));const font=(13+layer*3)*ratio;ctx.font=`${font}px monospace`;for(let row=0;row<20;row++){const y=(row*font*1.65-(age*25*ratio)%(font*1.65));const line=sourceLines[(row+layer*3+Math.floor(age*1.7))%sourceLines.length];const chars=Math.floor(clamp((age-row*.045)*.7)*line.length);ctx.fillStyle=`rgba(${layer===2?'178,210,240':'88,143,183'},${fade*(.28+layer*.17)})`;ctx.fillText(String(row+1).padStart(2,'0')+'  '+line.slice(0,chars),0,y);if(row===Math.floor(age*3)%18){ctx.fillStyle=`rgba(206,238,207,${fade*.9})`;ctx.fillRect((chars+4)*font*.6,y-font*.8,font*.55,font);}}ctx.restore();}const f=1-smooth((age-3.1)/1.25);ctx.fillStyle=`rgba(186,213,239,${f*.7})`;ctx.font=`${11*ratio}px monospace`;ctx.fillText('IDEA → STRUCTURE → MOTION → EXPERIENCE',w*.055,h*.9);ctx.fillRect(w*.055,h*.93,w*.87*clamp(age/4.4),1*ratio);}
-function portalLayout(age){if(['film','stage','transition'].includes(ui.phase)){Object.assign(portal.style,{width:'100vw',height:'100dvh',left:'0',top:'0',transform:'none'});return;}portal.style.left=portal.style.top='50%';portal.style.transform='translate(-50%,-50%)';const targetW=Math.min(innerWidth*.86,1280),initialW=Math.min(innerWidth*(innerWidth<700?.92:.86),960),initialH=innerWidth<700?390:430;let p=ui.phase==='launch'?smooth(age/2):['film','black','transition'].includes(ui.phase)?1:0;const w=T.MathUtils.lerp(initialW,targetW,p),h=T.MathUtils.lerp(initialH,targetW*9/16,p);portal.style.width=w+'px';portal.style.height=h+'px';if(ui.phase==='morph')portal.style.opacity=String(smooth((age-OPENING_TIMING.portalRevealStart)/OPENING_TIMING.portalRevealDuration));if(ui.phase==='launch'){const fade=1-smooth((age-2.65)/1.7);portal.style.opacity=String(fade);$('portal-frame').style.opacity=String(fade);portal.style.transform=`translate(-50%,-50%) perspective(1200px) rotateY(${(1-p)*-2}deg)`;}}
+function portalLayout(age){if(['film','stage','transition'].includes(ui.phase)){Object.assign(portal.style,{width:'100vw',height:'100dvh',left:'0',top:'0',transform:'none'});return;}portal.style.left=portal.style.top='50%';portal.style.transform='translate(-50%,-50%)';const targetW=Math.min(innerWidth*.86,1280),initialW=Math.min(innerWidth*(innerWidth<700?.92:.86),960),initialH=innerWidth<700?390:430;let p=ui.phase==='launch'?smooth(age/2):['film','black','transition'].includes(ui.phase)?1:0;const w=T.MathUtils.lerp(initialW,targetW,p),h=T.MathUtils.lerp(initialH,targetW*9/16,p);portal.style.width=w+'px';portal.style.height=h+'px';if(ui.phase==='morph')portal.style.opacity='1';if(ui.phase==='launch'){const fade=1-smooth((age-2.65)/1.7);portal.style.opacity=String(fade);$('portal-frame').style.opacity=String(fade);portal.style.transform=`translate(-50%,-50%) perspective(1200px) rotateY(${(1-p)*-2}deg)`;}}
 function timeText(t){if(!Number.isFinite(t))return'00:00';return `${Math.floor(t/60).toString().padStart(2,'0')}:${Math.floor(t%60).toString().padStart(2,'0')}`;}
 const normalPos=vec(),normalLook=vec(),look=vec(),companion=vec(),companionView=vec(),stageStart=vec(0,4.3,-9.5),stageEnd=vec(0,6,9),stageLook=vec(0,3.6,-14),departureStart=vec(),departureLook=vec();
 function fitCompanionTarget(){
@@ -83,20 +85,20 @@ function fitCompanionTarget(){
   companion.copy(companionView.applyMatrix4(camera.matrixWorld));
   companionView.copy(companion).project(camera);
   companionView.x=clamp(companionView.x,-.76,.76);
-  companionView.y=clamp(companionView.y,-.52,.64);
+  companionView.y=innerWidth<700&&ui.phase==='scroll'&&!ui.focusLock?-.43:clamp(companionView.y,-.52,.64);
   companion.copy(companionView.unproject(camera));
 }
 let lastPhase='loading',lastChapter=-1,renderedFrames=0,departureFov=42;
 function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.05,Math.max(.001,rawDt));previous=current;time=current-startedAt;ui.frameTimes.push(rawDt*1000);if(ui.frameTimes.length>600)ui.frameTimes.shift();const age=time-ui.phaseAt;
   if(ui.phase==='intro'){ui.hold=clamp(ui.hold+(ui.held?dt:-dt*1.65));$('hold').style.setProperty('--hold',ui.hold);if(ui.hold>=1){sound.unlock();sound.play('open');ui.held=false;setPhase('morph');}}
-  else if(ui.phase==='morph'&&age>=OPENING_TIMING.morph)setPhase('chat');
+  else if(ui.phase==='morph'&&age>=OPENING_TIMING.morph&&opening.ready)setPhase('chat');
   else if(ui.phase==='launch'&&age>=4.35)setPhase('black');
   else if(ui.phase==='black'&&performance.now()-ui.blackAt>=1000){setPhase('film-wait');transport.start();}
   if(['film','stage','transition'].includes(ui.phase))transport.update(dt);
   chatPresentation.update(ui.phase,time-ui.phaseAt);cinemaControls.update();
   const introRender=['intro','morph','chat','launch','black','film-wait'].includes(ui.phase);
   dotForeground.setActive(ui.phase==='scroll'||ui.phase==='departure');
-  if(introRender){opening.update({time,dt,phase:ui.phase==='film-wait'?'black':ui.phase,phaseTime:time-ui.phaseAt,holdProgress:ui.hold});renderer.render(opening.scene,opening.camera);css.domElement.style.visibility='hidden';if(ui.phase==='launch')drawCode(age);portalLayout(time-ui.phaseAt);}
+  if(introRender){portalLayout(time-ui.phaseAt);opening.update({time,dt,phase:ui.phase==='film-wait'?'black':ui.phase,phaseTime:time-ui.phaseAt,holdProgress:ui.hold});renderer.render(opening.scene,opening.camera);css.domElement.style.visibility='hidden';if(ui.phase==='launch')drawCode(age);portalLayout(time-ui.phaseAt);}
   else if(ui.phase==='film'){portalLayout(age);renderer.setClearColor('#000000',1);renderer.clear();css.domElement.style.visibility='hidden';}
   else if(['stage','transition','departure','scroll'].includes(ui.phase)){
     css.domElement.style.visibility='visible';
@@ -113,14 +115,14 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
       const p=clamp((time-ui.phaseAt)/CONFIG.stage.departure),e=smooth(p);camera.fov=T.MathUtils.lerp(departureFov,innerWidth<700?48:42,e);camera.updateProjectionMatrix();camera.position.lerpVectors(departureStart,normalPos,e);camera.position.x+=Math.sin(p*Math.PI)*.7;look.lerpVectors(departureLook,normalLook,e);camera.lookAt(look);camera.updateMatrixWorld();companion.set(8.5,2.7,5);fitCompanionTarget();space.update({scroll:0,time,dt,unfold:smooth((p-.08)/.9)});for(const r of games.roots)r.visible=p>.65;dot.update({time,mode:'departure',stageTime:transport.stageDuration,performanceDuration:CONFIG.stage.performanceDuration,departureProgress:p,companionTarget:companion,dt});if(p>=1)setPhase('scroll');
     }else{
       const chapter=Math.min(5,Math.max(0,Math.floor((ui.scroll+11)/34)));ui.chapter=chapter;const gameIndex=CONFIG.chapters.findIndex(p=>Math.abs(-p.z-ui.scroll)<7.5);if(gameIndex!==ui.game&&!ui.gameLock){ui.game=gameIndex;games.setActiveChapter(gameIndex);if(gameIndex>=0){setBubble(['转动方块，让一面清楚地停在眼前。','把六个步骤，排成一次完整的创作。','先看需求，再把合适的工具连过去。','直接点模型上不合理的地方。','三项交付就位，最后再盖章。'][gameIndex],7);}}
-      if(gameIndex>=0){const gp=CONFIG.chapters[gameIndex],narrow=innerWidth<700,gameScale=narrow?1.2:scale,blend=(narrow?.95:.72)*smooth(1-clamp(Math.abs(-gp.z-ui.scroll)/8));normalPos.lerp(vec((narrow?0:2.5)*gameScale,12*gameScale,gp.z+15*gameScale),blend);normalLook.lerp(vec(0,0,gp.z),blend);}
+      if(gameIndex>=0){const gp=CONFIG.chapters[gameIndex],narrow=innerWidth<700,gameScale=narrow?1.2:scale,blend=(narrow?.95:.72)*smooth(1-clamp((Math.abs(-gp.z-ui.scroll)-2.5)/5.5));normalPos.lerp(vec((narrow?0:2.5)*gameScale,12*gameScale,gp.z+15*gameScale),blend);normalLook.lerp(vec(0,0,gp.z),blend);}
       if(ui.scroll>178){const end=smooth((ui.scroll-178)/12);normalPos.lerp(vec(10*scale,28*scale,-145),end);normalLook.lerp(vec(0,0,-172),end);}
       space.update({scroll:ui.scroll,time,dt});const cf=space.cameraFocus();if(cf){camera.position.lerpVectors(normalPos,cf.position,cf.mix);look.lerpVectors(normalLook,cf.target,cf.mix);}else{camera.position.copy(normalPos);look.copy(normalLook);}
       camera.lookAt(look);camera.updateMatrixWorld();const side=(chapter===2||chapter===4)?-1:1;companion.set(side*(innerWidth<700?5:8.7),innerWidth<700?3.8:2.7,chapter===5?Math.max(-ui.scroll+4,-176):-ui.scroll+4);fitCompanionTarget();dot.update({time,mode:'scroll',stageTime:transport.stageDuration,performanceDuration:CONFIG.stage.performanceDuration,companionTarget:companion,dt});
       for(let i=0;i<games.roots.length;i++)games.roots[i].visible=Math.abs(CONFIG.chapters[i].z+ui.scroll)<45;
       if(chapter!==lastChapter){lastChapter=chapter;if(chapter===5){dot.setAttention(null);setBubble('这次创作已经展开。下一次，换你的想法先行。',7);}document.querySelectorAll('#chapters button').forEach((b,i)=>b.classList.toggle('active',i===chapter));$('chapter-kicker').textContent=CHAPTERS[chapter]?.kicker||'06 / 留给下一次创作';$('chapter-title').textContent=CHAPTERS[chapter]?.title||'资源档案';$('chapter-description').textContent=CHAPTERS[chapter]?.description||'方法、工具与工程，都可以继续生长。';}
       display('scroll-cue',ui.scroll<1.2&&!ui.focusLock);display('chapter-caption',ui.scroll>1.2&&gameIndex<0&&!ui.focusLock&&chapter<5);display('game-controls',gameIndex>=0&&!ui.focusLock,'flex');$('game-instruction').textContent=gameIndex<0?'':['拖动旋转 · 清楚停留后自动收词','把步骤板拖入六个顺序槽','拖动工具，连接适合的用途','点击模型的问题区域','先安放三项成果，再拖动印章'][gameIndex];$('position-label').textContent=String(chapter+1).padStart(2,'0')+' / 06';$('scroll-progress').firstElementChild.style.width=(ui.scroll/CONFIG.scroll.max*100)+'%';
-      const body=dot.actorWorldPos.clone().add(vec(0,1.2,0));const screen=project(body,camera);const narrow=innerWidth<700;const bx=narrow?clamp(screen.x-115,55,innerWidth-185):clamp(screen.x-90,35,innerWidth-235),by=narrow&&gameIndex>=0?Math.max(100,innerHeight*.23):clamp(screen.y-85,90,innerHeight-180);ui.bubbleX=damp(ui.bubbleX,bx,8,dt);ui.bubbleY=damp(ui.bubbleY,by,8,dt);$('dot-bubble').style.left=ui.bubbleX+'px';$('dot-bubble').style.top=ui.bubbleY+'px';display('dot-bubble',screen.visible&&time<ui.bubbleUntil&&!ui.focusLock);
+      const body=dot.actorWorldPos.clone().add(vec(0,1.2,0));const screen=project(body,camera);const narrow=innerWidth<700;const bx=narrow?clamp(screen.x-115,55,innerWidth-185):clamp(screen.x-90,35,innerWidth-235),by=narrow?Math.max(90,innerHeight*.105):clamp(screen.y-85,90,innerHeight-180);ui.bubbleX=damp(ui.bubbleX,bx,8,dt);ui.bubbleY=damp(ui.bubbleY,by,8,dt);$('dot-bubble').style.left=ui.bubbleX+'px';$('dot-bubble').style.top=ui.bubbleY+'px';display('dot-bubble',screen.visible&&time<ui.bubbleUntil&&!ui.focusLock);
     }
     if(ui.phase==='stage'||ui.phase==='transition'){renderer.setClearColor('#000000',1);renderer.clear();dot.renderStage();}else{camera.lookAt(look);camera.updateMatrixWorld();key.position.set(-6,18,12-ui.scroll);keyTarget.position.set(0,0,-ui.scroll-3);quality.stabilizeShadow({phase:ui.phase});games.update(dt,time);dot.beforeRender(renderer);dotForeground.renderWorld(()=>renderer.render(scene,camera));css.render(scene,camera);space.syncReading();dotForeground.render();}
   }

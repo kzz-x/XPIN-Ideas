@@ -33,11 +33,11 @@ export function createProductCarousel({root,camera,box,label,line,materials,onRe
     const a=k*Math.PI/2,g=new T.Group();g.position.set(Math.sin(a)*2.45,.22,Math.cos(a)*2.45);g.rotation.y=a;platter.add(g);mounts.push(g);
     const pad=box(3.0,.05,2.25,materials.dark,[0,0,0],g);pad.name=PRODUCT_IDS[k]+' / 独立检测定位面';
     const ll=label(g,'模型载入中',[0,.2,0],2.4,.35,{surface:true,color:'#a8bdd5'});loadingLabels.push(ll);
-    identityLabels.push(label(g,PRODUCT_IDS[k],[0,.10,1.65],2.4,.35,{surface:true,color:'#b9d0e9'}));
+    identityLabels.push(label(g,PRODUCT_IDS[k],[0,.10,1.65],2.4,.46,{surface:true,color:'#b9d0e9'}));
     loads.push(loadProduct(k,g));
   }
   label(root,'点击模型的问题位置 · 观察修正',[0,.10,6.0],6.8,.50,{surface:true,color:'#c4d3e7',font:70});
-  label(root,'结构 / 接地 / 贴合 / 装配 · 教学示意',[0,.36,-5.05],5.8,.32,{surface:true,color:'#72849e'});
+  label(root,'结构 / 接地 / 贴合 / 装配 · 教学示意',[0,.08,-7.70],9.5,.54,{surface:true,color:'#e1eaf2',font:70});
   const ring=new T.Mesh(new T.RingGeometry(.18,.235,48),new T.MeshBasicMaterial({color:0xffcf79,transparent:true,opacity:.9,side:T.DoubleSide,depthTest:false}));ring.renderOrder=20;ring.visible=false;root.add(ring);
   const target=new T.Mesh(new T.SphereGeometry(.38,12,8),new T.MeshBasicMaterial({visible:false}));target.name='产品问题命中区域';root.add(target);
   const guide=line([[0,0,0],[0,0,0]],materials.goldLine,root);guide.renderOrder=19;
