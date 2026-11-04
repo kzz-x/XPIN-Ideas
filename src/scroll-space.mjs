@@ -1,3 +1,5 @@
+import {createCardMorph} from './card-morph.mjs';
+import {resourcePhases,RESOURCE_DURATION,createTitleMotion,createEnding} from './scroll-motion.mjs';
 import * as T from 'three';
 import {frostedGlass,glassEdges} from './frosted-glass.mjs';
 import {CSS3DObject} from 'three/addons/renderers/CSS3DRenderer.js';
@@ -7,8 +9,11 @@ import {clamp,smooth,damp,vec,titleMesh,label,line,box} from './space-utils.mjs'
 
 export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},onReplay=()=>{}}){
   const root=new T.Group();root.name='Continuous creative scroll';scene.add(root);
-  const objects=[],cards=[],industrials=[],resources=[],layoutLabels=[],layoutLines=[];
-  const cardTilt=T.MathUtils.degToRad(28),labelTilt=-Math.PI/4;
+  const objects=[],cards=[],industrials=[],resources=[],layoutLabels=[],layoutLines=[],titles=[];
+  let resourceSeen={};try{resourceSeen=JSON.parse(localStorage.getItem('linggan-resource-seen-r09')||'{}');}catch{}
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let animationTime=0,hoveredTitle=null,hoveredIndustrial=null,hoveredResource=null;
+  const cardTilt=0,labelTilt=-Math.PI/4;
   function placeLabel(text,width,height,{x=0,y=.65,z=0,chapter=-1,kind='caption',...style}={}){
     const mesh=label(text,width,height,{...style,size:Math.max(70,style.size||70),color:kind==='continuation'?'#e8eef4':style.color||'#f2f5f7'});mesh.name=`Chapter ${chapter+1} / ${kind}`;
     mesh.rotation.x=labelTilt;mesh.position.set(x,y,z);
@@ -44,15 +49,27 @@ export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},on
   const grid=new T.Group();
   for(const [divisions,color,opacity] of [[500,0x77797c,.13],[50,0xa1a2a5,.16]]){const layer=new T.GridHelper(500,divisions,color,color);layer.position.y=-.13;layer.material.transparent=true;layer.material.opacity=opacity;grid.add(layer);}root.add(grid);
   const rails=new T.Group();for(const x of [-11,11]){const pts=[];for(let z=33;z>=-70;z-=.5){const over=Math.max(0,-z-35),a=Math.min(over/18,1.42);pts.push(vec(x,over>0?18*(1-Math.cos(a))+.025:.025,over>0?-35-18*Math.sin(a):z));}rails.add(line(pts,0xdddfe2,.42));}root.add(rails);
-  let focus=null,focusMix=0,focusGoal=0,hover=null;
+  let focus=null,focusMix=0,focusGoal=0,hover=null,focusAge=0;
   const backdrop=document.querySelector('#focus-backdrop');
   const readingLayer=document.createElement('div');readingLayer.id='reading-layer';Object.assign(readingLayer.style,{position:'fixed',inset:'0',zIndex:'6',pointerEvents:'none'});document.body.append(readingLayer);let readingCard=null;
   function surface(el){const wrapper=document.createElement('div');wrapper.className='spatial-surface';wrapper.append(el);return new CSS3DObject(wrapper);}
   function restoreReading(){if(!readingCard)return;const card=readingCard;card.css.element.append(card.el);for(const key of ['position','left','top','transform','transformOrigin'])card.el.style[key]='';readingCard=null;}
   function syncReading(){if(!focus||!focusGoal||focusMix<1){restoreReading();return;}const card=focus,rect=card.css.element.getBoundingClientRect();if(readingCard!==card){restoreReading();readingCard=card;readingLayer.append(card.el);}Object.assign(card.el.style,{position:'absolute',left:rect.x+'px',top:rect.y+'px',transformOrigin:'0 0',transform:`scale(${rect.width/card.el.offsetWidth})`,pointerEvents:'auto'});}
   const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function open(card){if(focus===card&&focusGoal)return;if(focus)return;focus=card;focusGoal=1;card.el?.classList.add('focused');document.body.classList.add('has-focus');backdrop.classList.add('open');onFocus(true);onSound('open');}
-  function close(){if(!focus)return;restoreReading();focusGoal=0;backdrop.classList.remove('open');onSound('close');}
+  function open(card){
+    if(focus)return;card.morph?.prepare();focus=card;focusGoal=1;focusAge=0;focusMix=0;
+    card.openBase=card.group.position.clone();card.openQ=card.group.quaternion.clone();
+    card.el.classList.add('focused');document.body.classList.add('has-focus');
+    if(card.isResource){const r=resources.find(r=>r.card===card);r.visited=true;resourceSeen[r.kind]=true;try{localStorage.setItem('linggan-resource-seen-r09',JSON.stringify(resourceSeen));}catch{}}
+    else backdrop.classList.add('open');
+    onFocus(true);onSound('open');
+  }
+  function close(){if(!focus)return;focus.morph?.beginClose();restoreReading();focusGoal=0;backdrop.classList.remove('open');onSound('close');}
+  function cancelFocus(){
+    restoreReading();if(focus){focus.el.classList.remove('focused');focus.morph?.reset();focus.group.position.copy(focus.base);focus.group.quaternion.copy(focus.baseQ);focus.group.scale.setScalar(1);if(focus.isResource)focus.group.visible=false;}
+    focus=null;focusAge=focusMix=focusGoal=0;backdrop.classList.remove('open');document.body.classList.remove('has-focus');onFocus(false);
+  }
+
   // A touch on a model opens this layer on pointerup. Its following compatibility
   // click must not be mistaken for a new press on the newly visible backdrop.
   let backdropPressed=false;
@@ -66,16 +83,16 @@ export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},on
     // shadow and the same raycast target without a second bright raster edge.
     const backing=new T.Mesh(new T.BoxGeometry(size-.035,420*scale-.035,.18),frostedGlass({color:0xbacbd8,thickness:.28,roughness:.34,transmission:.93,envMapIntensity:.16}));backing.position.z=-.095;backing.name='Physical frosted archive card / 0.18 world-unit thickness';backing.receiveShadow=true;group.add(backing);const frame=glassEdges(backing.geometry,{opacity:.54});frame.position.copy(backing.position);group.add(frame);
     const css=surface(el);css.scale.setScalar(scale);group.add(css);
-    // A fixed 28-degree rise retains perspective but prevents crushed DOM text.
+    // The board rests flat. A small hover rise is applied around its lower edge.
     // Primary and support columns have a real gap in both world and screen space.
     // All far edges end before z=-10; game geometry starts after z=-12.
     const chapterZ=-chapter*34,mirrored=chapter===2;
     const x=index===0?(mirrored?2.05:-2.15):(mirrored?-6.05:6.05);
     const z=chapterZ+(index===0?-3.8:index===1?-.8:-8.2),height=420*scale;
-    group.position.set(x,Math.sin(cardTilt)*height/2+.24,z);group.rotation.set(-Math.PI/2+cardTilt,0,0);root.add(group);
-    const card={group,el,css,frame,c,chapter,width:size,height,base:group.position.clone(),baseQ:group.quaternion.clone(),hover:0};cards.push(card);objects.push({group,z});el.addEventListener('pointerenter',()=>hover=card);el.addEventListener('pointerleave',()=>{if(hover===card)hover=null;});let down=null;el.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});el.addEventListener('click',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)return;if(!focus){open(card);e.stopPropagation();}});el.addEventListener('keydown',e=>{if(e.key==='Enter'){open(card);e.preventDefault();}});el.querySelector('.card-detail').addEventListener('wheel',e=>e.stopPropagation(),{passive:true});el.querySelector('.card-detail').addEventListener('pointerdown',e=>e.stopPropagation());el.querySelectorAll('[data-image]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();el.querySelector('.card-detail figure img').src=btn.dataset.image;}));el.querySelector('.comparison input')?.addEventListener('input',e=>e.target.parentElement.style.setProperty('--split',e.target.value+'%'));return card;
+    group.position.set(x,Math.sin(cardTilt)*height/2+.195,z);group.rotation.set(-Math.PI/2+cardTilt,0,0);root.add(group);
+    const card={group,el,css,frame,c,chapter,width:size,height,base:group.position.clone(),baseQ:group.quaternion.clone(),hover:0,morph:createCardMorph(el)};cards.push(card);objects.push({group,z});el.addEventListener('pointerenter',()=>hover=card);el.addEventListener('pointerleave',()=>{if(hover===card)hover=null;});let down=null;el.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});el.addEventListener('click',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)return;if(!focus){open(card);e.stopPropagation();}});el.addEventListener('keydown',e=>{if(e.key==='Enter'){open(card);e.preventDefault();}});el.querySelector('.card-detail').addEventListener('wheel',e=>e.stopPropagation(),{passive:true});el.querySelector('.card-detail').addEventListener('pointerdown',e=>e.stopPropagation());el.querySelectorAll('[data-image]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();el.querySelector('.card-detail figure img').src=btn.dataset.image;}));el.querySelector('.comparison input')?.addEventListener('input',e=>e.target.parentElement.style.setProperty('--split',e.target.value+'%'));return card;
   }
-  CHAPTERS.forEach((chapter,i)=>{const z=-i*34,mainSide=i===2?1:-1;const title=styleTitle(titleMesh(chapter.title,1.85,.22));title.name=`Chapter ${i+1} / title`;title.position.set(mainSide*3.6,0,z+4.0);root.add(raiseTitle(title));objects.push({group:title,z:z+4.0});
+  CHAPTERS.forEach((chapter,i)=>{const z=-i*34,mainSide=i===2?1:-1;const title=styleTitle(titleMesh(chapter.title,1.85,.22));title.name=`Chapter ${i+1} / title`;title.position.set(mainSide*3.6,0,z+4.0);root.add(raiseTitle(title));titles.push(createTitleMotion(title));objects.push({group:title,z:z+4.0});
     placeLabel(chapter.kicker,7,.42,{x:mainSide*3.6,y:1.30,z:z+1.3,chapter:i,kind:'kicker',size:25,color:'#e1e1dc'});
     placeLabel(chapter.description,10.8,.58,{x:0,y:.40,z:z+7.2,chapter:i,kind:'description',size:29,color:'#f0f0ea'});
     const headingRule=line([vec(mainSide*9.5,.055,z+1.0),vec(mainSide*9.5,.055,z+7.3)],0xe8e8df,.27);headingRule.name=`Chapter ${i+1} / header separator`;root.add(headingRule);objects.push({group:headingRule,z:z+.7});layoutLines.push(headingRule);
@@ -161,19 +178,24 @@ export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},on
       const edgeMaterial=new T.LineBasicMaterial({color:0xdfe1e2,transparent:true,opacity:minor?.50:.71});
       const outline=new T.LineSegments(edgeGeometry,edgeMaterial);outline.name='Structural edges / one batched draw';g.add(outline);root.add(g);
       placeLabel(`${minor?'DETAIL':'FIG'} ${String(i+1).padStart(2,'0')} / ${['OPTICS','SEQUENCE','ROUTING','STRUCTURE','ARCHIVE'][i]}`,minor?3.4:5.6,.36,{x:g.position.x,y:.34,z:g.position.z+(minor?1.95:3.05),chapter:i,kind:minor?'detail ID':'engineering ID',size:25,color:'#a6a9ae'});
-      const record={group:g,z:g.position.z,bodyMaterial,edgeMaterial,mode:0,mix:0,minor,baseYaw:(minor?-.18:.24)*side};industrials.push(record);objects.push({group:g,z:g.position.z});
+      const record={group:g,z:g.position.z,bodyMaterial,edgeMaterial,mode:0,mix:0,hover:0,hoverGoal:0,minor,baseYaw:(minor?-.18:.24)*side};industrials.push(record);objects.push({group:g,z:g.position.z});
     }
     artifact(false);artifact(true);
   }
   const shelf=createResourceShelf();shelf.position.set(0,0,-177);root.add(shelf);objects.push({group:shelf,z:-177});
-  const resourceTitle=styleTitle(titleMesh('资源档案',1.85,.22));resourceTitle.name='Chapter 6 / title';resourceTitle.position.set(-3,0,-169);root.add(raiseTitle(resourceTitle));objects.push({group:resourceTitle,z:-169});
+  const resourceTitle=styleTitle(titleMesh('资源档案',1.85,.22));resourceTitle.name='Chapter 6 / title';resourceTitle.position.set(-3,0,-169);root.add(raiseTitle(resourceTitle));titles.push(createTitleMotion(resourceTitle));objects.push({group:resourceTitle,z:-169});
   RESOURCES.forEach((r,i)=>{
     const model=createResourceModel(r.kind,{label}),{group:g,lid,parts=[]}=model;
     g.name=`Resource ${r.kind}`;g.position.set(-4.2+i*4.2,i===1?2.78:.3,0);shelf.add(g);
     const tagEl=document.createElement('button');tagEl.className='shelf-tag';tagEl.textContent=r.title+' ↗';const tag=new CSS3DObject(tagEl);tag.scale.setScalar(.014);tag.position.set(g.position.x,g.position.y+.30,2.3);tag.rotation.x=labelTilt;tag.name='Resource tag / '+r.kind;tag.userData.readableLabel={text:r.title,chapter:5,kind:'resource tag'};shelf.add(tag);
-    const detailEl=document.createElement('article');detailEl.className='process-card resource-detail';detailEl.innerHTML=`<div class="card-detail" style="display:block"><div class="detail-label">RESOURCE / 资源档案</div><h2>${escape(r.title)}</h2><span class="pending">${escape(r.status||'待补充')}</span><div class="resource-symbol">${['[ / ]','{ + }','[ ≡ ]'][i]}</div><p>${escape(r.description)}</p>${(r.body||[]).map(t=>`<p>${escape(t)}</p>`).join('')}<p class="source-note">领取内容确定后再接入；私密源工程不自动对外提供。</p></div>`;const dg=new T.Group();const css=surface(detailEl);css.scale.setScalar(.0125);dg.add(css);dg.position.copy(shelf.position).add(vec(g.position.x,4,4));dg.visible=false;root.add(dg);const card={group:dg,el:detailEl,css,c:r,chapter:5,width:8,base:dg.position.clone(),baseQ:dg.quaternion.clone(),isResource:true};cards.push(card);const record={group:g,lid,parts,model,kind:r.kind,card,base:g.position.clone(),hover:0};resources.push(record);tagEl.addEventListener('click',e=>{e.stopPropagation();dg.visible=true;open(card);});tagEl.addEventListener('pointerenter',()=>record.hover=1);tagEl.addEventListener('pointerleave',()=>record.hover=0);tagEl.addEventListener('pointerleave',()=>record.hover=0);detailEl.querySelector('.card-detail').addEventListener('wheel',e=>e.stopPropagation(),{passive:true});
+    const detailEl=document.createElement('article');detailEl.className='process-card resource-detail';detailEl.innerHTML=`<div class="card-detail" style="display:block"><div class="detail-label">RESOURCE / 资源档案</div><h2>${escape(r.title)}</h2><span class="pending">${escape(r.status||'待补充')}</span><div class="resource-symbol">${['[ / ]','{ + }','[ ≡ ]'][i]}</div><p>${escape(r.description)}</p>${(r.body||[]).map(t=>`<p>${escape(t)}</p>`).join('')}<p class="source-note">领取内容确定后再接入；私密源工程不自动对外提供。</p></div>`;const dg=new T.Group();const css=surface(detailEl);css.scale.setScalar(.0125);dg.add(css);dg.position.copy(shelf.position).add(vec(g.position.x,4,4));dg.visible=false;root.add(dg);const card={group:dg,el:detailEl,css,c:r,chapter:5,width:8,base:dg.position.clone(),baseQ:dg.quaternion.clone(),isResource:true};cards.push(card);const guidePositions=[];for(let k=0;k<72;k++)if(k%9<6){for(const a of [k/72*Math.PI*2,(k+1)/72*Math.PI*2])guidePositions.push(Math.cos(a),Math.sin(a),0);}
+    const guideGeo=new T.BufferGeometry();guideGeo.setAttribute('position',new T.Float32BufferAttribute(guidePositions,3));
+    const guide=new T.LineSegments(guideGeo,new T.LineBasicMaterial({color:0xd3e8f0,transparent:true,opacity:.6,depthWrite:false}));guide.name='First click reminder / '+r.kind;root.add(guide);
+    const plate=new T.Mesh(new T.BoxGeometry(7.98,5.23,.10),frostedGlass({color:0xbacbd8,thickness:.18,roughness:.36,transmission:.9,envMapIntensity:.16}));plate.position.z=-.065;dg.add(plate);
+    const record={group:g,lid,parts,model,kind:r.kind,card,guide,tagEl,base:g.position.clone(),hover:0,visited:!!resourceSeen[r.kind],phases:resourcePhases(0)};resources.push(record);tagEl.addEventListener('click',e=>{e.stopPropagation();dg.visible=true;open(card);});tagEl.addEventListener('pointerenter',()=>record.hover=1);tagEl.addEventListener('pointerleave',()=>record.hover=0);tagEl.addEventListener('pointerleave',()=>record.hover=0);detailEl.querySelector('.card-detail').addEventListener('wheel',e=>e.stopPropagation(),{passive:true});
   });
-  const noteEl=document.createElement('div');noteEl.className='end-note';noteEl.innerHTML='从一个想法，到一次完成。<b>下一次，让你的想法先行。</b><small>回看影片 · 返回任一章节 · 留在这里看看资源</small>';const note=new CSS3DObject(noteEl);note.scale.setScalar(.014);note.rotation.x=labelTilt;note.position.set(0,1.5,-188);root.add(note);objects.push({group:note,z:-188});
+  const noteEl=document.createElement('div');noteEl.className='end-note';noteEl.innerHTML='从一个想法，到一次完成。<small>回看影片 · 返回任一章节 · 留在这里看看资源</small>';const note=new CSS3DObject(noteEl);note.scale.setScalar(.014);note.rotation.x=labelTilt;note.position.set(0,.7,-194);root.add(note);objects.push({group:note,z:-194});
+  const ending=createEnding(titleMesh);root.add(ending.root);
   const raycaster=new T.Raycaster();raycaster.params.Line.threshold=.065;const pointer=new T.Vector2();
   const industrialDark=new T.Color('#101113'),industrialSolid=new T.Color('#92969B');
   function pointerHit(e){if(focus)return false;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);const rs=raycaster.intersectObjects(resources.map(r=>r.group).filter(g=>g.visible&&g.parent.visible),true);if(rs.length){
@@ -189,6 +211,19 @@ export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},on
     const cardHits=raycaster.intersectObjects(activeCards.map(c=>c.group.children.find(o=>o.isMesh)).filter(Boolean),false);
     if(cardHits.length){const card=activeCards.find(c=>c.group===cardHits[0].object.parent);if(card)open(card);return;}
     const hits=raycaster.intersectObjects(industrials.map(r=>r.group).filter(g=>g.visible),true);if(hits.length){const record=industrials.find(r=>{let o=hits[0].object;while(o){if(o===r.group)return true;o=o.parent;}return false;});if(record){record.mode=record.mode?0:1;onSound('open');}}}
+  function clearHover(){hoveredTitle=hoveredIndustrial=hoveredResource=null;for(const i of industrials)i.hoverGoal=0;}
+  function pointerMove(e){
+    if(focus||e.target.closest('button,input,dialog,.process-card')){clearHover();return;}
+    pointer.set(e.clientX/innerWidth*2-1,1-e.clientY/innerHeight*2);raycaster.setFromCamera(pointer,camera);
+    const meshes=titles.filter(r=>r.title.visible).flatMap(r=>r.letters.map(l=>l.mesh));
+    const hit=raycaster.intersectObjects(meshes,false)[0];
+    if(hit){const record=titles.find(r=>r.letters.some(l=>l.mesh===hit.object));if(hoveredTitle!==hit.object&&!reduced)record.trigger(hit.object,animationTime);hoveredTitle=hit.object;}else hoveredTitle=null;
+    const candidates=industrials.filter(i=>i.group.visible),h=raycaster.intersectObjects(candidates.map(i=>i.group.children.find(o=>o.isMesh)),false)[0];
+    hoveredIndustrial=h?candidates.find(i=>i.group===h.object.parent):null;for(const i of industrials)i.hoverGoal=i===hoveredIndustrial?1:0;
+    const rh=raycaster.intersectObjects(resources.filter(r=>r.group.parent.visible).map(r=>r.group),true)[0];
+    hoveredResource=rh?resources.find(r=>{for(let o=rh.object;o;o=o.parent)if(o===r.group)return true;return false;}):null;
+    {const ch=raycaster.intersectObjects(cards.filter(c=>!c.isResource&&c.group.visible).map(c=>c.group.children.find(o=>o.isMesh)),false)[0];hover=ch?cards.find(c=>c.group===ch.object.parent):null;}
+  }
   // Read-only projection evidence for layout QA. No render-time collision tricks:
   // the actual fixed world transforms must leave the projected polygons clear.
   const inkBoundsCache=new WeakMap();
@@ -214,14 +249,69 @@ export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},on
     const lines=layoutLines.filter(visible).map(o=>{const a=o.geometry.attributes.position,points=[];for(let i=0;i<a.count;i++)points.push(project(vec(a.getX(i),a.getY(i),a.getZ(i)).applyMatrix4(o.matrixWorld)));return {id:o.name,points};});
     return {viewport:{width:innerWidth,height:innerHeight},records,lines};
   }
-  return {root,ribbon,cards,resources,close,open,pointerHit,syncReading,snapshotLayout,get focused(){return !!focus;},get focusMix(){return focusMix;},cameraFocus(){if(!focus)return null;const target=focus.base.clone();target.y=focus.isResource?5:6;target.z+=1;const widthPx=Math.min(innerWidth*.84,920),distance=focus.width*innerHeight/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*widthPx);const position=target.clone().add(vec(0,.25,1).normalize().multiplyScalar(distance));return {target,position,mix:smooth(focusMix)};},update({scroll,time,dt,unfold=1}){
-      uniforms.scroll.value=scroll;uniforms.unfold.value=unfold;ribbon.position.z=-scroll;rails.position.z=-scroll;grid.position.z=-scroll;root.visible=unfold>.001;
-      focusMix=clamp(focusMix+(focusGoal?1:-1)*dt/.95);if(focus&&focusMix===0&&focusGoal===0){focus.el.classList.remove('focused');if(focus.isResource)focus.group.visible=false;focus=null;document.body.classList.remove('has-focus');onFocus(false);}
-      const fm=smooth(focusMix),contentReveal=smooth((unfold-.42)/.5);for(const o of objects){const distance=Math.abs(o.z+scroll);o.group.visible=distance<51&&unfold>.43;}for(const text of layoutLabels){const meta=text.userData.typography,desired=text.userData.readableLabel.kind==='description'?16:13;text.scale.setScalar(1);text.updateMatrixWorld(true);const a=vec(0,-meta.worldHeight/2,0).applyMatrix4(text.matrixWorld).project(camera),b=vec(0,meta.worldHeight/2,0).applyMatrix4(text.matrixWorld).project(camera),pixels=Math.hypot((b.x-a.x)*innerWidth/2,(b.y-a.y)*innerHeight/2)*meta.fontPx/meta.canvasHeight;const grow=Math.min(2.4,20/meta.worldWidth,Math.max(1,desired/Math.max(.01,pixels)));text.scale.setScalar(grow);text.userData.screenFontEstimate=pixels*grow;const distance=Math.abs(text.position.z+scroll),alpha=1-smooth((distance-13)/6);text.material.opacity=alpha*(1-fm*.9);text.visible=text.visible&&alpha>.01&&!(innerWidth<700&&text.userData.readableLabel.kind==='action');}note.visible=scroll>181&&unfold>.9;note.element.style.opacity=String(smooth((scroll-181)/7));for(const card of cards){if(card.isResource&&card!==focus)continue;const layoutMix=card===focus&&innerWidth<700?fm:0,domW=T.MathUtils.lerp(640,340,layoutMix),domH=T.MathUtils.lerp(420,640,layoutMix);card.el.style.width=domW+"px";card.el.style.height=domH+"px";card.css.element.style.width=domW+"px";card.css.element.style.height=domH+"px";card.css.element.style.pointerEvents=focus&&card!==focus?"none":"auto";card.css.scale.setScalar(card.width/domW);const backing=card.group.children.find(c=>c.isMesh);if(backing)backing.scale.y=(domH/domW)/(420/640);if(card.frame)card.frame.scale.y=(domH/domW)/(420/640);if(card===focus){const cf=this.cameraFocus();card.group.position.lerpVectors(card.base,cf.target,fm);card.group.position.x+=Math.sin(fm*Math.PI)*.18;const rot=new T.Matrix4().lookAt(cf.position,cf.target,vec(0,1,0));const q=new T.Quaternion().setFromRotationMatrix(rot);card.group.quaternion.slerpQuaternions(card.baseQ,q,fm);card.el.style.opacity='1';card.group.visible=true;}else{card.hover=damp(card.hover,hover===card?1:0,7,dt);const proximity=1-clamp((Math.abs(card.base.z+scroll)-2)/22);card.group.position.copy(card.base);card.group.position.y=card.base.y+(smooth(proximity)*.12+card.hover*.16)*contentReveal;card.group.quaternion.copy(card.baseQ);card.group.updateMatrixWorld(true);const px=vec(-.5,0,0).applyMatrix4(card.group.matrixWorld).project(camera),qx=vec(.5,0,0).applyMatrix4(card.group.matrixWorld).project(camera),py=vec(0,-.5,0).applyMatrix4(card.group.matrixWorld).project(camera),qy=vec(0,.5,0).applyMatrix4(card.group.matrixWorld).project(camera),ratio=Math.hypot((qy.x-py.x)*innerWidth,(qy.y-py.y)*innerHeight)/Math.max(.0001,Math.hypot((qx.x-px.x)*innerWidth,(qx.y-px.y)*innerHeight)),nearZ=Math.max(...[-1,1].flatMap(x=>[-1,1].map(y=>vec(x*card.width/2,y*card.height/2,0).applyMatrix4(card.group.matrixWorld).applyMatrix4(camera.matrixWorldInverse).z))),nearFade=1-smooth((nearZ+2.5)/2),passedFade=1-smooth((card.base.z+scroll-7)/5),readable=nearZ < -camera.near?smooth((ratio-.76)/.05)*nearFade*passedFade:0;const nearContent=1-smooth((Math.abs(card.base.z+scroll)-13)/4);const screenScale=Math.hypot((qx.x-px.x)*innerWidth/2,(qx.y-px.y)*innerHeight/2)*card.width/640;card.el.style.setProperty('--thumb-title',Math.max(29,Math.min(innerWidth<700?100:60,14/Math.max(.08,screenScale)))+'px');card.el.style.setProperty('--thumb-meta',Math.max(20,Math.min(innerWidth<700?90:48,11.5/Math.max(.08,screenScale)))+'px');card.el.style.setProperty('--thumb-foot',Math.max(22,Math.min(innerWidth<700?95:50,12/Math.max(.08,screenScale)))+'px');card.el.dataset.screenScale=screenScale.toFixed(4);card.readable=readable*nearContent;card.group.visible=card.group.visible&&readable*nearContent>.01;card.el.style.opacity=String((1-fm*.9)*contentReveal*readable*nearContent);if(backing)backing.visible=readable*nearContent>.5;if(card.frame)card.frame.visible=readable*nearContent>.5;card.el.style.pointerEvents=focus||readable*nearContent<.5?'none':'auto';card.css.element.style.pointerEvents=card.el.style.pointerEvents;card.el.tabIndex=readable*nearContent>=.5?0:-1;}}
-      for(const r of resources){const opened=focus===r.card?fm:0;r.group.position.copy(r.base);r.group.position.z+=(r.kind==='project'?smooth(clamp(opened/.6))*2.45:opened*(r.kind==='toolbox'?2.1:1.8))+r.hover*.08;r.group.rotation.y=-opened*.12;r.model.update(opened,r.hover);}
-      for(const i of industrials){i.mix=damp(i.mix,i.mode,4.5,dt);i.bodyMaterial.color.copy(industrialDark).lerp(industrialSolid,smooth(i.mix));i.edgeMaterial.opacity=T.MathUtils.lerp(i.minor?.50:.71,.26,smooth(i.mix));i.bodyMaterial.metalness=.12+i.mix*.16;i.group.rotation.y=i.baseYaw+Math.sin(time*.16+i.z*.03)*.12+Math.sin(time*.069)*.035;i.group.rotation.z=Math.sin(time*.13+i.z)*.018;}
+  return {root,ribbon,grid,cards,resources,industrials,titles,ending,close,cancelFocus,open,pointerHit,pointerMove,clearHover,syncReading,snapshotLayout,get focused(){return !!focus;},get focusMix(){return focusMix;},cameraFocus(){if(!focus)return null;const target=focus.base.clone();target.y=focus.isResource?5:6;target.z+=1;const widthPx=Math.min(innerWidth*.84,920),distance=focus.width*innerHeight/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*widthPx);const position=target.clone().add(vec(0,.25,1).normalize().multiplyScalar(distance));return {target,position,mix:smooth(focusMix)};},update({scroll,time,dt,unfold=1}){
+      animationTime=time;
+      uniforms.scroll.value=scroll;uniforms.unfold.value=unfold;ribbon.position.z=-scroll;rails.position.z=-scroll;
+      // The side grid is fixed in the same world coordinates as the content.
+      // Both respond to the shared camera, including scrolling and mouse parallax.
+      grid.position.z=-96;root.visible=unfold>.001;
+      const resource=focus?.isResource?resources.find(r=>r.card===focus):null;
+      if(focus){focusAge=clamp(focusAge+(focusGoal?1:-1)*dt,0,resource?RESOURCE_DURATION:.95);focusMix=resource?clamp((focusAge-1.9)/.95):clamp(focusAge/.95);
+        if(resource&&focusAge>1.9&&focusGoal)backdrop.classList.add('open');
+        if(focusAge===0&&!focusGoal){focus.el.classList.remove('focused');focus.morph?.reset();if(focus.isResource)focus.group.visible=false;focus=null;focusMix=0;document.body.classList.remove('has-focus');onFocus(false);}
+      }
+      const fm=smooth(focusMix),contentReveal=smooth((unfold-.42)/.5);
+      for(const o of objects)o.group.visible=Math.abs(o.z+scroll)<51&&unfold>.43;
+      for(const text of layoutLabels){
+        const meta=text.userData.typography,desired=text.userData.readableLabel.kind==='description'?16:13;text.scale.setScalar(1);text.updateMatrixWorld(true);
+        const a=vec(0,-meta.worldHeight/2,0).applyMatrix4(text.matrixWorld).project(camera),b=vec(0,meta.worldHeight/2,0).applyMatrix4(text.matrixWorld).project(camera),pixels=Math.hypot((b.x-a.x)*innerWidth/2,(b.y-a.y)*innerHeight/2)*meta.fontPx/meta.canvasHeight;
+        const grow=Math.min(2.4,20/meta.worldWidth,Math.max(1,desired/Math.max(.01,pixels)));text.scale.setScalar(grow);text.userData.screenFontEstimate=pixels*grow;
+        const alpha=1-smooth((Math.abs(text.position.z+scroll)-13)/6);text.material.opacity=alpha*(1-fm*.9);text.visible=text.visible&&alpha>.01&&!(innerWidth<700&&text.userData.readableLabel.kind==='action');
+      }
+      note.visible=false;note.element.style.opacity=String(smooth((scroll-184)/5));ending.update(scroll,time,reduced);ending.root.visible&&=unfold>.9;
+      for(const t of titles)t.update(dt,time);
+      // Extract, open, emerge and only then move into the reading position.
+      for(const r of resources){
+        const selected=focus===r.card,p=resourcePhases(selected?focusAge:0);r.phases=p;r.tagEl.style.opacity=String(1-p.extract);r.tagEl.style.pointerEvents=focus?"none":"auto";
+        const hoverTarget=r.hover||hoveredResource===r?1:0;
+        r.group.position.copy(r.base);r.group.position.z+=p.extract*(r.kind==='book'?2.7:3.3)+hoverTarget*.04;r.group.rotation.y=-p.extract*.1;
+        r.model.update(p.open,hoverTarget);
+        r.guide.visible=!r.visited&&shelf.visible&&!focus;r.guide.position.copy(r.group.getWorldPosition(vec())).add(vec(0,r.kind==='book'?1.1:.75,0));r.guide.quaternion.copy(camera.quaternion);
+        r.guide.scale.setScalar((r.kind==='book'?1.45:1.65)*(1+.025*Math.sin(time*2.4)));r.guide.material.opacity=.30+.20*(.5+.5*Math.sin(time*2.4));
+      }
+      for(const card of cards){
+        if(card.isResource&&card!==focus)continue;
+        const layoutMix=card===focus&&innerWidth<700?fm:0,domW=T.MathUtils.lerp(640,340,layoutMix),domH=T.MathUtils.lerp(420,640,layoutMix);
+        card.el.style.width=domW+'px';card.el.style.height=domH+'px';card.css.element.style.width=domW+'px';card.css.element.style.height=domH+'px';card.css.element.style.pointerEvents=focus&&card!==focus?'none':'auto';card.css.scale.setScalar(card.width/domW);
+        const backing=card.group.children.find(c=>c.isMesh);if(backing)backing.scale.y=(domH/domW)/(420/640);if(card.frame)card.frame.scale.y=(domH/domW)/(420/640);
+        if(card===focus){
+          const cf=this.cameraFocus(),rot=new T.Matrix4().lookAt(cf.position,cf.target,vec(0,1,0)),q=new T.Quaternion().setFromRotationMatrix(rot);
+          if(card.isResource){
+            const r=resources.find(r=>r.card===card),p=r.phases,origin=r.group.localToWorld(vec(0,r.kind==='book'?1:.7,.25));
+            const emerged=origin.clone().add(vec(0,2.3,1.4));card.group.position.lerpVectors(origin,emerged,p.emerge).lerp(cf.target,fm);card.group.quaternion.copy(q);
+            card.group.scale.setScalar(T.MathUtils.lerp(.001+.55*p.emerge,1,fm));card.group.visible=focusAge>1.3;card.el.style.opacity='1';
+          }else{
+            card.group.position.lerpVectors(card.openBase,cf.target,fm);card.group.position.x+=Math.sin(fm*Math.PI)*.18;card.group.quaternion.slerpQuaternions(card.openQ,q,fm);card.el.style.opacity='1';card.group.visible=true;
+          }
+          card.morph?.update(fm);
+        }else{
+          card.hover=damp(card.hover,hover===card?1:0,9,dt);const tilt=(reduced?0:card.hover)*T.MathUtils.degToRad(7);
+          card.group.position.copy(card.base);card.group.position.y=card.base.y+Math.sin(tilt)*card.height/2+card.hover*.06;card.group.rotation.set(-Math.PI/2+tilt,0,0);card.group.updateMatrixWorld(true);card.morph?.update(0);
+          const px=vec(-.5,0,0).applyMatrix4(card.group.matrixWorld).project(camera),qx=vec(.5,0,0).applyMatrix4(card.group.matrixWorld).project(camera),py=vec(0,-.5,0).applyMatrix4(card.group.matrixWorld).project(camera),qy=vec(0,.5,0).applyMatrix4(card.group.matrixWorld).project(camera);
+          const ratio=Math.hypot((qy.x-py.x)*innerWidth,(qy.y-py.y)*innerHeight)/Math.max(.0001,Math.hypot((qx.x-px.x)*innerWidth,(qx.y-px.y)*innerHeight));
+          const nearZ=Math.max(...[-1,1].flatMap(x=>[-1,1].map(y=>vec(x*card.width/2,y*card.height/2,0).applyMatrix4(card.group.matrixWorld).applyMatrix4(camera.matrixWorldInverse).z))),nearFade=1-smooth((nearZ+2.5)/2),passedFade=1-smooth((card.base.z+scroll-7)/5);
+          const readable=nearZ<-camera.near?smooth((ratio-.28)/.12)*nearFade*passedFade:0,nearContent=1-smooth((Math.abs(card.base.z+scroll)-13)/4);
+          const screenScale=Math.hypot((qx.x-px.x)*innerWidth/2,(qx.y-px.y)*innerHeight/2)*card.width/640;
+          const fontScale=screenScale*Math.min(1,Math.max(.70,ratio));
+          card.el.style.setProperty('--thumb-title',Math.max(29,Math.min(innerWidth<700?100:60,14/Math.max(.08,fontScale)))+'px');card.el.style.setProperty('--thumb-meta',Math.max(20,Math.min(innerWidth<700?90:48,11.5/Math.max(.08,fontScale)))+'px');card.el.style.setProperty('--thumb-foot',Math.max(22,Math.min(innerWidth<700?95:50,12/Math.max(.08,fontScale)))+'px');
+          card.el.dataset.screenScale=screenScale.toFixed(4);card.readable=readable*nearContent;card.group.visible=card.group.visible&&card.readable>.01;card.el.style.opacity=String((1-fm*.9)*contentReveal*card.readable);
+          if(backing)backing.visible=card.readable>.5;if(card.frame)card.frame.visible=card.readable>.5;card.el.style.pointerEvents=focus||card.readable<.5?'none':'auto';card.css.element.style.pointerEvents=card.el.style.pointerEvents;card.el.tabIndex=card.readable>=.5?0:-1;
+        }
+      }
+      for(const i of industrials){
+        i.mix=damp(i.mix,i.mode,4.5,dt);i.hover=damp(i.hover,i.hoverGoal,8,dt);
+        i.bodyMaterial.color.copy(industrialDark).lerp(industrialSolid,smooth(i.mix));i.edgeMaterial.opacity=T.MathUtils.lerp(i.minor?.50:.71,.26,smooth(i.mix))+i.hover*.18;i.bodyMaterial.metalness=.12+i.mix*.16;
+        i.group.rotation.y=i.baseYaw+Math.sin(time*.16+i.z*.03)*.12+(reduced?0:i.hover*.24);i.group.rotation.z=reduced?0:-i.hover*.035;i.group.position.y=.25+(reduced?0:i.hover*.16);
+      }
     }};
 }
-
-
-

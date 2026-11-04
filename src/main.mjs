@@ -1,3 +1,5 @@
+import {createBgm} from './bgm.mjs';
+import {COUNTS} from './games-rules.mjs';
 import * as T from 'three';
 import {CSS3DRenderer} from 'three/addons/renderers/CSS3DRenderer.js';
 import {createOpening,OPENING_TIMING} from './opening-r08.mjs';
@@ -17,6 +19,21 @@ const $=id=>document.getElementById(id),canvas=$('world'),film=$('film'),audio=$
 const ui={phase:'loading',phaseAt:0,scroll:0,target:0,scrollVelocity:0,held:false,hold:0,muted:false,gameLock:false,focusLock:false,bubbleUntil:0,bubbleX:0,bubbleY:0,chapter:0,game:-1,stageEntryAt:0,frameTimes:[],blackAt:0,events:[],errors:[]};
 let opening,dot,dotForeground,games,space,renderer,scene,camera,css,key,keyTarget,quality,previous=performance.now()/1000,time=0,startedAt=previous,toastTimer;
 const sound=createSound(),chatPresentation=createChatPresentation();
+const bgm=createBgm({onError:toast,onChange:s=>{
+  for(const id of ['bgm-toggle','bgm-enabled']){$(id).setAttribute('aria-pressed',String(s.enabled));$(id).setAttribute('aria-label',s.enabled?'关闭背景音乐':'开启背景音乐');}
+  $('bgm-toggle').textContent=s.enabled?'BGM / 开':'BGM / 关';$('bgm-enabled').textContent=s.enabled?'已开启':'已关闭';
+  $('bgm-volume').value=Math.round(s.volume*100);$('bgm-value').value=Math.round(s.volume*100)+'%';
+  $('bgm-status').textContent=s.error?'音乐暂未载入':!s.enabled?'背景音乐已关闭 · 影片与互动音效不受影响':s.finished?'本次创作已通关 · 音乐已收尾':s.complete?'已通关 · 音乐将在乐句出口自然收尾':s.active&&!s.ready?'背景音乐正在载入':s.active?'Tank B · 通关前持续循环':'进入卷轴后播放 · 通关前持续循环';
+}});
+const scrollPointer={x:0,y:0,dx:0,dy:0};
+window.addEventListener('pointerdown',()=>bgm.unlock(),{capture:true});
+window.addEventListener('keydown',()=>bgm.unlock(),{capture:true});
+for(const id of ['bgm-toggle','bgm-enabled'])$(id).addEventListener('click',()=>bgm.setEnabled(!bgm.snapshot().enabled));
+$('bgm-volume').addEventListener('input',e=>bgm.setVolume(Number(e.target.value)/100));
+bgm.setMasterMuted(false);
+function updateCompletion(){if(games)bgm.setComplete(COUNTS.every((n,i)=>games.getState().done[i].length===n));}
+window.addEventListener('pointermove',e=>{if(ui.phase==='scroll'&&e.pointerType!=='touch'){scrollPointer.x=e.clientX/innerWidth*2-1;scrollPointer.y=1-e.clientY/innerHeight*2;space?.pointerMove(e);}},true);
+document.addEventListener('pointerleave',()=>{scrollPointer.x=scrollPointer.y=0;space?.clearHover();});
 const transport=new PresentationTransport(film,audio,{onFilm(){setPhase('film');},onStage(){ui.stageEntryAt=time;setPhase('stage');},onTransition(){ui.stageEntryAt=time;setPhase('transition');},onDeparture(){if(ui.phase==='film'){dot?.update({time,dt:0,mode:'stage',stageTime:CONFIG.stage.end,pixelRatio:renderer.getPixelRatio()});camera.copy(dot.stageCamera,false);camera.layers.set(0);look.copy(camera.position).add(camera.getWorldDirection(vec()).multiplyScalar(10));}setPhase('departure');},onError:toast});
 const cinemaControls=createCinemaControls({transport,getPhase:()=>ui.phase});
 const seekControl=bindSeekControl($('seek'),transport,{onUserGesture:()=>sound.unlock()});
@@ -28,6 +45,7 @@ function setPhase(phase){ui.phase=phase;ui.phaseAt=time;document.body.dataset.ph
   if(scroll&&camera){camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.near=.05;camera.far=220;camera.updateProjectionMatrix();}
   display('intro-copy',intro);display('hold',intro,'flex');display('portal',['morph','chat','launch','black','film','transition'].includes(phase));display('chat',['morph','chat'].includes(phase));display('code',phase==='launch');display('film',['film','transition'].includes(phase));display('film-badge',phase==='film');display('transport',watch,'flex');display('stage-caption',phase==='stage');$('skip-film').style.visibility=watch?'visible':'hidden';$('skip-film').disabled=!watch;$('skip-film').firstChild.textContent=phase==='stage'?'进入卷轴 ':'跳过影片 ';cinemaControls.reveal();$('handoff-white').style.opacity='0';display('chapters',scroll,'flex');display('scroll-footer',scroll,'flex');display('chapter-caption',scroll);display('dot-bubble',false);display('game-controls',false);display('scroll-cue',scroll&&ui.scroll<1);
   $('masthead').style.visibility=phase==='black'?'hidden':'visible';$('blackout').style.opacity=phase==='black'?'1':'0';portal.style.opacity='1';$('portal-frame').style.opacity=phase==='film'?'0':'1';if(phase==='film'){$('film-badge').textContent=CONFIG.film.label;portal.style.boxShadow='none';}else portal.style.boxShadow='0 28px 80px #0006';
+  if(phase==='scroll'){updateCompletion();bgm.enter();}else{bgm.leave();space?.cancelFocus();}
   if(phase==='scroll'){ui.target=ui.scroll=ui.scrollVelocity=0;ui.game=-1;ui.bubbleUntil=time+7;$('dot-bubble-text').textContent='你好，我是 Dot。我们把这次创作慢慢展开。';}
   if(phase==='stage'){ui.scroll=ui.target=ui.scrollVelocity=0;}
   if(phase==='black'){ui.blackAt=performance.now();ui.events.push({event:'pure-black-start',at:ui.blackAt});}
@@ -49,7 +67,7 @@ async function init(){
   await Promise.all([document.fonts.load('400 48px Idea','想法先行组织步骤资源档案'),document.fonts.load('700 48px Idea','主体构图色彩光影材质氛围')]);
   await document.fonts.ready;await loadType();
   space=createScrollSpace({scene,camera,onFocus:v=>{ui.focusLock=v;if(v){ui.target=ui.scroll;ui.scrollVelocity=0;}},onSound:t=>sound.play(t)});
-  games=createGames({scene,camera,renderer,canvas,chapterPositions:CONFIG.chapters,onFeedback:event=>{sound.play(event.type);if(event.text)setBubble(event.text,event.type==='complete'?7:4);},onProgress:()=>{},onInteractionLock:locked=>{ui.gameLock=locked;if(locked){ui.target=ui.scroll;ui.scrollVelocity=0;}},onGuide:guide=>{if(guide.text)setBubble(guide.text,7);const target=guide.target?.isVector3?guide.target:guide.target?.getWorldPosition?.(vec());if(target)dot?.setAttention(target);}});
+  games=createGames({scene,camera,renderer,canvas,chapterPositions:CONFIG.chapters,onFeedback:event=>{sound.play(event.type);if(event.text)setBubble(event.text,event.type==='complete'?7:4);},onProgress:()=>updateCompletion(),onInteractionLock:locked=>{ui.gameLock=locked;if(locked){ui.target=ui.scroll;ui.scrollVelocity=0;}},onGuide:guide=>{if(guide.text)setBubble(guide.text,7);const target=guide.target?.isVector3?guide.target:guide.target?.getWorldPosition?.(vec());if(target)dot?.setAttention(target);}});
   $('loading-status').textContent='正在准备 Dot 的表演';[opening,dot]=await Promise.all([createOpening({canvas}),createDotStage({scene,camera,film,isPlaying:()=>transport.playing})]);dot.preparePerformance(CONFIG.stage.performanceDuration);await document.fonts.ready;
   dotForeground=createDotForeground({scene,camera,worldRenderer:renderer,root:dot.root});
   // Compile both sides of the handoff behind the loading screen. Otherwise
@@ -66,7 +84,7 @@ async function init(){
   const hostMask=camera.layers.mask;camera.layers.set(30);await dotForeground.renderer.compileAsync(scene,camera);camera.layers.mask=hostMask;
   dotForeground.setActive(true);dotForeground.renderWorld(()=>renderer.render(scene,camera));dotForeground.render();dotForeground.setActive(false);
   dot.update({mode:'hidden'});
-  window.__linggan={ui,scene,camera,renderer,quality,opening,games,dot,dotForeground,space,transport,seekControl,config:CONFIG,version:CONFIG.version,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],dot:dot.snapshot(),games:games.snapshot()})};
+  window.__linggan={ui,bgm,scrollPointer,scene,camera,renderer,quality,opening,games,dot,dotForeground,space,transport,seekControl,config:CONFIG,version:CONFIG.version,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],dot:dot.snapshot(),bgm:bgm.snapshot(),games:games.snapshot()})};
   resize();previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');$('loading').style.opacity='0';setTimeout(()=>$('loading').style.display='none',1000);requestAnimationFrame(frame);
 }
 function resize(){if(!renderer)return;quality.resize(innerWidth,innerHeight);css.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.updateProjectionMatrix();opening?.resize(innerWidth,innerHeight);const code=$('code');code.width=Math.round(Math.min(innerWidth*.86,1280)*devicePixelRatio);code.height=Math.round(code.width*9/16);}
@@ -116,7 +134,9 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
     }else{
       const chapter=Math.min(5,Math.max(0,Math.floor((ui.scroll+11)/34)));ui.chapter=chapter;const gameIndex=CONFIG.chapters.findIndex(p=>Math.abs(-p.z-ui.scroll)<7.5);if(gameIndex!==ui.game&&!ui.gameLock){ui.game=gameIndex;games.setActiveChapter(gameIndex);if(gameIndex>=0){setBubble(['转动方块，让一面清楚地停在眼前。','把六个步骤，排成一次完整的创作。','先看需求，再把合适的工具连过去。','直接点模型上不合理的地方。','三项交付就位，最后再盖章。'][gameIndex],7);}}
       if(gameIndex>=0){const gp=CONFIG.chapters[gameIndex],narrow=innerWidth<700,gameScale=narrow?1.2:scale,blend=(narrow?.95:.72)*smooth(1-clamp((Math.abs(-gp.z-ui.scroll)-2.5)/5.5));normalPos.lerp(vec((narrow?0:2.5)*gameScale,12*gameScale,gp.z+15*gameScale),blend);normalLook.lerp(vec(0,0,gp.z),blend);}
-      if(ui.scroll>178){const end=smooth((ui.scroll-178)/12);normalPos.lerp(vec(10*scale,28*scale,-145),end);normalLook.lerp(vec(0,0,-172),end);}
+      if(ui.scroll>178){const end=smooth((ui.scroll-178)/12);normalPos.lerp(innerWidth<700?vec(0,35,-141):vec(8,24,-147),end);normalLook.lerp(vec(0,0,-179),end);}
+      scrollPointer.dx=damp(scrollPointer.dx,scrollPointer.x,4,dt);scrollPointer.dy=damp(scrollPointer.dy,scrollPointer.y,4,dt);
+      const parallax=innerWidth<700?0:1;normalPos.x+=scrollPointer.dx*.8*parallax;normalPos.y+=scrollPointer.dy*.5*parallax;normalLook.x+=scrollPointer.dx*.12*parallax;normalLook.y+=scrollPointer.dy*.08*parallax;
       space.update({scroll:ui.scroll,time,dt});const cf=space.cameraFocus();if(cf){camera.position.lerpVectors(normalPos,cf.position,cf.mix);look.lerpVectors(normalLook,cf.target,cf.mix);}else{camera.position.copy(normalPos);look.copy(normalLook);}
       camera.lookAt(look);camera.updateMatrixWorld();const side=(chapter===2||chapter===4)?-1:1;companion.set(side*(innerWidth<700?5:8.7),innerWidth<700?3.8:2.7,chapter===5?Math.max(-ui.scroll+4,-176):-ui.scroll+4);fitCompanionTarget();dot.update({time,mode:'scroll',stageTime:transport.stageDuration,performanceDuration:CONFIG.stage.performanceDuration,companionTarget:companion,dt});
       for(let i=0;i<games.roots.length;i++)games.roots[i].visible=Math.abs(CONFIG.chapters[i].z+ui.scroll)<45;
@@ -131,7 +151,7 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
 }
 const hold=$('hold');hold.addEventListener('pointermove',e=>{const r=hold.getBoundingClientRect();hold.style.setProperty('--mx',(e.clientX-r.x)/r.width);hold.style.setProperty('--my',(e.clientY-r.y)/r.height);});hold.addEventListener('pointerleave',()=>{hold.style.setProperty('--mx','.5');hold.style.setProperty('--my','.5');});hold.addEventListener('pointerdown',e=>{if(ui.phase!=='intro')return;e.preventDefault();hold.setPointerCapture(e.pointerId);ui.held=true;sound.unlock();});hold.addEventListener('pointerup',()=>ui.held=false);hold.addEventListener('pointercancel',()=>ui.held=false);hold.addEventListener('keydown',e=>{if([' ','Enter'].includes(e.key)&&ui.phase==='intro'){e.preventDefault();ui.held=true;sound.unlock();}});hold.addEventListener('keyup',e=>{if([' ','Enter'].includes(e.key)){e.preventDefault();ui.held=false;}});window.addEventListener('blur',()=>ui.held=false);
 $('send').addEventListener('click',()=>{if(ui.phase!=='chat')return;sound.unlock();sound.play('correct');transport.unlock();setPhase('launch');});
-$('sound').addEventListener('click',()=>{sound.unlock();ui.muted=!ui.muted;transport.setMuted(ui.muted);sound.setMuted(ui.muted);$('sound').textContent=ui.muted?'声 / 关':'声 / 开';$('sound').setAttribute('aria-label',ui.muted?'打开声音':'关闭声音');});
+$('sound').addEventListener('click',()=>{sound.unlock();ui.muted=!ui.muted;transport.setMuted(ui.muted);sound.setMuted(ui.muted);bgm.setMasterMuted(ui.muted);$('sound').textContent=ui.muted?'声 / 关':'声 / 开';$('sound').setAttribute('aria-label',ui.muted?'打开声音':'关闭声音');});
 $('play-pause').addEventListener('click',()=>{sound.unlock();transport.toggle();});$('skip-film').addEventListener('click',()=>{sound.unlock();transport.skipFilm();});
 function scrollInput(delta){if(ui.phase!=='scroll'||ui.gameLock||ui.focusLock||$('settings').open)return;ui.target=clamp(ui.target+delta,0,CONFIG.scroll.max);}
 window.addEventListener('wheel',e=>{if(e.target.closest('.card-detail,dialog'))return;e.preventDefault();scrollInput(e.deltaY*(e.deltaMode===1?15:1)*CONFIG.scroll.speed);},{passive:false});

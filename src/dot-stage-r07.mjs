@@ -12,8 +12,6 @@ export async function createDotStage({scene,camera,film=document.querySelector('
   const body=rig.native.body,bodyCentre=body.geometry.boundingBox.getCenter(V()),actorWorldPos=V(),position=V(),velocity=V(),target=V(),offset=V();
   const view=V(),right=V(),up=V(),ndc=V(),ray=new T.Raycaster(),mouse=new T.Vector2(),eyeBase=rig.model.eyeAdapter.frontTargets.map(v=>[...v]);
   const attention=V(),gaze=new T.Vector2();let attentionUntil=0,pointer=null,hovering=false;
-  const contactMaterial=new T.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{opacity:{value:.16}},vertexShader:'varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 v;uniform float opacity;void main(){vec2 p=(v-.5)*2.;gl_FragColor=vec4(.006,.01,.018,exp(-dot(p,p)*4.5)*(1.-smoothstep(.7,1.,length(p)))*opacity);}'});
-  const contact=new T.Mesh(new T.PlaneGeometry(2.2,1.9),contactMaterial);contact.rotation.x=-Math.PI/2;scene.add(contact);
   const guidance=new T.Group();guidance.visible=false;scene.add(guidance);
   const interact=document.createElement('button');interact.id='dot-interact';interact.setAttribute('aria-label','与 Dot 互动，触发一个小动作');interact.title='和 Dot 打个招呼';
   Object.assign(interact.style,{position:'fixed',width:'76px',height:'76px',background:'transparent',border:'0',zIndex:'14',pointerEvents:'none',display:'none'});document.body.append(interact);interact.onclick=()=>actions.trigger('click');
@@ -28,10 +26,10 @@ export async function createDotStage({scene,camera,film=document.querySelector('
   function spring(dt){const w=6.4,decay=Math.exp(-w*dt);for(const k of ['x','y','z']){const x=position[k]-target[k],v=velocity[k],c=v+w*x;position[k]=target[k]+(x+c*dt)*decay;velocity[k]=(v-w*c*dt)*decay;}}
   function update({time=0,dt=1/60,mode:next='hidden',stageTime:st=0,departureProgress=0,companionTarget=V(8,3,4),pixelRatio=1.5}={}){
     lastTime=time;stageTime=st;dt=Math.min(.05,Math.max(0,dt));
-    if(next==='hidden'){root.visible=false;contact.visible=false;source.hide();interact.style.display='none';mode=next;return;}
+    if(next==='hidden'){root.visible=false;source.hide();interact.style.display='none';mode=next;return;}
     root.visible=true;
     if(next==='stage'){
-      source.update(st,{ratio:pixelRatio});centre();contact.visible=false;interact.style.display='none';depart=null;mode=next;return;
+      source.update(st,{ratio:pixelRatio});centre();interact.style.display='none';depart=null;mode=next;return;
     }
     if(next==='departure'){
       const p=sat(departureProgress),e=ease(p);
@@ -47,7 +45,7 @@ export async function createDotStage({scene,camera,film=document.querySelector('
       const sampled=actions.sample(time),frame=sampled.frame;
       if(depart.frame&&p<.7){const mix=ease(p/.7);for(const k of Object.keys(frame.p))if(typeof frame.p[k]==='number'&&typeof depart.frame.p[k]==='number')frame.p[k]=T.MathUtils.lerp(depart.frame.p[k],frame.p[k],mix);frame.bodyRoll=T.MathUtils.lerp(Math.atan2(Math.sin(depart.frame.bodyRoll||0),Math.cos(depart.frame.bodyRoll||0)),frame.bodyRoll,mix);}
       pose(frame,position,T.MathUtils.lerp(oldScale,nativeScale*.55,e));
-      source.advanceBackground?.(p*1.35);source.render(1-ease(p/.96));contact.visible=false;
+      source.advanceBackground?.(p*1.35);source.render(1-ease(p/.96));
       if(p>=1){source.hide();position.copy(actorWorldPos);actions.trigger('ambient','greet');}
     }else{
       if(mode!=='scroll'){toHost();source.hide();position.copy(mode==='departure'?actorWorldPos:companionTarget);sideStart=sideEnd=position.x;sideAt=time;previousTargetZ=null;if(mode!=='departure')actions.reset(time);}
@@ -64,8 +62,7 @@ export async function createDotStage({scene,camera,film=document.querySelector('
       else if(time<attentionUntil){view.copy(attention).project(camera);ndc.copy(desired).project(camera);gazeTarget.set(T.MathUtils.clamp(view.x-ndc.x,-1,1),T.MathUtils.clamp(view.y-ndc.y,-.6,.6));}
       gaze.lerp(gazeTarget,1-Math.exp(-dt*8));
       for(let i=0;i<eyeBase.length;i++){rig.model.eyeAdapter.frontTargets[i][0]=eyeBase[i][0]+gaze.x*.05*rig.model.actionUnit;rig.model.eyeAdapter.frontTargets[i][1]=eyeBase[i][1]+gaze.y*.035*rig.model.actionUnit;}
-      pose(sampled.frame,desired,nativeScale*.55);contact.visible=true;contact.position.set(actorWorldPos.x,.035,actorWorldPos.z);
-      contactMaterial.uniforms.opacity.value=.19*Math.exp(-Math.max(0,actorWorldPos.y-1.4)*.3);
+      pose(sampled.frame,desired,nativeScale*.55);
       ndc.copy(actorWorldPos).project(camera);interact.style.display='block';interact.style.left=((ndc.x+1)*innerWidth/2-38)+'px';interact.style.top=((1-ndc.y)*innerHeight/2-38)+'px';
     }
     mode=next;

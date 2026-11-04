@@ -1,0 +1,203 @@
+{
+  "version": "interactive-suite-1",
+  "structure": "intro once -> varied middle loop indefinitely -> B bass+drums outro once when win is queued",
+  "source": "selected full HTDemucs-FT bass+drums mix only; no full-band original music added",
+  "source_frames": 4296009,
+  "sample_rate": 48000,
+  "bits_per_sample": 24,
+  "channels": 2,
+  "source_split_frames": [
+    0,
+    778108,
+    3397055,
+    4296009
+  ],
+  "source_split_seconds": [
+    0,
+    16.210583333333332,
+    70.77197916666667,
+    89.5001875
+  ],
+  "intro": {
+    "wav": "01-Tank-B-开头-48k24bit.wav",
+    "flac": "01-Tank-B-开头-48k24bit.flac",
+    "frames": 778108,
+    "duration_seconds": 16.210583333333332,
+    "wav_bytes": 4668750,
+    "flac_bytes": 2995762,
+    "sample_peak_dbfs": -2.3006539344787598,
+    "true_peak_4x_dbtp": -2.2539216992557782,
+    "wav_sha256": "3bb5de6b949bc0bea66d7c4c8a8f063bf53523893630922e730c90baa8ac8e1a",
+    "flac_decoded_pcm_equal": true
+  },
+  "loop": {
+    "wav": "02-Tank-B-变化循环中段-48k24bit.wav",
+    "flac": "02-Tank-B-变化循环中段-48k24bit.flac",
+    "frames": 2618947,
+    "duration_seconds": 54.561395833333336,
+    "wav_bytes": 15713784,
+    "flac_bytes": 10551472,
+    "sample_peak_dbfs": -2.4729630947113037,
+    "true_peak_4x_dbtp": -2.4674354543762185,
+    "wav_sha256": "939d24c8cf9711b2b8f7725793ff66754bf193aa5cc5ca65fe4bc650e52b40a4",
+    "flac_decoded_pcm_equal": true
+  },
+  "outro": {
+    "wav": "03-Tank-B-通关结尾-48k24bit.wav",
+    "flac": "03-Tank-B-通关结尾-48k24bit.flac",
+    "frames": 898954,
+    "duration_seconds": 18.728208333333335,
+    "wav_bytes": 5393826,
+    "flac_bytes": 3353700,
+    "sample_peak_dbfs": -2.089005470275879,
+    "true_peak_4x_dbtp": -1.975846666650314,
+    "wav_sha256": "8f84caba856843289fd3d22a3baf54e32d56962df5b72ac544ed301966a0f110",
+    "flac_decoded_pcm_equal": true
+  },
+  "estimated_beats_per_loop": 128,
+  "estimated_bpm": 140.7588622450168,
+  "tempo_status": "algorithmic estimates; meter, bar labels and musical exit naturalness are not listening-verified",
+  "loop_range_frames_inclusive_exclusive": [
+    0,
+    2618947
+  ],
+  "seam_blend_frames": 1200,
+  "seam_blend_description": "25ms raised-cosine loop-tail blend into pre-loop source context; matching outro-head blend. Sample counts retained; no fade gap or repeat-time shortening.",
+  "loop_wrap_sample_jump": 0.00018227100372314453,
+  "intro_to_loop_sample_jump": 0.00018227100372314453,
+  "loop_to_outro_sample_jump_without_player_crossfade": 0.00018227100372314453,
+  "estimated_phrase_exit_gates": [
+    {
+      "frame": 327368,
+      "seconds": 6.820166666666666,
+      "estimated_beat_number": 16,
+      "offset_from_even_grid_ms": -0.0078125,
+      "source_boundary_seconds": 23.03075
+    },
+    {
+      "frame": 654737,
+      "seconds": 13.640354166666667,
+      "estimated_beat_number": 32,
+      "offset_from_even_grid_ms": 0.005208333333333333,
+      "source_boundary_seconds": 29.8509375
+    },
+    {
+      "frame": 980896,
+      "seconds": 20.435333333333332,
+      "estimated_beat_number": 48,
+      "offset_from_even_grid_ms": -25.190104166666668,
+      "source_boundary_seconds": 36.645916666666665
+    },
+    {
+      "frame": 1305790,
+      "seconds": 27.203958333333333,
+      "estimated_beat_number": 64,
+      "offset_from_even_grid_ms": -76.73958333333333,
+      "source_boundary_seconds": 43.414541666666665
+    },
+    {
+      "frame": 1637371,
+      "seconds": 34.111895833333335,
+      "estimated_beat_number": 80,
+      "offset_from_even_grid_ms": 11.0234375,
+      "source_boundary_seconds": 50.32247916666667
+    },
+    {
+      "frame": 1965051,
+      "seconds": 40.9385625,
+      "estimated_beat_number": 96,
+      "offset_from_even_grid_ms": 17.515625,
+      "source_boundary_seconds": 57.149145833333336
+    },
+    {
+      "frame": 2291579,
+      "seconds": 47.74122916666666,
+      "estimated_beat_number": 112,
+      "offset_from_even_grid_ms": 0.0078125,
+      "source_boundary_seconds": 63.9518125
+    },
+    {
+      "frame": 2618947,
+      "seconds": 54.561395833333336,
+      "estimated_beat_number": 128,
+      "offset_from_even_grid_ms": 0,
+      "source_boundary_seconds": 70.77197916666667
+    }
+  ],
+  "maximum_wait_in_loop_seconds": 6.9079375,
+  "outro_crossfade_frames": 5760,
+  "outro_crossfade_seconds": 0.12,
+  "exit_transition_checks": [
+    {
+      "exit_frame": 327368,
+      "transition_true_peak_4x_dbtp": -5.536167398582927,
+      "start_boundary_sample_jump": 0.014305830001831055,
+      "end_boundary_sample_jump": 0.03334975242614746,
+      "finite": true
+    },
+    {
+      "exit_frame": 654737,
+      "transition_true_peak_4x_dbtp": -3.5937347822997583,
+      "start_boundary_sample_jump": 0.007153034210205078,
+      "end_boundary_sample_jump": 0.03334975242614746,
+      "finite": true
+    },
+    {
+      "exit_frame": 980896,
+      "transition_true_peak_4x_dbtp": -6.494285123067054,
+      "start_boundary_sample_jump": 0.0017483234405517578,
+      "end_boundary_sample_jump": 0.03334975242614746,
+      "finite": true
+    },
+    {
+      "exit_frame": 1305790,
+      "transition_true_peak_4x_dbtp": -6.900890623152353,
+      "start_boundary_sample_jump": 0.001300215721130371,
+      "end_boundary_sample_jump": 0.03334975242614746,
+      "finite": true
+    },
+    {
+      "exit_frame": 1637371,
+      "transition_true_peak_4x_dbtp": -5.030736700078293,
+      "start_boundary_sample_jump": 0.005230069160461426,
+      "end_boundary_sample_jump": 0.03334975242614746,
+      "finite": true
+    },
+    {
+      "exit_frame": 1965051,
+      "transition_true_peak_4x_dbtp": -6.403360252365699,
+      "start_boundary_sample_jump": 0.003237009048461914,
+      "end_boundary_sample_jump": 0.03334975242614746,
+      "finite": true
+    },
+    {
+      "exit_frame": 2291579,
+      "transition_true_peak_4x_dbtp": -5.079112375472432,
+      "start_boundary_sample_jump": 0.0026085376739501953,
+      "end_boundary_sample_jump": 0.03334975242614746,
+      "finite": true
+    },
+    {
+      "exit_frame": 2618947,
+      "transition_true_peak_4x_dbtp": -7.834095010291709,
+      "start_boundary_sample_jump": 0.00018227100372314453,
+      "end_boundary_sample_jump": 0.03334975242614746,
+      "finite": true
+    }
+  ],
+  "preview_file": "Tank-B-开头_循环两轮_通关结尾-试听.mp3",
+  "preview_duration_seconds": 144.06158333333335,
+  "preview_layout_seconds": {
+    "intro_end": 16.210583333333332,
+    "loop1_end": 70.77197916666667,
+    "loop2_end_outro_start": 125.333375,
+    "end": 144.06158333333335
+  },
+  "preview_is_lossy_convenience_only": true,
+  "player_audio_is_lossless": true,
+  "listening_qa": "No subjective listening performed. All exits need user audition; technical continuity is not proof of musical phrasing.",
+  "player_scheduling_guard_seconds": 0.08,
+  "maximum_scheduled_wait_in_loop_seconds_bound": 6.9879375,
+  "exhaustive_1ms_phase_sweep_max_wait_seconds": 6.987895833333333,
+  "player_validation": "Static check and actual JavaScript scheduler tested with mocked Web Audio/DOM, all 8 exit paths pass. Real browser execution blocked by environment; no listening claim."
+}

@@ -31,7 +31,6 @@ export function createProductCarousel({root,camera,box,label,line,materials,onRe
   let disposed=false,index=0,angle=0,targetAngle=0,turn=null,repair=null,done=[],active=false;
   for(let k=0;k<4;k++){
     const a=k*Math.PI/2,g=new T.Group();g.position.set(Math.sin(a)*2.45,.22,Math.cos(a)*2.45);g.rotation.y=a;platter.add(g);mounts.push(g);
-    const pad=box(3.0,.05,2.25,materials.dark,[0,0,0],g);pad.name=PRODUCT_IDS[k]+' / 独立检测定位面';
     const ll=label(g,'模型载入中',[0,.2,0],2.4,.35,{surface:true,color:'#a8bdd5'});loadingLabels.push(ll);
     identityLabels.push(label(g,PRODUCT_IDS[k],[0,.10,1.65],2.4,.46,{surface:true,color:'#b9d0e9'}));
     loads.push(loadProduct(k,g));
