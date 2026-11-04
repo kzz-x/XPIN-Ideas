@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#081641"><title>灵感先行 · 一次创作的展开</title>
+  <meta name="description" content="从一个想法到可以继续创作的成果。与 Dot 一起展开这条互动长卷。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23081641'/%3E%3Ctext x='32' y='45' text-anchor='middle' fill='white' font-size='43' font-family='monospace'%3Ei%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="./styles.css">
+  <script type="importmap">{"imports":{"three":"./assets/dot/model/frozen/r07d/editable-stage/素材/v011/DotSharedWeb/vendor/three.module.js","three/addons/":"./assets/vendor/addons/"}}</script>
+</head>
+<body data-phase="loading">
+  <canvas id="world" aria-label="灵感先行三维创作长卷"></canvas><div id="spatial"></div>
+  <header id="masthead"><a class="brand" href="#" aria-label="回到开场"><span class="brand-mark">[ i ]</span> 灵感先行 <span class="brand-en">IDEA FIRST</span></a><div class="header-actions"><button id="sound" aria-label="关闭声音" title="声音">声 / 开</button><button id="settings-button" aria-label="打开制作设置" title="制作设置">设置</button></div></header>
+  <div id="loading"><span class="loading-symbol">[ / ]</span><p>让想法，有了形状。</p><small id="loading-status">正在准备空间与角色</small></div>
+  <div id="intro-copy"><p class="eyebrow">A CREATIVE JOURNEY · 一次创作的展开</p><p class="intro-caption">先有想法，再让工具接住它。</p></div>
+  <button id="hold" aria-label="按住一秒开始，键盘可长按空格或回车"><svg viewBox="0 0 320 64" aria-hidden="true"><rect x="1" y="1" width="318" height="62" pathLength="1"/></svg><span class="ascii-l">[ /</span><span>按住，开始</span><small>约 1 秒</small><span class="ascii-r">→ ]</span></button>
+  <div id="opening-foot"><span>线条 / 体积 / 字符</span><span>移动光标，看看字的另一面</span></div>
+  <section id="portal" aria-label="创作窗口"><div id="portal-frame"></div><div id="chat"><div class="chat-top"><span class="tiny-mark">[ i ]</span><span>从一句想法开始</span><span class="chat-code">01 / CREATE</span></div><div class="chat-empty"><span>把脑海里的画面，<br>说出来。</span><p>让想法先走一步。</p></div><div class="input-line"><span id="prompt">帮我做一个炫酷的视频<span class="caret">│</span></span><button id="send" aria-label="发送：帮我做一个炫酷的视频">↗</button></div><div class="send-cue">点击发送 <span>↗</span></div></div><canvas id="code"></canvas><video id="film" preload="auto" playsinline></video><span id="film-badge">预览片 · 片尾待更新</span></section>
+  <div id="blackout" aria-hidden="true"></div>
+  <div id="transport"><button id="play-pause" aria-label="暂停影片">Ⅱ</button><span id="timecode">00:00 / 00:00</span><input id="seek" type="range" min="0" max="1" step="0.01" value="0" aria-label="影片与舞台播放进度"><span id="transport-label">影片</span></div>
+  <div id="stage-caption"><span>DOT / ENCORE</span><p>让最后一个音符，慢慢散开。</p><small>舞台接续预演 · 最终片尾待替换</small></div>
+  <nav id="chapters" aria-label="章节导航"><button data-chapter="0"><b>01</b><span>看清想法</span></button><button data-chapter="1"><b>02</b><span>组织步骤</span></button><button data-chapter="2"><b>03</b><span>选择工具</span></button><button data-chapter="3"><b>04</b><span>发现问题</span></button><button data-chapter="4"><b>05</b><span>完成交付</span></button><button data-chapter="5"><b>06</b><span>资源档案</span></button></nav>
+  <div id="scroll-cue"><span>接下来，看看它是怎样做出来的。</span><small>向下滚动，展开创作　↓</small></div>
+  <div id="chapter-caption"><span id="chapter-kicker">01 / OBSERVE</span><h1 id="chapter-title">看清想法</h1><p id="chapter-description">把模糊的感觉，变成可观察的关系。</p></div>
+  <div id="game-controls"><span id="game-instruction"></span><button id="game-help">Dot，示范一步 ↗</button><button id="game-reset">重试本关</button></div>
+  <button id="dot-bubble" aria-label="Dot 的当前提示"><span id="dot-bubble-text">一起往下看看。</span><span class="bubble-arrow">↙</span></button>
+  <div id="focus-backdrop"></div><button id="close-focus" aria-label="收起当前内容">收起　×</button>
+  <footer id="scroll-footer"><button id="replay">↶ 回看影片</button><span id="position-label">01 / 06</span><span id="scroll-progress"><i></i></span><button id="back-start">回到开场 ↑</button></footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <dialog id="settings"><form method="dialog"><button class="dialog-close" aria-label="关闭设置">×</button></form><span class="eyebrow">制作设置</span><h2>内容可以继续生长。</h2><p>当前使用 11 月 3 日的旧剪辑，结尾仍含制作说明。最新影片到位后，需要重新核对声音、白场和舞台接点。</p><label class="file-input">选择本机影片（本次会话预览）<input id="film-file" type="file" accept="video/*"></label><p id="film-status" class="small">旧剪辑 · 片尾待替换</p><label>画面质量<select id="quality"><option value="balanced">均衡</option><option value="high">精细</option><option value="low">轻量</option></select></label><div class="settings-actions"><button id="preview-scroll">直接检查卷轴</button><button id="preview-stage">检查舞台预演</button></div><p class="small">五关进度保存在此浏览器。资源领取内容尚待补充；原始私密工程未放入资源架。</p><details><summary>素材与鸣谢</summary><p>角色：认可 Dot D02。过程图来自提供的 92 项创作档案。四产品为教学模型，局部调整用于说明观察方法。Three.js（MIT）；IdeaSans / Noto 字体（OFL）。</p><p><a href="https://www.shopify.com/editions/fall2026" target="_blank" rel="noreferrer">空间研究参考：Shopify Editions Fall 2026 ↗</a></p></details></dialog>
+  <audio id="stage-audio" preload="auto" src="./assets/media/stage-placeholder.m4a"></audio>
+  <script type="module" src="./src/main.mjs"></script>
+</body>
+</html>

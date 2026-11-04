@@ -1,0 +1,59 @@
+{
+  "candidate": "D 六瓣轮廓与正侧眼睛 r02",
+  "notFinal": true,
+  "base": "historically accepted smooth six-petal body + A materials/hat/open eyes/trumpet + independent front closed eyelids",
+  "expectedABodyHash": "9f72da2685fab43a42a317a9213213cf12daab8b3221d5e0c1a02bd237d921dd",
+  "expectedAMorphMeshes": 24,
+  "CBodyHeight": 2.0130610494420127,
+  "CBodyCentre": [
+    -0.0003685588412943863,
+    -0.0026224324202629434,
+    0.14499998092651367
+  ],
+  "CNeutralEyeAnchors": [
+    [
+      -0.210386456987,
+      0.313630203442
+    ],
+    [
+      0.210386456987,
+      0.313630203442
+    ]
+  ],
+  "musicEnd": 14.809,
+  "eyeFrontStart": 14.859,
+  "eyeFrontEnd": 16.359,
+  "responseStart": 16.709,
+  "responseDuration": 2.15,
+  "sequenceEnd": 20.5,
+  "eyeGeometry": "A original SphereGeometry and original curved closed lids; no C eye/body mesh",
+  "shadowScope": "all 26 trumpet meshes castShadow false only; all other shadow flags retained",
+  "CResponseFunctionSha256": "9a9cf801e3ba1f9ec7098a4f7bf93a07dfd2fcf2abbb5c92b5b89e489e40921d",
+  "priorSelectDeliverables": [
+    {
+      "path": "D:\\codex任务打包\\Dot_ModelCompare_SELECT_r01_20261031\\Dot模型与姿态对比_SELECT_r01_单文件CPU候选.html",
+      "name": "Dot模型与姿态对比_SELECT_r01_单文件CPU候选.html",
+      "bytes": 10415693,
+      "sha256": "29719e264b0cd5af4b3d7f595fbdbe1b838aff9f7f99c3a5119e1727869ef8de",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "D:\\codex任务打包\\Dot_ModelCompare_SELECT_r01_20261031\\Dot模型对比_SELECT_r01_完整可编辑源码与CPU证据.zip",
+      "name": "Dot模型对比_SELECT_r01_完整可编辑源码与CPU证据.zip",
+      "bytes": 7420829,
+      "sha256": "9325e78b2940223b008c9523fb9c6b8f18a5a69b098e195a38e381b2b2c4588e",
+      "mime_type": "application/zip"
+    },
+    {
+      "path": "D:\\codex任务打包\\Dot_ModelCompare_SELECT_r01_20261031\\Dot模型对比_SELECT_r01_说明.md",
+      "name": "Dot模型对比_SELECT_r01_说明.md",
+      "bytes": 6532,
+      "sha256": "21cf8e21f44bd1ffa8710c20cb44955877572c50ae6549d49c37c7403e66f57f",
+      "mime_type": "text/markdown"
+    }
+  ],
+  "eyePerformanceAnchorInset": 0.94,
+  "eyePhysicalGeometryAndMaterial": "A open eyeballs/material; newly separated side/front closed profiles",
+  "expectedApprovedRawHash": "a6822dec04141bd86623c00348d727073ec21ef9d1db39efe5925cf8e65f6ac0",
+  "r01Root": "D:\\codex任务打包\\Dot_D_A建模_C动作_融合候选_r01_20261031"
+}

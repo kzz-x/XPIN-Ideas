@@ -1,0 +1,140 @@
+{
+  "status": "compressed-preview-of-old-placeholder-awaiting-replacement",
+  "label": "旧片网页压缩副本 · 等待最新影片替换",
+  "src": "./assets/media/film-preview.mp4",
+  "source": {
+    "filename": "film-placeholder.mp4",
+    "original_filename": "20261103-正式剪辑.mp4",
+    "sha256": "eb2fe502f76f7ab8a05f42e40bdc743a091130cbf2c7aa364c329c23e374ff3a",
+    "bytes": 199146103,
+    "preserved_unchanged": true
+  },
+  "derivative": {
+    "filename": "film-preview.mp4",
+    "sha256": "1561d8fb1d29b3683f855b8e141304be03fc968ce3d8f552649d6cab8b842d90",
+    "bytes": 20435969,
+    "mib": 19.4893,
+    "duration_seconds": 51.983333,
+    "video_frames": 3119,
+    "first_video_pts_seconds": 0.0,
+    "last_video_pts_seconds": 51.966667
+  },
+  "encoding": {
+    "video_codec": "libx264",
+    "preset": "veryfast",
+    "crf": 26,
+    "scale": "1280:720:flags=lanczos",
+    "fps_mode": "passthrough",
+    "source_fps": 60,
+    "pixel_format": "yuv420p",
+    "audio_codec": "aac",
+    "audio_bitrate_target": "128k",
+    "faststart": true,
+    "trim": false,
+    "reorder": false
+  },
+  "checks": {
+    "source_bytes_unchanged": true,
+    "source_sha256_unchanged": true,
+    "under_24_mib": true,
+    "dimensions_1280x720": true,
+    "video_h264": true,
+    "frame_rate_60": true,
+    "audio_aac_stereo": true,
+    "all_video_frame_timestamps_equal": true,
+    "video_frame_count_equal": true,
+    "first_video_timestamp_equal": true,
+    "last_video_timestamp_equal": true,
+    "container_duration_equal": true,
+    "faststart_moov_before_mdat": true
+  },
+  "pass": true,
+  "source_probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "sample_rate": "48000",
+        "channels": 2,
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "start_time": "0.000000",
+        "duration": "51.983333",
+        "bit_rate": "317270",
+        "nb_frames": "2438",
+        "nb_read_frames": "2437"
+      },
+      {
+        "index": 1,
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "pix_fmt": "yuv420p",
+        "r_frame_rate": "60/1",
+        "avg_frame_rate": "60/1",
+        "start_time": "0.000000",
+        "duration": "51.983333",
+        "bit_rate": "30312106",
+        "nb_frames": "3119",
+        "nb_read_frames": "3119"
+      }
+    ],
+    "format": {
+      "start_time": "0.000000",
+      "duration": "51.983333",
+      "size": "199146103"
+    }
+  },
+  "preview_probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720,
+        "pix_fmt": "yuv420p",
+        "r_frame_rate": "60/1",
+        "avg_frame_rate": "60/1",
+        "start_time": "0.000000",
+        "duration": "51.983333",
+        "bit_rate": "3011459",
+        "nb_frames": "3119",
+        "nb_read_frames": "3119"
+      },
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "sample_rate": "48000",
+        "channels": 2,
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "start_time": "0.000000",
+        "duration": "51.983333",
+        "bit_rate": "120962",
+        "nb_frames": "2438",
+        "nb_read_frames": "2437"
+      }
+    ],
+    "format": {
+      "start_time": "0.000000",
+      "duration": "51.983333",
+      "size": "20435969"
+    }
+  },
+  "final_film_verified": false,
+  "notes": [
+    "本文件为用户已提供旧剪辑的低体积网页预览副本，不是最终影片。",
+    "未截断、未重排；全部3119个视频帧的时间戳与原件逐一相同。",
+    "旧片结尾的制作说明卡完整保留，不能据此宣布最终FPV白屏舞台接续完成。",
+    "只为部署剔除大体积原件；用户原始ZIP和本地原影片均保留不变。",
+    "更新网站config由宿主负责，本脚本不改配置。"
+  ]
+}
