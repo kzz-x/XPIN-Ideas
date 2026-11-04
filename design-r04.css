@@ -1,0 +1,10 @@
+/* World-space chapter captions already carry this text. Keep the duplicate
+   semantic heading available to assistive technology without overlaying it. */
+#chapter-caption{position:fixed;left:0;top:0;width:1px;height:1px;max-width:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;pointer-events:none}
+
+/* A control rail is an explicit foreground surface; captions do not mix with
+   the moving scene beneath it. */
+#game-controls{padding:10px 14px;background:#08111eed;border:1px solid #b9cce240;backdrop-filter:blur(5px);gap:14px}
+#game-instruction{line-height:1.5}
+#scroll-footer{padding:0 14px;background:#0b1019;border:1px solid #b9cce22b;min-height:34px}
+@media(max-width:700px){#game-controls{width:calc(100vw - 44px);padding:9px 12px;gap:7px;bottom:63px}#game-controls button{min-height:38px}}

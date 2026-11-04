@@ -55,15 +55,15 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
   const footprint = box(3.25,.05,3.25,materials.dark,[-2.35,.04,0],root);
   footprint.name='观察定位面 / 直接位于卷面';
   line([[-3.98,.075,-1.63],[-.72,.075,-1.63],[-.72,.075,1.63],[-3.98,.075,1.63],[-3.98,.075,-1.63]],materials.line,root);
-  label(root,'拖动观察 · 清晰停留后自动收词',[-2.35,.09,2.45],4.2,.38,{surface:true,color:'#c4ddff'});
+  label(root,'拖动观察 · 清晰停留后自动收词',[0,.10,3.65],8.0,.50,{surface:true,color:'#c4ddff',font:70});
   const trays=[],collected=[];
   for(let i=0;i<6;i++){
     const pos=V(1.12+(i%2)*2.2,.16,-1.65+Math.floor(i/2)*1.7);
     const tray=box(1.95,.14,1.20,materials.dark,pos.toArray(),root);
     line([[-.96,.08,-.58],[.96,.08,-.58],[.96,.08,.58],[-.96,.08,.58],[-.96,.08,-.58]],materials.line,tray);
-    label(tray,String(i+1).padStart(2,'0'),[-.72,.10,-.35],.30,.22,{surface:true,color:'#7d9bc3'});
+    label(tray,String(i+1).padStart(2,'0'),[-.80,.10,-.35],.25,.22,{surface:true,color:'#7d9bc3'});
     const solid = new T.Mesh(wordGeometry(WORDS[i]),[materials.white,materials.side]);
-    solid.name='Collected solid word '+WORDS[i];solid.scale.setScalar(.72);solid.rotation.x=-Math.PI/2;solid.position.copy(pos).add(V(0,.16,.06));solid.visible=false;root.add(solid);
+    solid.name='Collected solid word '+WORDS[i];solid.scale.setScalar(.72);solid.rotation.x=-.70;solid.position.copy(pos).add(V(0,.40,.06));solid.visible=false;root.add(solid);
     trays.push({root:tray,pos});collected.push(solid);
   }
   const velocity=new T.Vector2(),goal=new T.Quaternion();
@@ -87,13 +87,13 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
     const target=collected[index];target.visible=true;
     const start=root.worldToLocal(holder.getWorldPosition(V()));
     target.position.copy(start);target.scale.setScalar(.90);target.quaternion.copy(localCameraQuaternion());
-    flights.push({index,age:0,start,end:trays[index].pos.clone().add(V(0,.16,.06)),q0:target.quaternion.clone()});
+    flights.push({index,age:0,start,end:trays[index].pos.clone().add(V(0,.40,.06)),q0:target.quaternion.clone()});
     onCollect(index);
   }
   function setDone(values){
     done=values.slice();
     for(let i=0;i<6;i++)if(!flights.some(f=>f.index===i)){
-      collected[i].visible=done.includes(i);collected[i].position.copy(trays[i].pos).add(V(0,.16,.06));collected[i].rotation.set(-Math.PI/2,0,0);collected[i].scale.setScalar(.72);
+      collected[i].visible=done.includes(i);collected[i].position.copy(trays[i].pos).add(V(0,.40,.06));collected[i].rotation.set(-.70,0,0);collected[i].scale.setScalar(.72);
     }
   }
   function update(dt,time,isActive){
@@ -118,13 +118,13 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
       if(dwellFace!==face){dwellFace=face;dwell=0;}else dwell+=dt;
       if(dwell>=.42){collect(face);dwell=0;}
     }else{dwell=0;dwellFace=-1;}
-    const endQ=new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2,0,0));
+    const endQ=new T.Quaternion().setFromEuler(new T.Euler(-.70,0,0));
     for(let j=flights.length-1;j>=0;j--){const f=flights[j],u=Math.min(1,(f.age+=dt)/1.25),s=ease(u),o=collected[f.index];o.position.lerpVectors(f.start,f.end,s);o.position.y+=Math.sin(Math.PI*s)*1.05;o.quaternion.slerpQuaternions(f.q0,endQ,s);o.scale.setScalar(T.MathUtils.lerp(.90,.72,s));if(u===1)flights.splice(j,1);}
   }
   return {root:holder,cube,glass,turn,release,showFace,setDone,update,
     hit(ray){return ray.intersectObject(glass,false).length>0;},
     helpTarget(index){return {object:holder,face:index};},
-    snapshot(){return {face,clarity:alpha,dwell,held,done:[...done],glyphs:glyphs.map(g=>({name:g.name,vertices:g.geometry.attributes.position.count})),flights:flights.length};},
+    snapshot(){return {face,clarity:alpha,dwell,held,done:[...done],glyphs:glyphs.map(g=>({name:g.name,vertices:g.geometry.attributes.position.count,scale:g.scale.toArray()})),collected:collected.map(g=>({name:g.name,visible:g.visible,scale:g.scale.toArray(),rotation:g.rotation.toArray(),position:g.position.toArray()})),flights:flights.length};},
     reset(){initialized=false;velocity.set(0,0);held=false;helpTurn=false;dwell=0;flights.length=0;setDone([]);}
   };
 }

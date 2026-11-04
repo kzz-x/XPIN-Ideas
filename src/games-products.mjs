@@ -25,21 +25,21 @@ export function createProductCarousel({root,camera,box,label,line,materials,onRe
   const axis=new T.Mesh(new T.CylinderGeometry(.7,.7,.32,48),materials.dark);axis.position.y=.24;platter.add(axis);
   const axisTop=new T.Mesh(new T.CylinderGeometry(.42,.42,.04,48),materials.gold);axisTop.position.y=.42;platter.add(axisTop);
   const models=[],loads=[],errors=[],mounts=[];
-  const loadingLabels=[];
+  const loadingLabels=[],identityLabels=[];
   let disposed=false,index=0,angle=0,targetAngle=0,turn=null,repair=null,done=[],active=false;
   for(let k=0;k<4;k++){
     const a=k*Math.PI/2,g=new T.Group();g.position.set(Math.sin(a)*2.45,.22,Math.cos(a)*2.45);g.rotation.y=a;platter.add(g);mounts.push(g);
     const pad=box(3.0,.05,2.25,materials.dark,[0,0,0],g);pad.name=PRODUCT_IDS[k]+' / 独立检测定位面';
     const ll=label(g,'模型载入中',[0,.2,0],2.4,.35,{surface:true,color:'#a8bdd5'});loadingLabels.push(ll);
-    label(g,PRODUCT_IDS[k],[0,.055,1.05],2.4,.35,{surface:true,color:'#b9d0e9'});
+    identityLabels.push(label(g,PRODUCT_IDS[k],[0,.10,1.65],2.4,.35,{surface:true,color:'#b9d0e9'}));
     loads.push(loadProduct(k,g));
   }
-  label(root,'点击模型的问题位置 · 观察修正',[0,.04,5.35],6.0,.42,{surface:true,color:'#c4d3e7'});
-  label(root,'结构 / 接地 / 贴合 / 装配 · 教学示意',[0,.035,-5.20],5.8,.32,{surface:true,color:'#72849e'});
+  label(root,'点击模型的问题位置 · 观察修正',[0,.10,6.0],6.8,.50,{surface:true,color:'#c4d3e7',font:70});
+  label(root,'结构 / 接地 / 贴合 / 装配 · 教学示意',[0,.36,-5.05],5.8,.32,{surface:true,color:'#72849e'});
   const ring=new T.Mesh(new T.RingGeometry(.18,.235,48),new T.MeshBasicMaterial({color:0xffcf79,transparent:true,opacity:.9,side:T.DoubleSide,depthTest:false}));ring.renderOrder=20;ring.visible=false;root.add(ring);
   const target=new T.Mesh(new T.SphereGeometry(.38,12,8),new T.MeshBasicMaterial({visible:false}));target.name='产品问题命中区域';root.add(target);
   const guide=line([[0,0,0],[0,0,0]],materials.goldLine,root);guide.renderOrder=19;
-  const title=label(root,'',[0,.8,3.8],4,.38,{color:'#ffe0a0'});title.visible=false;
+  const title=label(root,'',[0,.8,3.8],4.8,.46,{color:'#ffe0a0',font:70});title.visible=false;
   const faultNames=['右臂部件错位','车轮没有接地','头带贴合关系','存储堆栈装配'];
   const fallbackNames=['结构接地演示','车轮没有接地','贴合接地演示','板卡接地演示'];
 
@@ -129,6 +129,7 @@ export function createProductCarousel({root,camera,box,label,line,materials,onRe
     }
     for(let k=0;k<mounts.length;k++){
       const front=Math.max(0,Math.cos(k*Math.PI/2+angle)),s=.62+.38*front;mounts[k].scale.setScalar(s);
+      identityLabels[k].visible=front>.78&&!turn;
     }
     root.updateWorldMatrix(true,true);
     const p=worldFault(),show=!!p&&active&&!done.includes(index)&&!turn&&!repair;
@@ -137,8 +138,9 @@ export function createProductCarousel({root,camera,box,label,line,materials,onRe
       root.worldToLocal(p);ring.position.copy(p);target.position.copy(p);
       ring.quaternion.copy(root.getWorldQuaternion(new T.Quaternion()).invert()).multiply(camera.quaternion);
       const pulse=1+Math.sin(time*2.2)*.065;ring.scale.setScalar(pulse);
-      const a=guide.geometry.attributes.position;a.setXYZ(0,p.x,p.y,p.z);a.setXYZ(1,p.x+1.0,p.y+.65,p.z);a.needsUpdate=true;
-      title.position.set(p.x+1.6,p.y+.72,p.z);title.quaternion.copy(ring.quaternion);
+      // Keep the diagnosis in a reserved front margin, clear of the model volume.
+      const a=guide.geometry.attributes.position;a.setXYZ(0,p.x,p.y,p.z);a.setXYZ(1,0,.42,4.72);a.needsUpdate=true;
+      title.position.set(0,.68,5.02);title.quaternion.copy(ring.quaternion);
       title.userData.setText?.(models[index]?.kind==='ground-contact-fallback'?fallbackNames[index]:faultNames[index]);
     }
   }

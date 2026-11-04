@@ -6,12 +6,13 @@ import {createGames} from './games.mjs';
 import {createScrollSpace} from './scroll-space.mjs';
 import {PresentationTransport,createSound,bindSeekControl} from './transport.mjs';
 import {CONFIG} from './config.mjs';
+import {createRenderQuality} from './render-quality.mjs';
 import {CHAPTERS} from './content.mjs';
 import {loadType,clamp,smooth,damp,vec,project} from './space-utils.mjs';
 
 const $=id=>document.getElementById(id),canvas=$('world'),film=$('film'),audio=$('stage-audio'),portal=$('portal');
 const ui={phase:'loading',phaseAt:0,scroll:0,target:0,scrollVelocity:0,held:false,hold:0,muted:false,gameLock:false,focusLock:false,bubbleUntil:0,bubbleX:0,bubbleY:0,chapter:0,game:-1,stageEntryAt:0,frameTimes:[],blackAt:0,events:[],errors:[]};
-let opening,dot,games,space,renderer,scene,camera,css,key,keyTarget,previous=performance.now()/1000,time=0,startedAt=previous,toastTimer;
+let opening,dot,games,space,renderer,scene,camera,css,key,keyTarget,quality,previous=performance.now()/1000,time=0,startedAt=previous,toastTimer;
 const sound=createSound();
 const transport=new PresentationTransport(film,audio,{onFilm(){setPhase('film');},onStage(){ui.stageEntryAt=time;setPhase('stage');},onTransition(){ui.stageEntryAt=time;setPhase('transition');},onDeparture(){setPhase('departure');},onError:toast});
 const seekControl=bindSeekControl($('seek'),transport,{onUserGesture:()=>sound.unlock()});
@@ -28,21 +29,26 @@ function setPhase(phase){ui.phase=phase;ui.phaseAt=time;document.body.dataset.ph
 }
 function setBubble(text,duration=5){if(!text)return;$('dot-bubble-text').textContent=text;ui.bubbleUntil=time+duration;}
 async function init(){
-  renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;
+  renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;
   scene=new T.Scene();scene.background=new T.Color('#0b0c0e');scene.fog=new T.Fog('#0b0c0e',48,100);camera=new T.PerspectiveCamera(innerWidth<700?48:42,innerWidth/innerHeight,.05,220);camera.position.set(3,18,22);camera.lookAt(0,0,-3);
   scene.add(new T.HemisphereLight(0xf0f1f3,0x222327,1.35));key=new T.DirectionalLight(0xfffdf8,3.0);key.position.set(-6,18,12);key.castShadow=true;key.shadow.mapSize.set(1536,1536);key.shadow.camera.left=-18;key.shadow.camera.right=18;key.shadow.camera.top=21;key.shadow.camera.bottom=-21;key.shadow.camera.near=.1;key.shadow.camera.far=65;key.shadow.bias=-.0007;key.shadow.normalBias=.035;keyTarget=new T.Object3D();scene.add(keyTarget);key.target=keyTarget;scene.add(key);const fill=new T.DirectionalLight(0xbfc7d0,.6);fill.position.set(-12,8,-12);scene.add(fill);
+  quality=createRenderQuality({renderer,key,width:innerWidth,height:innerHeight});
   css=new CSS3DRenderer({element:$('spatial')});css.setSize(innerWidth,innerHeight);
   // CSS3D camera transforms own placement. Prevent focus/scrollIntoView from
   // scrolling the renderer container; card-detail keeps its own native scroll.
   css.domElement.style.overflow='clip';
-  $('loading-status').textContent='正在描绘中文与空间';await loadType();
+  $('loading-status').textContent='正在描绘中文与空间';
+  // Canvas textures are painted once: load the actual typeface before their
+  // creation so fallback metrics cannot be frozen into the three-dimensional UI.
+  await Promise.all([document.fonts.load('400 48px Idea','想法先行组织步骤资源档案'),document.fonts.load('700 48px Idea','主体构图色彩光影材质氛围')]);
+  await document.fonts.ready;await loadType();
   space=createScrollSpace({scene,camera,onFocus:v=>{ui.focusLock=v;if(v){ui.target=ui.scroll;ui.scrollVelocity=0;}},onSound:t=>sound.play(t)});
   games=createGames({scene,camera,renderer,canvas,chapterPositions:CONFIG.chapters,onFeedback:event=>{sound.play(event.type);if(event.text)setBubble(event.text,event.type==='complete'?7:4);},onProgress:()=>{},onInteractionLock:locked=>{ui.gameLock=locked;if(locked){ui.target=ui.scroll;ui.scrollVelocity=0;}},onGuide:guide=>{if(guide.text)setBubble(guide.text,7);const target=guide.target?.isVector3?guide.target:guide.target?.getWorldPosition?.(vec());if(target)dot?.setAttention(target);}});
   $('loading-status').textContent='正在准备 Dot 的表演';[opening,dot]=await Promise.all([createOpening({canvas}),createDotStage({scene,camera,stageOrigin:vec(0,0,-15)})]);dot.preparePerformance(CONFIG.stage.performanceDuration);await document.fonts.ready;
-  window.__linggan={ui,scene,camera,renderer,opening,games,dot,space,transport,seekControl,config:CONFIG,version:CONFIG.version,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],dot:dot.snapshot(),games:games.snapshot()})};
+  window.__linggan={ui,scene,camera,renderer,quality,opening,games,dot,space,transport,seekControl,config:CONFIG,version:CONFIG.version,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],dot:dot.snapshot(),games:games.snapshot()})};
   resize();previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');$('loading').style.opacity='0';setTimeout(()=>$('loading').style.display='none',1000);requestAnimationFrame(frame);
 }
-function resize(){if(!renderer)return;renderer.setSize(innerWidth,innerHeight);css.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.updateProjectionMatrix();opening?.resize(innerWidth,innerHeight);const code=$('code');code.width=Math.round(Math.min(innerWidth*.86,1280)*devicePixelRatio);code.height=Math.round(code.width*9/16);}
+function resize(){if(!renderer)return;quality.resize(innerWidth,innerHeight);css.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.updateProjectionMatrix();opening?.resize(innerWidth,innerHeight);const code=$('code');code.width=Math.round(Math.min(innerWidth*.86,1280)*devicePixelRatio);code.height=Math.round(code.width*9/16);}
 window.addEventListener('resize',resize);
 const codeCtx=$('code').getContext('2d');
 const sourceLines=['const idea = observe({ subject, frame, light });','await create.space({ depth: true, continuity: 1 });','timeline.connect(reference, intention, result);','for (const part of thought) {','  geometry.extrude(part.outline, { precision: 0.001 });','  motion.follow(curve, ease.inOut);','  material.respond(light, atmosphere);','}','await render({ camera, scene, sound });','frame.read();  // 让每一个选择，都能被看见','return experience({ watch, interact, continue });'];
@@ -84,10 +90,10 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
       display('scroll-cue',ui.scroll<1.2&&!ui.focusLock);display('chapter-caption',ui.scroll>1.2&&gameIndex<0&&!ui.focusLock&&chapter<5);display('game-controls',gameIndex>=0&&!ui.focusLock,'flex');$('game-instruction').textContent=gameIndex<0?'':['拖动旋转 · 清楚停留后自动收词','把步骤板拖入六个顺序槽','拖动工具，连接适合的用途','点击模型的问题区域','先安放三项成果，再拖动印章'][gameIndex];$('position-label').textContent=String(chapter+1).padStart(2,'0')+' / 06';$('scroll-progress').firstElementChild.style.width=(ui.scroll/CONFIG.scroll.max*100)+'%';
       const body=dot.actorWorldPos.clone().add(vec(0,1.2,0));const screen=project(body,camera);const narrow=innerWidth<700;const bx=narrow?clamp(screen.x-115,55,innerWidth-185):clamp(screen.x-90,35,innerWidth-235),by=narrow&&gameIndex>=0?Math.max(100,innerHeight*.23):clamp(screen.y-85,90,innerHeight-180);ui.bubbleX=damp(ui.bubbleX,bx,8,dt);ui.bubbleY=damp(ui.bubbleY,by,8,dt);$('dot-bubble').style.left=ui.bubbleX+'px';$('dot-bubble').style.top=ui.bubbleY+'px';display('dot-bubble',screen.visible&&time<ui.bubbleUntil&&!ui.focusLock);
     }
-    camera.lookAt(look);camera.updateMatrixWorld();key.position.set(-6,18,12-ui.scroll);keyTarget.position.set(0,0,-ui.scroll-3);games.update(dt,time);dot.beforeRender(renderer);renderer.render(scene,camera);css.render(scene,camera);space.syncReading();
+    camera.lookAt(look);camera.updateMatrixWorld();key.position.set(-6,18,12-ui.scroll);keyTarget.position.set(0,0,-ui.scroll-3);quality.stabilizeShadow({phase:ui.phase});games.update(dt,time);dot.beforeRender(renderer);renderer.render(scene,camera);css.render(scene,camera);space.syncReading();
   }
   if(['film','transition','stage'].includes(ui.phase)){seekControl.update();$('timecode').textContent=`${timeText(transport.currentTime)} / ${timeText(transport.duration)}`;$('play-pause').textContent=transport.playing?'Ⅱ':'▶';$('play-pause').setAttribute('aria-label',transport.playing?'暂停影片':'继续播放');$('transport-label').textContent=ui.phase==='transition'?'进入创作':ui.phase==='stage'?'Dot 舞台预演':'影片';}
-  lastPhase=ui.phase;renderedFrames++;requestAnimationFrame(frame);
+  quality.sampleFrame({dt:rawDt,time:current,phase:ui.phase});lastPhase=ui.phase;renderedFrames++;requestAnimationFrame(frame);
 }
 const hold=$('hold');hold.addEventListener('pointermove',e=>{const r=hold.getBoundingClientRect();hold.style.setProperty('--mx',(e.clientX-r.x)/r.width);hold.style.setProperty('--my',(e.clientY-r.y)/r.height);});hold.addEventListener('pointerleave',()=>{hold.style.setProperty('--mx','.5');hold.style.setProperty('--my','.5');});hold.addEventListener('pointerdown',e=>{if(ui.phase!=='intro')return;e.preventDefault();hold.setPointerCapture(e.pointerId);ui.held=true;sound.unlock();});hold.addEventListener('pointerup',()=>ui.held=false);hold.addEventListener('pointercancel',()=>ui.held=false);hold.addEventListener('keydown',e=>{if([' ','Enter'].includes(e.key)&&ui.phase==='intro'){e.preventDefault();ui.held=true;sound.unlock();}});hold.addEventListener('keyup',e=>{if([' ','Enter'].includes(e.key)){e.preventDefault();ui.held=false;}});window.addEventListener('blur',()=>ui.held=false);
 $('send').addEventListener('click',()=>{if(ui.phase!=='chat')return;sound.unlock();sound.play('correct');transport.unlock();setPhase('launch');});
@@ -99,7 +105,7 @@ let touch=null,downPoint=null;window.addEventListener('pointerdown',e=>{if(e.poi
 window.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea')||$('settings').open)return;if(ui.phase==='scroll'){if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();scrollInput(e.key==='PageDown'?9:2);}if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();scrollInput(e.key==='PageUp'?-9:-2);}if(e.key==='Home'){e.preventDefault();ui.target=0;}if(e.key==='End'){e.preventDefault();ui.target=CONFIG.scroll.max;}}else if(e.key===' '&&['film','transition','stage'].includes(ui.phase)){e.preventDefault();transport.toggle();}});
 document.querySelectorAll('#chapters button').forEach((b,i)=>b.addEventListener('click',()=>{if(ui.gameLock||ui.focusLock)return;ui.target=i===5?174:i*34;}));$('game-help').addEventListener('click',()=>games.help());$('dot-bubble').addEventListener('click',()=>{if(ui.game>=0)games.help();else setBubble('点击卡片可以立起阅读，点空白就回到长卷。',5);});$('game-reset').addEventListener('click',()=>games.reset(ui.game));
 $('settings-button').addEventListener('click',()=>{$('settings').showModal();});$('preview-scroll').addEventListener('click',()=>{$('settings').close();transport.pause();setPhase('scroll');});$('preview-stage').addEventListener('click',()=>{$('settings').close();sound.unlock();transport.playing=true;transport.enterStage(0);});$('film-file').addEventListener('change',e=>{const file=e.target.files?.[0];if(!file)return;transport.replace(file);$('film-status').textContent=`${file.name} · 接点待复核`;film.addEventListener('loadedmetadata',()=>{$('film-status').textContent=`${file.name} · ${film.videoWidth}×${film.videoHeight} · ${film.duration.toFixed(3)} 秒 · 接点待复核`;},{once:true});toast('已接入本机影片。本次会话可回看；正式接点仍需复核。');});
-$('quality').addEventListener('change',e=>{const q=e.target.value;renderer.setPixelRatio(Math.min(devicePixelRatio,q==='high'?2:q==='low'?1:1.25));dot.setReflectionEnabled(q!=='low');renderer.shadowMap.enabled=q!=='low';resize();});
+$('quality').addEventListener('change',e=>{const q=e.target.value;quality.setMode(q);dot.setReflectionEnabled(q!=='low');resize();});
 function restart(){transport.pause();space.close();ui.hold=0;ui.held=false;setPhase('intro');}
 $('back-start').addEventListener('click',restart);document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();restart();});$('replay').addEventListener('click',()=>{transport.pause();space.close();transport.start();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&transport.playing)transport.pause();});
