@@ -8,7 +8,7 @@ let glyphs;
 export async function loadType(){glyphs=await (await fetch('./assets/type/title-glyphs.json')).json();return glyphs;}
 const geoCache=new Map();
 export function titleMesh(text,size=2,depth=.25){
-  const g=new T.Group(),front=new T.MeshStandardMaterial({color:0xf4f5ee,roughness:.55,metalness:.1,side:T.DoubleSide}),side=new T.MeshStandardMaterial({color:0x777f91,roughness:.45,metalness:.25,side:T.DoubleSide});
+  const g=new T.Group(),front=new T.MeshStandardMaterial({color:0xf5f5f0,roughness:.43,metalness:.08,side:T.DoubleSide}),side=new T.MeshStandardMaterial({color:0x9a9da2,roughness:.39,metalness:.32,side:T.DoubleSide});
   [...text].forEach((c,i)=>{let geo=geoCache.get(c);if(!geo){const d=glyphs[c]?.path;if(!d)return;const svg=new SVGLoader().parse(`<svg xmlns="http://www.w3.org/2000/svg"><path fill-rule="nonzero" d="${d.replace(/^F[01]\s*/, '')}"/></svg>`);let shapes=svg.paths.flatMap(p=>p.toShapes());geo=new T.ExtrudeGeometry(shapes,{depth:12,steps:1,bevelEnabled:true,bevelSize:.6,bevelThickness:.8,bevelSegments:1,curveSegments:3});geo.scale(.01,-.01,.01);const indices=[];for(let i=0;i<geo.attributes.position.count;i+=3)indices.push(i,i+2,i+1);geo.setIndex(indices);geo.computeBoundingBox();geo.translate(-.5,1.18,0);geoCache.set(c,geo);}
     const mesh=new T.Mesh(geo,[front,side]);mesh.scale.set(size,size,depth/.12);mesh.position.x=(i-(text.length-1)/2)*size*1.08;mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);});
   return g;

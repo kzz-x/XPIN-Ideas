@@ -23,12 +23,12 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
   // The default one-unit line threshold would select neighbouring board outlines.
   raycaster.params.Line.threshold=.025;
   const materials={
-    white:new T.MeshStandardMaterial({color:0xf3f6fa,roughness:.36,metalness:.10}),
-    side:new T.MeshStandardMaterial({color:0x687e9a,roughness:.42,metalness:.25}),
-    dark:new T.MeshStandardMaterial({color:0x101c2e,roughness:.45,metalness:.45}),
-    glass:new T.MeshPhysicalMaterial({color:0xc8ddf4,roughness:.23,metalness:.18,clearcoat:.8,transparent:true,opacity:.84}),
-    blue:new T.MeshStandardMaterial({color:0x3264e4,roughness:.32,metalness:.25}),
-    gold:new T.MeshStandardMaterial({color:0xe2b35b,roughness:.25,metalness:.75}),
+    white:new T.MeshStandardMaterial({color:0xf5f4ec,roughness:.38,metalness:.08}),
+    side:new T.MeshStandardMaterial({color:0x9b9fa4,roughness:.38,metalness:.32}),
+    dark:new T.MeshStandardMaterial({color:0x171b22,roughness:.36,metalness:.48}),
+    glass:new T.MeshPhysicalMaterial({color:0xe4e9e8,roughness:.19,metalness:.12,clearcoat:.8,transparent:true,opacity:.84}),
+    blue:new T.MeshStandardMaterial({color:0x183bc1,roughness:.34,metalness:.18}),
+    gold:new T.MeshStandardMaterial({color:0xc5ae7a,roughness:.31,metalness:.72}),
     green:new T.MeshStandardMaterial({color:0xb7f2d0,roughness:.32,metalness:.18,emissive:0x2f925b,emissiveIntensity:.12}),
     line:new T.LineBasicMaterial({color:0x8da9d0,transparent:true,opacity:.48}),
     goldLine:new T.LineBasicMaterial({color:0xf3cf7f,transparent:true,opacity:.85}),
