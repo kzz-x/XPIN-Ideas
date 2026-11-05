@@ -1,0 +1,39 @@
+{
+  "name": "B / fine glass grains",
+  "grains": [
+    {
+      "offset": 0.0,
+      "duration": 0.1206875
+    },
+    {
+      "offset": 0.18,
+      "duration": 0.12908333333333333
+    },
+    {
+      "offset": 0.36,
+      "duration": 0.12985416666666666
+    },
+    {
+      "offset": 0.54,
+      "duration": 0.124875
+    },
+    {
+      "offset": 0.72,
+      "duration": 0.099625
+    },
+    {
+      "offset": 0.9,
+      "duration": 0.13158333333333333
+    },
+    {
+      "offset": 1.08,
+      "duration": 0.1319375
+    },
+    {
+      "offset": 1.26,
+      "duration": 0.141375
+    }
+  ],
+  "sampleRate": 48000,
+  "source": "Glass Tinkle 4.mp3 / FunWithSound / CC0"
+}

@@ -197,7 +197,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
   });
   const noteEl=document.createElement('div');noteEl.className='end-note';noteEl.innerHTML='从一个想法，到一次完成。<small>回看影片 · 返回任一章节 · 留在这里看看资源</small>';const note=new CSS3DObject(noteEl);note.scale.setScalar(.014);note.rotation.x=labelTilt;note.position.set(0,.7,-194);root.add(note);objects.push({group:note,z:-194});
   await yieldTask();
-  const ending=createEnding(titleMesh,camera);root.add(ending.root);
+  const ending=createEnding(titleMesh,camera,{onLand:({index})=>onSound('land',{key:'ending-letter-'+index,cooldown:0,intensity:.38,pitch:.86+(index%4)*.035})});root.add(ending.root);
   const raycaster=new T.Raycaster();raycaster.params.Line.threshold=.065;const pointer=new T.Vector2();
   const industrialDark=new T.Color('#101113'),industrialSolid=new T.Color('#92969B');
   function pointerHit(e){if(focus)return false;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);const rs=raycaster.intersectObjects(resources.map(r=>r.group).filter(g=>g.visible&&g.parent.visible),true);if(rs.length){
