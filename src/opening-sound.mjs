@@ -2,10 +2,12 @@ const clamp=x=>Math.max(0,Math.min(1,Number(x)||0));
 // Both gestures use the selected B recording. A narrowing gap, shorter grains
 // and rising playback rate make acceleration audible without raising the mix.
 export function glassProfile(progress,kind='hold',settled=0){
- const p=clamp(progress),hold=kind==='hold',curve=p**1.45;
- return{progress:p,interval:(hold?.135:.125)*(1-curve)+(hold?.019:.021)*curve,
-  rate:(hold?.72:.76)+p*(hold?.78:.64),duration:(hold?.105:.14)*(1-p)+.055*p,
-  gain:((hold?.018:.039)+(hold?.045:.026)*p*p)*(1-.88*clamp((settled-.65)/.35)),
+ const p=clamp(progress),hold=kind==='hold',curve=p**(hold?1.15:1.45);
+ const interval=(hold?.110:.125)*(1-curve)+(hold?.014:.021)*curve;
+ const referenceInterval=.135*(1-p**1.45)+.019*p**1.45;
+ return{progress:p,interval,
+  rate:(hold?.80:.76)+p*(hold?.90:.64),duration:(hold?.095:.14)*(1-p)+.055*p,
+  gain:((hold?.018:.039)+(hold?.045:.026)*p*p)*(hold?Math.sqrt(interval/referenceInterval):1)*(1-.88*clamp((settled-.65)/.35)),
   width:.55*(1-.78*p),air:(hold?.001:.003)+(hold?.012:.004)*p*p};
 }
 

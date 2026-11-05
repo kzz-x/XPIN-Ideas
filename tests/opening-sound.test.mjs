@@ -19,3 +19,12 @@ test('settled particles fade and narrow to the centre while invalid progress sta
  assert.deepEqual(glassProfile(4),glassProfile(1));
  assert.deepEqual(glassProfile(NaN),glassProfile(0));
 });
+test('the accepted B hold gets faster spacing and pitch without increasing its energy',()=>{
+ for(const p of [0,.25,.5,.75,1]){
+  const next=glassProfile(p),oldInterval=.135*(1-p**1.45)+.019*p**1.45;
+  const oldGain=.018+.045*p*p;
+  assert.ok(next.interval<=oldInterval*.82);
+  assert.ok(next.rate>.72+p*.78);
+  assert.ok(next.gain*next.gain/next.interval<=oldGain*oldGain/oldInterval+1e-9);
+ }
+});
