@@ -58,7 +58,7 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
       buffer=source.addSourceBuffer(manifest.mime);buffer.timestampOffset=manifest.timestampOffset||0;source.duration=manifest.duration;
       await append(await fetchBytes(manifest.init));await chunk(0);
       await waitFor(()=>{if(video.error)throw Error('浏览器无法解码影片');return video.readyState>=2;},{label:'影片首帧',signal:abort.signal});record('first-frame-ready');
-    })().catch(e=>{error=e.message;record('error');opening=null;if(objectURL)URL.revokeObjectURL(objectURL);source=buffer=null;loaded.clear();bytes=0;throw e;});return opening;
+    })().catch(e=>{if(aborted)throw e;error=e.message;record('error');opening=null;if(objectURL)URL.revokeObjectURL(objectURL);source=buffer=null;loaded.clear();bytes=0;throw e;});return opening;
   }
   async function ensure(at=0,seconds=8){
     if(local){await waitFor(()=>video.readyState>=2,{label:'替换影片'});return;}

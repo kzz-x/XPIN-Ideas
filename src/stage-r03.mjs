@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {CONFIG} from './config.mjs';
+import {constrainedDevice} from './performance-budget.mjs';
 import {yieldTask} from './preparation.mjs';
 import {loadDot} from '../assets/r03-stage/v020-white-encore-cpu/stage-character-d02-r01.mjs';
 import {createBridgeStage} from '../assets/r03-stage/v020-white-encore-cpu/stage-base.mjs';
@@ -18,7 +19,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
   const doc=makeDefaults(data.project);
   // Finish the same source pullback before the new, short scroll handoff.
   SHOT.pullStart=SHOT.musicEnd+.05;SHOT.pullEnd=16.30;SHOT.speechStart=SHOT.musicEnd+.30;SHOT.speechEnd=SHOT.speechStart+3.4;
-  doc.camera.dofStrength=.62;doc.camera.dofWidth=1.25;
+  doc.camera.dofEnabled=!constrainedDevice();doc.camera.dofStrength=.62;doc.camera.dofWidth=1.25;
   Object.assign(doc.screen,{fadeStart:1.0,fadeDuration:2,whiteEnabled:true,whiteRadiance:1});
   globalThis.DOT_STAGE_OPENING_SOURCE={kind:'video',status:'approved',label:'同源影片 · 共用解码帧',element:film,uri:film.currentSrc||film.src,inPoint:CONFIG.film.stageAt,fps:60};
   const dot=await loadDot({sharedRig:rig});
@@ -93,7 +94,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
     freeze(){media.pause();return dot.captureHandoffFrame();},
     advanceBackground(elapsed){if(lastState){concert.update(lastState.time+elapsed,{stageSettings:doc.stage,project:doc.project,actorWorld:new T.Vector3(...lastState.actorWorld)});concert.game.visible=false;}},
     async seek(time){await media.seekExact(time);},
-    setQuality(mode){doc.camera.dofEnabled=mode!=='low';renderer.shadowMap.enabled=mode!=='low';},
+    setQuality(mode){doc.camera.dofEnabled=mode!=='low'&&!constrainedDevice();renderer.shadowMap.enabled=mode!=='low';},
     snapshot:()=>({source:'D02_R03_统一单文件_r01',active,characterCount:1,islandLoaded:false,...lastState})
   };
 }

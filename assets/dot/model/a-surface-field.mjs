@@ -1,7 +1,7 @@
 import * as T from './frozen/r07d/editable-stage/素材/v011/DotSharedWeb/vendor/three.module.js';
 /** Read-only height query of A's actual triangle mesh, indexed in its front
  * frame. Rotation is analytic around the front axis; no C body is involved. */
-export function createAHeightField(geometry,nativeToFront,resolution=56){
+export function createAHeightField(geometry,nativeToFront,resolution=128){
  const a=geometry.attributes.position,index=geometry.index?.array,points=new Float64Array(a.count*3),p=new T.Vector3(),bounds={minX:Infinity,minY:Infinity,maxX:-Infinity,maxY:-Infinity,minZ:Infinity,maxZ:-Infinity};
  for(let i=0;i<a.count;i++){p.fromBufferAttribute(a,i).applyMatrix4(nativeToFront);points.set(p.toArray(),i*3);bounds.minX=Math.min(bounds.minX,p.x);bounds.maxX=Math.max(bounds.maxX,p.x);bounds.minY=Math.min(bounds.minY,p.y);bounds.maxY=Math.max(bounds.maxY,p.y);bounds.minZ=Math.min(bounds.minZ,p.z);bounds.maxZ=Math.max(bounds.maxZ,p.z);}
  const bins=Array.from({length:resolution*resolution},()=>[]),tris=[],sx=resolution/(bounds.maxX-bounds.minX),sy=resolution/(bounds.maxY-bounds.minY),cellX=x=>Math.max(0,Math.min(resolution-1,Math.floor((x-bounds.minX)*sx))),cellY=y=>Math.max(0,Math.min(resolution-1,Math.floor((y-bounds.minY)*sy)));
