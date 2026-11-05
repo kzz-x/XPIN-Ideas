@@ -157,7 +157,6 @@ function prepareWorld(){if(worldJob)return worldJob;worldJob=prepareScroll().the
 function beginListening(){
   const generation=++listenGeneration;listeningGate.reset();setPhase('listen');ui.listenStartedAt=performance.now();ui.listenFinishedAt=null;$('listening-status').textContent='正在准备影片';sound.play('headphones');
   media.prime().catch(()=>{});media.ensure(0,8).then(()=>{if(generation!==listenGeneration)return;listeningGate.ready=true;$('listening-status').textContent='准备就绪，即将开始';}).catch(error=>{if(generation===listenGeneration&&ui.phase==='listen'){toast(error.message);setPhase('chat');}});
-  requestAnimationFrame(()=>setTimeout(()=>prepareWorld().catch(()=>{}),0));
 }
 const listeningRange=$('listening-volume');
 listeningRange.addEventListener('pointerdown',()=>listeningGate.adjusting=true);
@@ -196,8 +195,8 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
   if(ui.phase==='intro'){ui.hold=ui.held?clamp(current-ui.holdStart):clamp(ui.hold-dt*1.65);$('hold').style.setProperty('--hold',ui.hold);if(ui.hold>=1&&opening.prepared){sound.unlock();ui.held=false;setPhase('morph');}}
   else if(ui.phase==='morph'&&age>=OPENING_TIMING.morph&&opening.ready)setPhase('chat');
   else if(ui.phase==='launch'&&age>=4.35)beginListening();
-  else if(ui.phase==='listen'){const state=listeningGate.update(dt,{paused:document.hidden||$('settings').open});$('listening-fill').style.transform='scaleX('+state.progress+')';$('listening-fill').parentElement.setAttribute('aria-valuenow',String(Math.round(state.progress*100)));if(state.done){ui.listenFinishedAt=performance.now();setPhase('black');}}
-  else if(ui.phase==='black'&&performance.now()-ui.blackAt>=150){setPhase('film-wait');startFilm();}
+  else if(ui.phase==='listen'){const state=listeningGate.update(dt,{paused:document.hidden||$('settings').open});$('listening-fill').style.transform='scaleX('+state.progress+')';$('listening-fill').parentElement.setAttribute('aria-valuenow',String(Math.round(state.progress*100)));if(state.done){ui.listenFinishedAt=performance.now();setPhase('black');requestAnimationFrame(()=>setTimeout(()=>prepareWorld().catch(()=>{}),0));}}
+  else if(ui.phase==='black'&&performance.now()-ui.blackAt>=750){setPhase('film-wait');startFilm();}
   if(['film','stage','transition'].includes(ui.phase))transport.update(dt);
   chatPresentation.update(ui.phase,time-ui.phaseAt);cinemaControls.update();
   const introRender=['intro','morph','chat','launch','black','film-wait'].includes(ui.phase);
