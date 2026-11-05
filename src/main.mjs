@@ -3,6 +3,8 @@ import {warmScene,warmEnvironment} from './scene-warm.mjs';
 import {createFilmMedia} from './film-media.mjs';
 import {createStreamingBgm} from './bgm-stream.mjs';
 import {createSound,bindUiSound} from './sound-design.mjs';
+import {createAudioMix,bindAudioMix} from './audio-mix.mjs';
+import {ListeningGate} from './listening-gate.mjs';
 import {COUNTS} from './games-rules.mjs';
 import * as T from 'three';
 import {CSS3DRenderer} from 'three/addons/renderers/CSS3DRenderer.js';
@@ -39,11 +41,12 @@ async function readyAction(action,button){
   try{await prepareWorld();action();}catch(error){toast('场景暂未就绪，请稍后重试。');}
   finally{if(button){button.disabled=false;if(label)button.textContent=label;}}
 }
-const sound=createSound(),chatPresentation=createChatPresentation({onTyping:count=>sound.typing(count)});bindUiSound(sound);let activateSoundOnly=false;
+const audioMix=createAudioMix(),listeningGate=new ListeningGate(2);let listenGeneration=0;
+const sound=createSound({volume:audioMix.snapshot().sfx}),chatPresentation=createChatPresentation({onTyping:count=>sound.typing(count)});bindUiSound(sound);let activateSoundOnly=false;
 const bgm=createStreamingBgm({getContext:()=>sound.ensureContext(),getOutput:()=>sound.musicBus,onError:toast,onChange:s=>{
   updateSoundButton();
   for(const id of ['bgm-toggle','bgm-enabled']){$(id).setAttribute('aria-pressed',String(s.enabled));$(id).setAttribute('aria-label',s.enabled?'关闭背景音乐':'开启背景音乐');}
-  $('bgm-toggle').textContent=s.enabled?'BGM / 开':'BGM / 关';$('bgm-enabled').textContent=s.enabled?'已开启':'已关闭';
+  $('bgm-toggle').textContent=s.enabled?'BGM / 开':'BGM / 关';$('bgm-enabled').textContent=s.enabled?'BGM / 开':'BGM / 关';
   $('bgm-volume').value=Math.round(s.volume*100);$('bgm-value').value=Math.round(s.volume*100)+'%';
   $('bgm-status').textContent=s.error?'音乐暂未载入':!s.enabled?'背景音乐已关闭 · 影片与互动音效不受影响':s.finished?'本次创作已通关 · 音乐已收尾':s.complete?'已通关 · 音乐将在乐句出口自然收尾':s.active&&!s.ready?'背景音乐正在载入':s.needsGesture?'点击任意位置启用音乐':s.active?(s.section==='opening'?'开场音乐 · 无损连续播放':'卷轴音乐 · 从头播放，通关前循环'):'影片与舞台期间停止背景音乐';
 }});
@@ -52,12 +55,15 @@ function unlockAudio(e){if(e.target?.closest?.('#sound'))activateSoundOnly=!ui.m
 window.addEventListener('pointerdown',unlockAudio,{capture:true});
 window.addEventListener('keydown',unlockAudio,{capture:true});
 for(const id of ['bgm-toggle','bgm-enabled'])$(id).addEventListener('click',()=>bgm.setEnabled(!bgm.snapshot().enabled));
-$('bgm-volume').addEventListener('input',e=>bgm.setVolume(Number(e.target.value)/100));
+
 bgm.setMasterMuted(false);
 function updateCompletion(){if(games)bgm.setComplete(COUNTS.every((n,i)=>games.getState().done[i].length===n));}
 window.addEventListener('pointermove',e=>{if(ui.phase==='scroll'&&e.pointerType!=='touch'){scrollPointer.x=e.clientX/innerWidth*2-1;scrollPointer.y=1-e.clientY/innerHeight*2;space?.pointerMove(e);}},true);
 document.addEventListener('pointerleave',()=>{scrollPointer.x=scrollPointer.y=0;space?.clearHover();});
-const transport=new PresentationTransport(film,audio,{managedMedia:true,getMediaOffset:()=>media.timeOffset,canEnterStage:()=>runtime.ready,canDepart:()=>runtime.ready,onBuffering:buffering,onFilm(){setPhase('film');prepareWorld().catch(()=>{});},onStage(){ui.stageEntryAt=time;setPhase('stage');},onTransition(){ui.stageEntryAt=time;setPhase('transition');},onDeparture(){if(ui.phase==='film'){dot?.update({time,dt:0,mode:'stage',stageTime:CONFIG.stage.end,pixelRatio:renderer.getPixelRatio()});camera.copy(dot.stageCamera,false);camera.layers.set(0);look.copy(camera.position).add(camera.getWorldDirection(vec()).multiplyScalar(10));}setPhase('departure');},onError:toast});
+const transport=new PresentationTransport(film,audio,{managedMedia:true,getVideoVolume:()=>audioMix.snapshot().video,getMediaOffset:()=>media.timeOffset,canEnterStage:()=>runtime.ready,canDepart:()=>runtime.ready,onBuffering:buffering,onFilm(){setPhase('film');prepareWorld().catch(()=>{});},onStage(){ui.stageEntryAt=time;setPhase('stage');},onTransition(){ui.stageEntryAt=time;setPhase('transition');},onDeparture(){if(ui.phase==='film'){dot?.update({time,dt:0,mode:'stage',stageTime:CONFIG.stage.end,pixelRatio:renderer.getPixelRatio()});camera.copy(dot.stageCamera,false);camera.layers.set(0);look.copy(camera.position).add(camera.getWorldDirection(vec()).multiplyScalar(10));}setPhase('departure');},onError:toast});
+const mixControls=bindAudioMix(audioMix,{onToast:toast,onPreview:()=>{sound.unlock();sound.play('click');setTimeout(()=>sound.play('win'),230);}});
+function applyAudioMix(values){sound.setVolume(values.sfx);bgm.setVolume(values.bgm);transport.restoreVolumes();}
+audioMix.subscribe(applyAudioMix);applyAudioMix(audioMix.snapshot());
 const cinemaControls=createCinemaControls({transport,getPhase:()=>ui.phase});
 const seekControl=bindSeekControl($('seek'),transport,{onUserGesture:()=>sound.unlock()});
 window.addEventListener('error',e=>ui.errors.push(e.message));window.addEventListener('unhandledrejection',e=>ui.errors.push(String(e.reason)));
@@ -68,8 +74,8 @@ function setPhase(phase){const priorPhase=ui.phase;ui.phase=phase;ui.phaseAt=tim
   if(!['stage','transition','departure'].includes(phase))dot?.source.hide();
   if(scroll&&camera){camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.near=.05;camera.far=220;camera.updateProjectionMatrix();}
   display('intro-copy',intro);display('hold',intro,'flex');display('portal',['morph','chat','launch','black','film','transition'].includes(phase));display('chat',['morph','chat'].includes(phase));display('code',phase==='launch');display('film',['film','transition'].includes(phase));display('film-badge',phase==='film');display('transport',watch,'flex');display('stage-caption',phase==='stage');$('skip-film').style.visibility=watch?'visible':'hidden';$('skip-film').disabled=!watch;$('skip-film').firstChild.textContent=phase==='stage'?'进入卷轴 ':'跳过影片 ';cinemaControls.reveal();$('handoff-white').style.opacity='0';display('chapters',scroll,'flex');display('scroll-footer',scroll,'flex');display('chapter-caption',scroll);display('dot-bubble',false);display('game-controls',false);display('scroll-cue',scroll&&ui.scroll<1);
-  $('masthead').style.visibility=phase==='black'?'hidden':'visible';$('blackout').style.opacity=phase==='black'?'1':'0';portal.style.opacity='1';$('portal-frame').style.opacity=phase==='film'?'0':'1';if(phase==='film'){$('film-badge').textContent=CONFIG.film.label;portal.style.boxShadow='none';}else portal.style.boxShadow='0 28px 80px #0006';
-  if(phase==='scroll'){bgm.enter({restart:true,section:'scroll'});updateCompletion();}else{space?.cancelFocus();if(['intro','morph','chat','launch','black','film-wait'].includes(phase)){const b=bgm.snapshot();if(!b.active||b.section!=='opening')bgm.enter({restart:true,section:'opening'});}else bgm.leave();}
+  $('masthead').style.visibility=['black','listen'].includes(phase)?'hidden':'visible';$('listening-overlay').classList.toggle('visible',phase==='listen');$('listening-overlay').setAttribute('aria-hidden',String(phase!=='listen'));$('blackout').style.opacity=phase==='black'?'1':'0';portal.style.opacity='1';$('portal-frame').style.opacity=phase==='film'?'0':'1';if(phase==='film'){$('film-badge').textContent=CONFIG.film.label;portal.style.boxShadow='none';}else portal.style.boxShadow='0 28px 80px #0006';
+  if(phase==='scroll'){bgm.enter({restart:true,section:'scroll'});updateCompletion();}else{space?.cancelFocus();if(['intro','morph','chat','launch','listen','black','film-wait'].includes(phase)){const b=bgm.snapshot();if(!b.active||b.section!=='opening')bgm.enter({restart:true,section:'opening'});}else bgm.leave();}
   if(phase!=='intro')sound.updateHold(0,false);if(phase==='morph')sound.play('charge');if(priorPhase==='morph'&&phase==='chat'){sound.stopParticles();sound.play('assembly');}if(phase==='launch')sound.play('send');if(phase==='black')sound.play('sweep',{intensity:.6});if(phase==='departure')sound.play('turn',{intensity:.7});if(!['morph','chat'].includes(phase))sound.stopParticles();
   if(phase==='scroll'){ui.target=ui.scroll=ui.scrollVelocity=0;ui.game=-1;ui.bubbleUntil=time+7;$('dot-bubble-text').textContent='你好，我是 Dot。我们把这次创作慢慢展开。';}
   if(phase==='stage'){ui.scroll=ui.target=ui.scrollVelocity=0;}
@@ -94,7 +100,7 @@ async function init(){
   opening=await createOpening({canvas,onInteract:()=>sound.play('select',{pitch:.8,intensity:.75})});resize();bootProgress(.45,'正在准备字符与光影');bgm.enter({restart:true,section:'opening'});
   await Promise.all([fontsReady,chatPresentation.ready]);portalLayout(0);await opening.prepare(renderer);bootProgress(.82,'正在准备第一帧');
   opening.update({time:0,dt:0,phase:'intro'});await warmScene(renderer,opening.scene,opening.camera);renderer.render(opening.scene,opening.camera);
-  window.__linggan={ui,bgm,sound,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),games:games?.snapshot()})};
+  window.__linggan={ui,bgm,sound,audioMix,listeningGate,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),audioMix:audioMix.snapshot(),listening:listeningGate.snapshot(),games:games?.snapshot()})};
   rigModule=await rigModuleJob;await stageModuleJob;bootProgress(.94,'正在准备连续画面');
   const {makeEnvironment}=await environmentModule;globalThis.DOT_PREWARM_ENVIRONMENT=makeEnvironment();
   stageRenderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});stageRenderer.outputColorSpace=T.SRGBColorSpace;stageRenderer.toneMapping=T.ACESFilmicToneMapping;
@@ -130,7 +136,7 @@ async function prepareScroll(){
     await prepareStage();await fontsReady;
     const [{createGames},{createScrollSpace}]=await Promise.all([import('./games.mjs'),import('./scroll-space.mjs')]);await loadType();await yieldTask();
     space=await createScrollSpace({scene,camera,onFocus:v=>{ui.focusLock=v;if(v){ui.target=ui.scroll;ui.scrollVelocity=0;}},onSound:t=>sound.play(t)});
-    await yieldTask();games=await createGames({scene,camera,renderer,canvas,chapterPositions:CONFIG.chapters,onFeedback:event=>{if(!['info','warning'].includes(event.type))sound.play(event.type,event);if(event.text)setBubble(event.text,event.type==='complete'?7:4);},onProgress:()=>updateCompletion(),onInteractionLock:locked=>{ui.gameLock=locked;if(locked){ui.target=ui.scroll;ui.scrollVelocity=0;}},onGuide:guide=>{if(guide.text)setBubble(guide.text,7);const target=guide.target?.isVector3?guide.target:guide.target?.getWorldPosition?.(vec());if(target)dot?.setAttention(target);}});
+    await yieldTask();games=await createGames({scene,camera,renderer,canvas,chapterPositions:CONFIG.chapters,onFeedback:event=>{if(event.type==='level-success')sound.levelWin(event.chapter);else if(!['info','warning','complete'].includes(event.type))sound.play(event.type,event);if(event.text)setBubble(event.text,event.type==='complete'?7:4);},onProgress:()=>updateCompletion(),onInteractionLock:locked=>{ui.gameLock=locked;if(locked){ui.target=ui.scroll;ui.scrollVelocity=0;}},onGuide:guide=>{if(guide.text)setBubble(guide.text,7);const target=guide.target?.isVector3?guide.target:guide.target?.getWorldPosition?.(vec());if(target)dot?.setAttention(target);}});
     // Await actual model/texture decode, not just the creation of their loaders.
     await Promise.all(games.loads);await Promise.all([...document.querySelectorAll('.process-card img')].map(img=>img.decode().catch(()=>{})));
     Object.assign(window.__linggan,{games,space,dotForeground});
@@ -148,6 +154,17 @@ async function prepareScroll(){
   })();return scrollJob;
 }
 function prepareWorld(){if(worldJob)return worldJob;worldJob=prepareScroll().then(resolveWorld,error=>{rejectWorld(error);throw error;});worldJob.catch(()=>{});return worldJob;}
+function beginListening(){
+  const generation=++listenGeneration;listeningGate.reset();setPhase('listen');ui.listenStartedAt=performance.now();ui.listenFinishedAt=null;$('listening-status').textContent='正在准备影片';sound.play('headphones');
+  media.prime().catch(()=>{});media.ensure(0,8).then(()=>{if(generation!==listenGeneration)return;listeningGate.ready=true;$('listening-status').textContent='准备就绪，即将开始';}).catch(error=>{if(generation===listenGeneration&&ui.phase==='listen'){toast(error.message);setPhase('chat');}});
+  requestAnimationFrame(()=>setTimeout(()=>prepareWorld().catch(()=>{}),0));
+}
+const listeningRange=$('listening-volume');
+listeningRange.addEventListener('pointerdown',()=>listeningGate.adjusting=true);
+listeningRange.addEventListener('input',()=>listeningGate.adjusted());
+for(const type of ['pointerup','pointercancel'])window.addEventListener(type,()=>{if(listeningGate.adjusting){listeningGate.adjusting=false;listeningGate.adjusted();}});
+listeningRange.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(e.key))listeningGate.adjusting=true;});
+listeningRange.addEventListener('keyup',()=>{listeningGate.adjusting=false;listeningGate.adjusted();});
 async function startFilm(at=0){
   if(filmStarting)return;filmStarting=true;let shown=false;const timer=setTimeout(()=>{shown=true;buffering(true);},300);
   try{media.prime().catch(()=>{});await media.ensure(at,8);if(at>0)await prepareWorld();transport.started=true;await transport.start(at);}
@@ -178,8 +195,9 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
   sound.updateHold(ui.hold,ui.phase==='intro'&&ui.held);
   if(ui.phase==='intro'){ui.hold=ui.held?clamp(current-ui.holdStart):clamp(ui.hold-dt*1.65);$('hold').style.setProperty('--hold',ui.hold);if(ui.hold>=1&&opening.prepared){sound.unlock();ui.held=false;setPhase('morph');}}
   else if(ui.phase==='morph'&&age>=OPENING_TIMING.morph&&opening.ready)setPhase('chat');
-  else if(ui.phase==='launch'&&age>=4.35){setPhase('black');requestAnimationFrame(()=>setTimeout(()=>prepareWorld().catch(()=>{}),0));}
-  else if(ui.phase==='black'&&performance.now()-ui.blackAt>=1000){setPhase('film-wait');startFilm();}
+  else if(ui.phase==='launch'&&age>=4.35)beginListening();
+  else if(ui.phase==='listen'){const state=listeningGate.update(dt,{paused:document.hidden||$('settings').open});$('listening-fill').style.transform='scaleX('+state.progress+')';$('listening-fill').parentElement.setAttribute('aria-valuenow',String(Math.round(state.progress*100)));if(state.done){ui.listenFinishedAt=performance.now();setPhase('black');}}
+  else if(ui.phase==='black'&&performance.now()-ui.blackAt>=150){setPhase('film-wait');startFilm();}
   if(['film','stage','transition'].includes(ui.phase))transport.update(dt);
   chatPresentation.update(ui.phase,time-ui.phaseAt);cinemaControls.update();
   const introRender=['intro','morph','chat','launch','black','film-wait'].includes(ui.phase);
@@ -236,8 +254,8 @@ $('preview-seam').addEventListener('click',async()=>{const b=$('preview-seam');b
 $('film-file').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;transport.pause();transport.pendingSeek=null;transport.scrub=null;$('film-status').textContent='正在准备替换影片…';try{const info=await media.useLocal(file);CONFIG.film.label='本机替换影片';applyCue(CONFIG.film.stageAt);transport.absolute=0;transport.presentedTime=NaN;transport.phase='film';transport.started=false;$('film-status').textContent=`${file.name} · ${info.width}×${info.height} · ${info.duration.toFixed(3)} 秒 · 同源大屏`;$('film-cue').closest('details').open=true;toast('替换完成。大屏已共用这份影片，可调整接点后预览。');}catch(error){toast(error.message);}});
 $('quality').addEventListener('change',e=>{const q=e.target.value;quality.setMode(q);dot?.setReflectionEnabled(q!=='low');resize();});
 function restart(){transport.pause();space?.close();ui.hold=0;ui.held=false;setPhase('intro');}
-$('back-start').addEventListener('click',restart);document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();restart();});$('replay').addEventListener('click',()=>{transport.pause();space?.close();startFilm();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){ui.held=false;sound.updateHold(0,false);sound.stopParticles();if(transport.playing)transport.pause();}});
+$('back-start').addEventListener('click',restart);document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();restart();});$('replay').addEventListener('click',()=>{transport.pause();space?.close();beginListening();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){listeningGate.adjusting=false;listeningGate.adjusted();ui.held=false;sound.updateHold(0,false);sound.stopParticles();if(transport.playing)transport.pause();}});
 
 let dotPress=null;
 window.addEventListener('pointermove',e=>{if(ui.phase!=='scroll')return;dot.pointer(e.clientX,e.clientY);dot.hover(dot.hitTest(e.clientX,e.clientY));},true);

@@ -13,8 +13,8 @@ export function createParticleAssembly({scene,camera,glyphs,asciiData}){
  const dummy=new T.Object3D(),q=new T.Quaternion(),euler=new T.Euler();
  let solver=null,targets=[],parts=[],triangles=[],weights=[],totalArea=0,phase='',baked=false,welded=false,priorWidth=0,priorHeight=0,refine=0,settledAt=null;
  const random=i=>{const v=Math.sin(i*127.1+37.7)*43758.5453;return v-Math.floor(v);};
- function world(x,y,z=0){return V((x/innerWidth*2-1)*Math.tan(T.MathUtils.degToRad(camera.fov/2))*22*camera.aspect,(1-y/innerHeight*2)*Math.tan(T.MathUtils.degToRad(camera.fov/2))*22,-22+z).applyMatrix4(camera.matrixWorld);}
- function units(px){return px/innerHeight*2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*22;}
+ function world(x,y,z=0){const distance=22-z;return V((x/innerWidth*2-1)*Math.tan(T.MathUtils.degToRad(camera.fov/2))*distance*camera.aspect,(1-y/innerHeight*2)*Math.tan(T.MathUtils.degToRad(camera.fov/2))*distance,-distance).applyMatrix4(camera.matrixWorld);}
+ function units(px,z=0){return px/innerHeight*2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*(22-z);}
  function addTarget(x,y,w,h,type,c,z=0){targets.push({x,y,w,h,type,color:new T.Color(c),world:world(x,y,z),z});}
  function surface(rect,c,depth,name,pitch){
   if(rect.width<1||rect.height<1)return;parts.push({rect:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},color:c,depth,name});
@@ -51,7 +51,7 @@ export function createParticleAssembly({scene,camera,glyphs,asciiData}){
  }
  function clearWeld(){for(const c of [...assembled.children]){assembled.remove(c);c.geometry?.dispose();if(c.material)c.material.dispose();}}
  function makeWeld(){
-  clearWeld();for(const p of parts){const r=p.rect,g=new T.BoxGeometry(units(r.width),units(r.height),units(p.name.includes('panel')?7:4)),m=frostedGlass({color:p.color,thickness:.16,roughness:.4,transmission:p.name.includes('Send')?.2:.86}),o=new T.Mesh(g,m);o.position.copy(world(r.x+r.width/2,r.y+r.height/2,p.depth-units(2)));o.quaternion.copy(camera.quaternion);o.name=p.name;o.add(glassEdges(g,{opacity:.28}));assembled.add(o);}assembled.visible=false;
+  clearWeld();for(const p of parts){const r=p.rect,depth=units(p.name.includes('panel')?7:4,p.depth),g=new T.BoxGeometry(units(r.width,p.depth),units(r.height,p.depth),depth),m=frostedGlass({color:p.color,thickness:.16,roughness:.4,transmission:p.name.includes('Send')?.2:.86}),o=new T.Mesh(g,m);o.position.copy(world(r.x+r.width/2,r.y+r.height/2,p.depth)).addScaledVector(camera.getWorldDirection(V()),depth/2);o.quaternion.copy(camera.quaternion);o.name=p.name;o.add(glassEdges(g,{opacity:.28}));assembled.add(o);}assembled.visible=false;
  }
  function bake(){
   if(!targets.length||priorWidth!==innerWidth||priorHeight!==innerHeight){measureTargets();makeWeld();}if(!triangles.length)sourceTriangles();scene.updateMatrixWorld(true);solver=new ParticlePhysics(targets.length);

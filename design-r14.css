@@ -1,0 +1,39 @@
+/* The DOM outlines and the front face of the physical glass share one centre. */
+#send,#send:hover,#send:active{transform:none}
+.send-rings{inset:-1px;transform:none;transform-origin:50% 50%}
+.send-rings i{inset:-18px;width:auto;height:auto;transform-origin:50% 50%;animation-name:send-inward-aligned}
+@keyframes send-inward-aligned{0%{transform:scale(1);opacity:0}15%{opacity:.85}72%{opacity:.95}100%{transform:scale(.514);opacity:0}}
+#settings{max-height:min(90dvh,960px);overflow:auto;overscroll-behavior:contain}
+.mix-settings .mix-row{display:grid;grid-template-columns:76px minmax(0,1fr) 42px;align-items:center;gap:12px;margin:15px 0}
+.mix-row>span{font-size:13px;white-space:nowrap}
+.mix-row input{width:100%;min-width:0;margin:0;accent-color:#c6dce8}
+.mix-row output{font:12px monospace;text-align:right;color:#dce9f1}
+.mix-note{color:#9fb2c6;font-size:11px}
+.mix-actions{display:flex;gap:10px;margin:15px 0}
+.mix-actions button{padding:9px 14px;border:1px solid #748aa255;background:#192639;color:#dce9f1;font:12px Idea,sans-serif}
+.audio-mix-params{display:block;padding:10px 12px;border:1px solid #6b819633;color:#cfdfeb;background:#0b1420;font:12px/1.8 monospace;white-space:normal}
+#transport{gap:18px}
+#transport #seek{min-width:50px;flex:1 1 auto}
+.cinema-volume{display:flex;align-items:center;gap:8px;flex:0 0 auto;white-space:nowrap}
+#transport #video-mute{display:grid;place-items:center;width:24px;height:32px;min-width:24px;padding:0;border:0;background:none;color:#d5e3eb}
+#video-mute svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.mute-slash{display:none}
+.is-muted .mute-slash{display:block}
+#transport #video-volume-inline{flex:0 0 76px;width:76px;min-width:0;max-width:76px;height:4px;accent-color:#c5dce9;touch-action:none}
+.cinema-volume output{width:32px;font:10px monospace;text-align:right;color:#c7d9e5}
+#listening-overlay{position:fixed;inset:0;z-index:52;background:#05090f;display:grid;place-items:center;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility 0s linear .2s}
+#listening-overlay.visible{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .2s ease,visibility 0s}
+.listening-card{width:min(480px,calc(100vw - 48px));text-align:center;color:#dce9f3}
+.headphones-icon{width:48px;height:48px;fill:none;stroke:#b4cbdc;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:22px}
+.listening-card .eyebrow{font-size:10px;letter-spacing:.2em;color:#91a9bd}
+.listening-card h2{margin:18px 0 28px;font-size:27px;font-weight:500;line-height:1.7;letter-spacing:.06em}
+.listening-volume{display:flex;align-items:center;gap:12px;width:min(320px,100%);margin:0 auto 28px;font:12px Idea,sans-serif;color:#aabed0}
+.listening-volume input{flex:1;min-width:60px;height:4px;accent-color:#c5dce9;touch-action:none}
+.listening-volume output{width:32px;text-align:right;font:11px monospace}
+.listening-progress{width:min(320px,100%);height:3px;margin:0 auto;background:#b1c7da22;overflow:hidden}
+#listening-fill{display:block;width:100%;height:100%;background:#c5dce9;transform:scaleX(0);transform-origin:left center;will-change:transform}
+#listening-status{font:10px/1.8 Idea,sans-serif;letter-spacing:.08em;color:#829bb1;margin-top:13px}
+body[data-phase="listen"] #masthead,body[data-phase="listen"] #world{visibility:hidden}
+@media(max-width:700px){#settings{padding:28px 22px}.mix-settings .mix-row{grid-template-columns:62px minmax(0,1fr) 36px;gap:8px}.mix-row>span{font-size:11px}.mix-actions button{font-size:11px;padding:9px 12px}.audio-mix-params{font-size:10px}.send-rings i{inset:-18px}#transport{gap:8px;width:94vw}.cinema-volume{gap:5px}#transport #video-volume-inline{flex-basis:56px;width:56px;max-width:56px}.cinema-volume output{display:none}#skip-film{padding-left:4px;font-size:10px}#transport #video-mute{width:20px;min-width:20px}.listening-card h2{font-size:23px}}
+@media(prefers-reduced-motion:reduce){.send-rings i{animation:none;inset:-8px;transform:none;opacity:.7}}
+@media(max-width:700px){#transport{flex-wrap:nowrap}#transport #play-pause{order:0}#transport #seek{order:1}#transport #skip-film{order:2;margin-left:0}#transport .cinema-volume{order:3}}

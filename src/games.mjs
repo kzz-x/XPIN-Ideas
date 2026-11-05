@@ -288,6 +288,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
     const names=chapter===0?WORDS:chapter===1?STEP_NAMES:chapter===2?TOOL_NAMES:chapter===3?['G1','SU7','VisionPro','Rubin']:CARGO_NAMES;
     const text=completed(state,chapter)?'这一段完成了。结果留在卷面上，继续向下看看。':chapter===4&&stampUnlocked(state)?'三项已经齐备。现在可以把印章放到最后的位置。':(assisted?'这一步我示范好了。':'已完成「'+names[index]+'」。')+(chapter===0?'继续转动，看看其他面。':chapter===3?'先看清变化，转盘会送来下一件。':'继续下一步就好。');
     say(chapter===4&&index===3?'stamp':completed(state,chapter)?'complete':'correct',text);
+    if(completed(state,chapter))onFeedback({type:'level-success',chapter});
     onGuide({phase:'complete',chapter,index,text,target:chapter===0?cube.root:chapter===3?products.target():pieces.find(p=>p.chapter===chapter&&idsFor(chapter).indexOf(p.id)===index)?.root});
   }
   function animatePiece(piece,target,{correct=false,assisted=false,duration=1.05,stamp=false,onFinish=null}={}){

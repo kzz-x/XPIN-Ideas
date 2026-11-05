@@ -1,6 +1,6 @@
 // Short, quiet physical and digital cues. Continuous gestures own one voice.
 export const CUES={
- hover:{hz:1700,d:.028,g:.008,kind:'glass',noise:.05},
+ hover:{hz:1700,d:.028,g:.024,kind:'glass',noise:.05},
  click:{hz:620,d:.065,g:.022,kind:'wood',noise:.17},
  select:{hz:950,d:.055,g:.014,kind:'glass',noise:.04},
  toggle:{hz:840,d:.075,g:.018,kind:'glass',noise:.08},
@@ -14,20 +14,22 @@ export const CUES={
  help:{hz:560,d:.12,g:.019,kind:'glass',notes:[1,1.2]},
  open:{hz:400,d:.16,g:.021,kind:'glass',end:1.4,noise:.12},
  close:{hz:320,d:.12,g:.018,kind:'wood',end:.82,noise:.15},
- charge:{hz:520,d:.20,g:.026,kind:'glass',end:1.6,noise:.12},
+ charge:{hz:520,d:.25,g:.035,kind:'glass',end:2.0,noise:.2},
+ win:{hz:523.25,d:.42,g:.034,kind:'glass',notes:[1,1.25,1.5,2],noise:.025},
+ headphones:{hz:660,d:.22,g:.025,kind:'glass',notes:[1,1.5],noise:.02},
  cancel:{hz:240,d:.11,g:.013,kind:'wood',end:.7,noise:.08},
- particle:{hz:2100,d:.055,g:.008,kind:'glass',noise:.2},
+ particle:{hz:2100,d:.055,g:.024,kind:'glass',noise:.2},
  settle:{hz:1050,d:.075,g:.013,kind:'glass',noise:.12},
  assembly:{hz:720,d:.27,g:.025,kind:'glass',notes:[1,1.5,2],noise:.02},
- typing:{hz:1450,d:.020,g:.007,kind:'wood',noise:.3},
- code:{hz:1950,d:.023,g:.007,kind:'wood',noise:.38},
+ typing:{hz:1450,d:.020,g:.028,kind:'wood',noise:.3},
+ code:{hz:1950,d:.023,g:.025,kind:'wood',noise:.38},
  send:{hz:480,d:.19,g:.025,kind:'glass',end:2,noise:.18},
  sweep:{hz:300,d:.24,g:.017,kind:'air',end:2.2,noise:1},
  dot:{hz:390,d:.13,g:.020,kind:'wood',end:1.2,noise:.14},
  hat:{hz:1050,d:.18,g:.017,kind:'air',noise:.7},
  turn:{hz:700,d:.21,g:.017,kind:'air',noise:.8},
  land:{hz:130,d:.13,g:.028,kind:'wood',noise:.3},
- scrub:{hz:1150,d:.025,g:.008,kind:'wood',noise:.28},
+ scrub:{hz:1150,d:.025,g:.026,kind:'wood',noise:.28},
  reset:{hz:610,d:.13,g:.018,kind:'glass',end:.72,noise:.1},
  attach:{hz:820,d:.12,g:.019,kind:'glass',notes:[1,1.25],noise:.08}
 };
@@ -48,25 +50,28 @@ export function scheduleCue(context,output,type,{at=context.currentTime+.003,int
  if(spec.noise){const source=context.createBufferSource(),filter=context.createBiquadFilter();source.buffer=noiseBuffer(context);filter.type='bandpass';filter.frequency.value=spec.kind==='wood'?2200:spec.hz*pitch;filter.Q.value=spec.kind==='air'?.65:1.1;source.connect(filter);const gain=context.createGain();gain.gain.setValueAtTime(.00001,at);gain.gain.exponentialRampToValueAtTime(Math.max(.00002,level*spec.noise),at+.006);gain.gain.exponentialRampToValueAtTime(.00001,at+spec.d);filter.connect(gain).connect(bus);left++;source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();disconnect();};source.start(at,.17);source.stop(at+spec.d+.025);nodes.push(source);}
  return{nodes,end:at+spec.d+(notes.length-1)*.035+.025,stop(){for(const n of nodes)try{n.stop(context.currentTime+.01);}catch{}}};
 }
-export function createSound(){
- let context,mix,limiter,fxBus,musicBus,recording,muted=false,hold=null,particles=null,lastCode=-1,lastTyping=-1,particleBucket=-1,active=0,unlockAt=-Infinity,lastStage=null;
+export function createSound({volume=.8}={}){
+ let context,mix,limiter,fxBus,musicBus,recording,muted=false,hold=null,particles=null,lastCode=-1,lastTyping=-1,particleBucket=-1,active=0,unlockAt=-Infinity,lastStage=null,effectVolume=Math.max(0,Math.min(1,volume));
+ const EFFECTS_GAIN=6;
  const counters={},events=[],last=new Map(),queued=[];let playedAt=-Infinity;
  const record=(type,detail={})=>{counters[type]=(counters[type]||0)+1;events.push({type,at:performance.now(),...detail});if(events.length>240)events.shift();};
  function ensureContext(){
   if(context)return context;
   context=new (globalThis.AudioContext||globalThis.webkitAudioContext)({sampleRate:48000,latencyHint:'interactive'});
-  mix=context.createGain();limiter=context.createDynamicsCompressor();fxBus=context.createGain();musicBus=context.createGain();fxBus.gain.value=.75;
+  mix=context.createGain();limiter=context.createDynamicsCompressor();fxBus=context.createGain();musicBus=context.createGain();fxBus.gain.value=muted?0:effectVolume*EFFECTS_GAIN;
   limiter.threshold.value=-9;limiter.knee.value=10;limiter.ratio.value=4;limiter.attack.value=.003;limiter.release.value=.12;
   fxBus.connect(mix);musicBus.connect(mix);mix.connect(limiter).connect(context.destination);
   context.addEventListener('statechange',()=>{if(context.state==='running'){for(const item of queued.splice(0))if(performance.now()-item.at<350)play(item.type,item.options);}});
   return context;
  }
  function unlock(){try{const ctx=ensureContext();unlockAt=performance.now();ctx.resume().catch(()=>{});return ctx.state==='running';}catch{return false;}}
+ function duckMusic(level=.38,restore=true,holdFor=.15){if(!context||effectVolume<=0||muted)return;const at=context.currentTime,target=hold?.25:particles?.42:level;musicBus.gain.cancelAndHoldAtTime(at);musicBus.gain.linearRampToValueAtTime(target,at+.012);if(restore&&!hold&&!particles)musicBus.gain.setTargetAtTime(1,at+holdFor,.08);}
+ function releaseMusic(){if(!context||hold||particles)return;const at=context.currentTime;musicBus.gain.cancelAndHoldAtTime(at);musicBus.gain.setTargetAtTime(1,at,.065);}
  function play(type,options={}){
-  if(muted)return false;const now=performance.now(),ctx=ensureContext();
+  if(muted||effectVolume<=0)return false;const now=performance.now(),ctx=ensureContext();
   if(ctx.state!=='running'){if(now-unlockAt<350&&queued.length<4)queued.push({type,options,at:now});return false;}
   const interval=options.cooldown??({hover:70,typing:45,code:55,particle:105,settle:100,scrub:90,contact:70,dot:180}[type]??35),key=options.key||type;
-  if(now-(last.get(key)??-Infinity)<interval||active>=12)return false;last.set(key,now);active++;playedAt=now;record(type,{intensity:options.intensity??1});
+  if(now-(last.get(key)??-Infinity)<interval||(active>=12&&type!=='win'))return false;last.set(key,now);active++;playedAt=now;record(type,{intensity:options.intensity??1});if(options.duck!==false){const cue=CUES[type]||CUES.click;duckMusic(.38,true,cue.d+((cue.notes?.length||1)-1)*.035+.03);}
   scheduleCue(ctx,fxBus,type,{...options,onEnded:()=>active=Math.max(0,active-1)});return true;
  }
  function continuous(kind){
@@ -75,26 +80,28 @@ export function createSound(){
   record(kind+'-start');return{source,filter,gain,o,tonal,stop(){const at=ctx.currentTime;for(const g of[gain,tonal])if(g){g.gain.cancelAndHoldAtTime(at);g.gain.setTargetAtTime(.00001,at,.025);}source.stop(at+.16);o?.stop(at+.16);source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();o?.disconnect();tonal?.disconnect();};record(kind+'-end');}};
  }
  function updateHold(progress,pressed){
-  if(!pressed||muted){if(hold){hold.stop();hold=null;}return;}
-  if(!hold)hold=continuous('hold');const at=context.currentTime,p=Math.max(0,Math.min(1,progress));hold.filter.frequency.setTargetAtTime(450+p*1500,at,.025);hold.gain.gain.setTargetAtTime(.008+p*.012,at,.025);hold.o.frequency.setTargetAtTime(150+p*p*420,at,.025);hold.tonal.gain.setTargetAtTime(.007+p*.009,at,.025);
+  if(!pressed||muted||effectVolume<=0){if(hold){hold.stop();hold=null;releaseMusic();}return;}
+  if(!hold){hold=continuous('hold');duckMusic(.25,false);}const at=context.currentTime,p=Math.max(0,Math.min(1,progress));hold.filter.frequency.setTargetAtTime(260+Math.pow(p,1.6)*3340,at,.02);hold.gain.gain.setTargetAtTime(.0008+Math.pow(p,2.7)*.0592,at,.02);hold.o.frequency.setTargetAtTime(90+Math.pow(p,2.1)*650,at,.02);hold.tonal.gain.setTargetAtTime(.0008+Math.pow(p,2.4)*.026,at,.02);
  }
  function particleMotion(state){
-  if(muted||!state)return;const t=state.time||0;if(!particles){particles=continuous('particles');particleBucket=-1;}
+  if(muted||effectVolume<=0||!state)return;const t=state.time||0;if(!particles){particles=continuous('particles');particleBucket=-1;duckMusic(.42,false);}
   const at=context.currentTime,settled=(state.settled||0)/Math.max(1,state.count),moving=Math.min(1,(state.maxSpeed||0)/8);
-  particles.filter.frequency.setTargetAtTime(700+Math.sin(Math.min(1,t/6)*Math.PI)*2200,at,.07);particles.gain.gain.setTargetAtTime(.012*moving*(1-settled)+.001,at,.07);
-  if(t>.15&&settled<.95)play('particle',{pitch:1+(Math.floor(t*7)%7)*.07,intensity:.45+.35*moving});
+  const build=Math.min(1,t/5.5);particles.filter.frequency.setTargetAtTime(700+Math.sin(Math.min(1,t/6)*Math.PI)*2200,at,.07);particles.gain.gain.setTargetAtTime((.003+.024*Math.pow(build,1.6))*(.2+.8*moving)*(1-settled)+.0003,at,.06);
+  if(t>.15&&settled<.95)play('particle',{pitch:1+(Math.floor(t*7)%7)*.07,intensity:.6+.4*build});
   const bucket=Math.floor(settled*8);if(bucket>particleBucket&&bucket>0){particleBucket=bucket;play('settle',{pitch:.8+bucket*.1});}
  }
- function stopParticles(){if(particles){particles.stop();particles=null;}}
+ function stopParticles(){if(particles){particles.stop();particles=null;releaseMusic();}}
+ function levelWin(chapter){const pitch=[1,1.122462,1.259921,1.33484,1.498307][chapter]||1;if(play('win',{pitch,key:'level-win-'+chapter,cooldown:800,at:ensureContext().currentTime+.06}))record('level-win',{chapter});}
+ function setVolume(value){effectVolume=Math.max(0,Math.min(1,Number(value)||0));if(fxBus){const at=context.currentTime;fxBus.gain.cancelAndHoldAtTime(at);fxBus.gain.linearRampToValueAtTime(muted?0:effectVolume*EFFECTS_GAIN,at+.04);}if(effectVolume===0){updateHold(0,false);stopParticles();}}
  function codeTick(age){const key=Math.floor(age*11);if(key!==lastCode){lastCode=key;play('code',{pitch:.9+(key%5)*.06});}}
  function typing(count){if(count!==lastTyping){if(count>lastTyping&&count>0)play('typing',{pitch:.92+(count%4)*.06});lastTyping=count;}}
  function dotAction(action){if(!action||action.id==='idle')return;const id=action.id||'';if(action.edge==='end'){if(/response|dash|dodge|celebrate|happy/.test(id))play('land',{intensity:action.reason==='ambient'?.35:.55});return;}const type=/hat|shy|bow/.test(id)?'hat':/orbit|dash|dodge|turn|sway/.test(id)?'turn':'dot';play(type,{intensity:action.reason==='ambient'?.45:.85,pitch:.9+(id.length%5)*.06});}
  function stageMotion(time,playing){if(!playing){lastStage=time;return;}if(lastStage===null||Math.abs(time-lastStage)>.3){lastStage=time;return;}for(const[t,type]of[[.8,'turn'],[2.1,'hat'],[14.85,'hat'],[15.3,'particle'],[18.2,'turn']])if(lastStage<t&&time>=t)play(type,{intensity:.45});lastStage=time;}
- return{ensureContext,unlock,play,updateHold,particleMotion,stopParticles,codeTick,typing,dotAction,stageMotion,
+ return{ensureContext,unlock,play,updateHold,particleMotion,stopParticles,codeTick,typing,dotAction,stageMotion,levelWin,setVolume,
   get context(){return context;},get musicBus(){ensureContext();return musicBus;},get playedAt(){return playedAt;},
   getMixStream(){ensureContext();if(!recording){recording=context.createMediaStreamDestination();limiter.connect(recording);}return recording.stream;},
-  setMuted(value){muted=!!value;if(fxBus){const at=context.currentTime;fxBus.gain.cancelAndHoldAtTime(at);fxBus.gain.linearRampToValueAtTime(muted?0:.75,at+.04);}if(muted){updateHold(0,false);stopParticles();}},
-  snapshot:()=>({contextState:context?.state||'uncreated',muted,active,hold:!!hold,particles:!!particles,counters:{...counters},events:[...events]})
+  setMuted(value){muted=!!value;if(fxBus){const at=context.currentTime;fxBus.gain.cancelAndHoldAtTime(at);fxBus.gain.linearRampToValueAtTime(muted?0:effectVolume*EFFECTS_GAIN,at+.04);}if(muted){updateHold(0,false);stopParticles();}},
+  snapshot:()=>({contextState:context?.state||'uncreated',muted,volume:effectVolume,effectsGain:fxBus?.gain.value||0,musicDuckGain:musicBus?.gain.value??1,active,hold:!!hold,particles:!!particles,holdGain:hold?.gain.gain.value||0,holdToneGain:hold?.tonal.gain.value||0,counters:{...counters},events:[...events]})
  };
 }
 export function bindUiSound(sound,{root=document}={}){
@@ -103,7 +110,7 @@ export function bindUiSound(sound,{root=document}={}){
  root.addEventListener('pointerover',e=>{const el=element(e.target);if(!el||el.disabled||el.contains(e.relatedTarget)||e.pointerType==='touch')return;sound.play('hover',{key:'ui-hover',intensity:.8});},options);
  root.addEventListener('focusin',e=>{if(element(e.target))sound.play('hover',{key:'ui-hover',intensity:.7});},options);
  root.addEventListener('click',e=>{const el=element(e.target);if(!el||el.disabled||performance.now()-sound.playedAt<25)return;const id=el.id||'',type=/close|back-start/.test(id)?'close':/reset/.test(id)?'reset':/sound|bgm|quality/.test(id)?'toggle':/help|bubble/.test(id)?'help':/file/.test(id)?'attach':'click';sound.play(type);},options);
- root.addEventListener('input',e=>{if(e.target.matches?.('input[type="range"]'))sound.play('scrub');},options);
+ root.addEventListener('input',e=>{if(e.target.matches?.('input[type="range"]'))sound.play('scrub',{duck:e.target.dataset.audioChannel!=='bgm',intensity:e.target.dataset.audioChannel==='bgm'?.3:1});},options);
  root.addEventListener('change',e=>{if(e.target.matches?.('select,input[type="number"],input[type="file"]'))sound.play(e.target.type==='file'?'attach':'select');},options);
  root.addEventListener('selectionchange',()=>{const s=root.getSelection?.()||globalThis.getSelection?.(),value=s?.isCollapsed?'':s?.toString();if(value&&value!==selection)sound.play('select',{cooldown:85});selection=value||'';},options);
  return()=>abort.abort();

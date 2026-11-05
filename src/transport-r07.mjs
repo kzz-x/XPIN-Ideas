@@ -28,7 +28,7 @@ export class PresentationTransport{
   get revealProgress(){return this.stageRevealComplete?1:Math.max(0,Math.min(1,(this.absolute-CONFIG.film.stageAt)/CONFIG.film.stageReveal));}
   record(event,data={}){this.events.push({event,at:performance.now(),generation:this.generation,...data});if(this.events.length>200)this.events.shift();}
   invalidate(reason){this.generation++;this.awaitingPlay=null;if(this.pendingSeek)this.pendingSeek.generation=this.generation;this.record(reason);return this.generation;}
-  restoreVolumes(){this.video.volume=CONFIG.stage.musicGain;this.audio.volume=CONFIG.stage.impactGain;this.video.muted=this.audio.muted=this.muted;}
+  restoreVolumes(){const volume=Math.max(0,Math.min(1,this.callbacks.getVideoVolume?.()??CONFIG.stage.musicGain)),quiet=!!this.unlockPromise&&!this.started;this.video.volume=quiet?0:volume;this.audio.volume=quiet?0:Math.min(1,volume*CONFIG.stage.impactGain/CONFIG.stage.musicGain);this.video.muted=this.audio.muted=this.muted;}
   setPhase(next,detail={}){const old=this.phase;this.phase=next;if(old===next)return;if(next==='stage')this.callbacks.onStage?.(detail);if(next==='film')this.callbacks.onFilm?.(detail);}
   setVideoTime(requested){this.pendingSeek={requested,target:Math.min(Math.max(0,this.filmDuration-.001),requested),generation:this.generation};this.applySeek();}
   applySeek(){const p=this.pendingSeek;if(!p||this.video.readyState<1||p.generation!==this.generation)return;p.target=Math.min(Math.max(0,this.filmDuration-.001),p.requested);try{if(!this.video.seeking&&Math.abs(this.video.currentTime-this.offset-p.target)<.001){this.pendingSeek=null;return;}this.video.currentTime=p.target+this.offset;this.settleSeek();}catch{}}
@@ -44,7 +44,7 @@ export class PresentationTransport{
     this.unlockPromise=Promise.all([this.video,this.audio].map(async element=>{
       const t=element.currentTime||0;element.volume=0;try{await element.play();}catch{}
       if(this.generation!==generation||this.started)return;element.pause();try{element.currentTime=t;}catch{}this.restoreVolumes();
-    })).finally(()=>{this.unlockPromise=null;});return this.unlockPromise;
+    })).finally(()=>{this.unlockPromise=null;this.restoreVolumes();});return this.unlockPromise;
   }
   start(at=0){this.invalidate('start');this.waitingAt=null;this.scrub=null;this.previewStage=false;this.absolute=Math.max(0,at);this.stageRevealComplete=false;this.video.pause();this.audio.pause();this.started=true;this.playing=true;this.restoreVolumes();this.phase='film';this.setVideoTime(this.absolute);this.callbacks.onFilm?.({reason:'start'});return this.playSource();}
   pause(){this.invalidate('pause');this.playing=false;if(this.scrub)this.scrub.wasPlaying=false;this.video.pause();this.audio.pause();}
