@@ -219,11 +219,11 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     pointer.set(e.clientX/innerWidth*2-1,1-e.clientY/innerHeight*2);raycaster.setFromCamera(pointer,camera);
     const meshes=titles.filter(r=>r.title.visible).flatMap(r=>r.letters.map(l=>l.mesh));
     const hit=raycaster.intersectObjects(meshes,false)[0];
-    if(hit){const record=titles.find(r=>r.letters.some(l=>l.mesh===hit.object));if(hoveredTitle!==hit.object&&!reduced)record.trigger(hit.object,animationTime);hoveredTitle=hit.object;}else hoveredTitle=null;
+    if(hit){const record=titles.find(r=>r.letters.some(l=>l.mesh===hit.object));if(hoveredTitle!==hit.object){onSound('select');if(!reduced)record.trigger(hit.object,animationTime);}hoveredTitle=hit.object;}else hoveredTitle=null;
     const candidates=industrials.filter(i=>i.group.visible),h=raycaster.intersectObjects(candidates.map(i=>i.group.children.find(o=>o.isMesh)),false)[0];
-    hoveredIndustrial=h?candidates.find(i=>i.group===h.object.parent):null;for(const i of industrials)i.hoverGoal=i===hoveredIndustrial?1:0;
+    const previousIndustrial=hoveredIndustrial;hoveredIndustrial=h?candidates.find(i=>i.group===h.object.parent):null;if(hoveredIndustrial&&hoveredIndustrial!==previousIndustrial)onSound('hover');for(const i of industrials)i.hoverGoal=i===hoveredIndustrial?1:0;
     const rh=raycaster.intersectObjects(resources.filter(r=>r.group.parent.visible).map(r=>r.group),true)[0];
-    hoveredResource=rh?resources.find(r=>{for(let o=rh.object;o;o=o.parent)if(o===r.group)return true;return false;}):null;
+    const previousResource=hoveredResource;hoveredResource=rh?resources.find(r=>{for(let o=rh.object;o;o=o.parent)if(o===r.group)return true;return false;}):null;if(hoveredResource&&hoveredResource!==previousResource)onSound('hover');
     {const ch=raycaster.intersectObjects(cards.filter(c=>!c.isResource&&c.group.visible).map(c=>c.group.children.find(o=>o.isMesh)),false)[0];hover=ch?cards.find(c=>c.group===ch.object.parent):null;}
   }
   // Read-only projection evidence for layout QA. No render-time collision tricks:

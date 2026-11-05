@@ -4,10 +4,10 @@ const durations=Object.fromEntries(ACTIONS.map(a=>[a.id,a.duration]));durations.
 const ambient=['sway','look','curious','greet','inspect','happy','orbit','discover'];
 const hover=['attention','curious','greet','shy'];
 const clicks=['response','celebrate','discover','greet','happy','beckon','dodge','dash'];
-export function createCompanionActions(rig){
+export function createCompanionActions(rig,{onAction=()=>{},onEnd=()=>{}}={}){
   let current=null,now=0,nextAmbient=5,ambientIndex=0,hoverIndex=0,clickIndex=0,lastHover=-10;
   const events=[];
-  function start(id,reason){current={id,reason,start:now,duration:durations[id]||3};events.push({...current});if(events.length>32)events.shift();return id;}
+  function start(id,reason){current={id,reason,start:now,duration:durations[id]||3};events.push({...current});if(events.length>32)events.shift();onAction({...current});return id;}
   function trigger(reason='click',id){
     if(reason==='hover'){if(now-lastHover<2.5||current?.reason==='click')return null;lastHover=now;}
     if(current&&reason==='ambient')return null;
@@ -15,7 +15,7 @@ export function createCompanionActions(rig){
   }
   function sample(time){
     now=time;
-    if(current&&time-current.start>=current.duration){current=null;nextAmbient=time+3.4+(ambientIndex%3)*.7;}
+    if(current&&time-current.start>=current.duration){onEnd({...current});current=null;nextAmbient=time+3.4+(ambientIndex%3)*.7;}
     if(!current&&time>=nextAmbient)start(ambient[ambientIndex++%ambient.length],'ambient');
     const id=current?.id||'idle',local=current?Math.max(0,time-current.start):time*.9;
     const frame=rig.capturePose(id,local),motion=sampleMotion(id==='response'?'idle':id,local);

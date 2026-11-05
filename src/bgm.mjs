@@ -1,5 +1,5 @@
 // Lossless, sample-clock loop. No ended-event or animation-frame rescheduling.
-export const BGM_STORAGE='linggan-bgm-r09';
+export const BGM_STORAGE='linggan-bgm-r13';
 export function joinIntroLoop(context,intro,loop){
   const buffer=context.createBuffer(intro.numberOfChannels,intro.length+loop.length,intro.sampleRate);
   for(let c=0;c<buffer.numberOfChannels;c++){buffer.getChannelData(c).set(intro.getChannelData(c));buffer.getChannelData(c).set(loop.getChannelData(c),intro.length);}

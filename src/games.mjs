@@ -365,9 +365,9 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
       say('info','先把影片、互动场景和工程盒放好，最后再盖章。');return;
     }
     if(hit.kind==='product'){
-      drag={id:e.pointerId,kind:'product',startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,hit};
+      onFeedback({type:state.product===3?'metal':'contact',intensity:.65});drag={id:e.pointerId,kind:'product',startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,hit};
     }else if(hit.kind==='cube'){
-      drag={id:e.pointerId,kind:'cube',x:e.clientX,y:e.clientY};
+      onFeedback({type:'pickup',intensity:.7});drag={id:e.pointerId,kind:'cube',x:e.clientX,y:e.clientY};
     }else if(hit.kind==='scene-preview'){
       drag={id:e.pointerId,kind:'scene-preview',x:e.clientX,y:e.clientY};
     }else{
@@ -386,12 +386,12 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
   function pointerMove(e){
     if(!drag){
       const hit=pick(e),hover=hit?.piece||hit?.kind||null;
-      if(hover!==lastHover){lastHover=hover;canvas.style.cursor=hit?.kind==='locked'?'not-allowed':hit?.kind==='product'?'pointer':hit?'grab':'';}
+      if(hover!==lastHover){if(hover)onFeedback({type:'hover',intensity:.7});lastHover=hover;canvas.style.cursor=hit?.kind==='locked'?'not-allowed':hit?.kind==='product'?'pointer':hit?'grab':'';}
       return;
     }
     if(e.pointerId!==drag.id)return;e.preventDefault();e.stopImmediatePropagation();
     const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
-    if(drag.kind==='cube')cube.turn(dx,dy);
+    if(drag.kind==='cube'){cube.turn(dx,dy);if(Math.abs(dx)+Math.abs(dy)>1)onFeedback({type:'scrub',intensity:.65});}
     if(drag.kind==='scene-preview')scenePiece.extras.mini.rotation.y+=dx*.012;
     if(drag.kind==='piece'){
       setRay(e);const point=raycaster.ray.intersectPlane(drag.plane,V());
@@ -404,7 +404,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
     const d=drag;drag=null;
     if(canvas.hasPointerCapture?.(d.id))canvas.releasePointerCapture(d.id);canvas.style.cursor='';
     onInteractionLock(false);const cancelled=e.type!=='pointerup';
-    if(d.kind==='cube'){cube.release();return;}
+    if(d.kind==='cube'){cube.release();onFeedback({type:'contact',intensity:.6});return;}
     if(d.kind==='piece'){
       d.piece.body.material.emissive?.set(0);setRay(e);const slot=cancelled?null:nearestSlot(e),result=validateDrop(active,d.piece.id,slot?.id,state);
       if(result==='correct'){
@@ -461,7 +461,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
         const drop=ease((u-.60)/.40);p.root.position.y=a.end.y+.50*(1-drop);p.root.position.x=T.MathUtils.lerp(a.start.x,a.end.x,ease(u/.65));p.root.position.z=T.MathUtils.lerp(a.start.z,a.end.z,ease(u/.65));
       }else p.root.position.y+=Math.sin(Math.PI*s)*(a.correct?.38:.52);
       p.root.quaternion.slerpQuaternions(a.q0,a.q1,s);
-      if(u===1){animations.splice(i,1);p.root.position.copy(a.end);if(a.correct)mark(p.chapter,idsFor(p.chapter).indexOf(p.id),a.assisted);a.onFinish?.();}
+      if(u===1){animations.splice(i,1);p.root.position.copy(a.end);onFeedback({type:p.id==='stamp'?'stamp':'contact',intensity:a.correct?.65:.45});if(a.correct)mark(p.chapter,idsFor(p.chapter).indexOf(p.id),a.assisted);a.onFinish?.();}
     }
     for(const path of paths){
       path.progress=T.MathUtils.damp(path.progress,path.target,4.2,dt);const count=Math.floor(path.progress*73);path.lit.geometry.setDrawRange(0,count);

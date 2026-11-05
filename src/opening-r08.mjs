@@ -5,7 +5,7 @@ import {createOpeningGrid} from './opening-grid.mjs';
 import {frostedGlass,glassEnvironment} from './frosted-glass.mjs';
 export const OPENING_TIMING=Object.freeze({morph:6.1,portalRevealStart:0,portalRevealDuration:0});
 const BACKGROUND='#08142f',TITLE='想法先行';
-export async function createOpening({canvas}){
+export async function createOpening({canvas,onInteract=()=>{}}){
  const scene=new T.Scene();scene.background=new T.Color(BACKGROUND);glassEnvironment(scene);
  const camera=new T.PerspectiveCamera(38,16/9,.1,120);camera.position.set(0,.4,22);camera.lookAt(0,0,0);camera.updateMatrixWorld();
  const [data,asciiData]=await Promise.all(['title-glyphs.json','ascii-outlines.json'].map(name=>fetch(new URL('../assets/type/'+name,import.meta.url)).then(r=>r.json())));
@@ -25,7 +25,7 @@ export async function createOpening({canvas}){
  window.addEventListener('pointermove',move,{passive:true});
  function update({time=0,dt=1/60,phase:next='intro',phaseTime=0,holdProgress=0}){
   phase=next;lastTime=time;if(next==='intro'&&previousPhase!==next){for(const g of glyphs){g.angle=g.velocity=g.goal=0;g.placement.rotation.set(0,0,0);}previousHover=-1;}
-  hovered=-1;if(next==='intro'&&holdProgress<.1){scene.updateMatrixWorld(true);ray.setFromCamera(pointer,camera);hovered=ray.intersectObjects(meshes,false)[0]?.object.userData.glyphIndex??-1;if(hovered>=0&&hovered!==previousHover&&time-glyphs[hovered].lastKick>2.1){const g=glyphs[hovered],direction=pointerDX<0?-1:1;g.goal+=direction*Math.PI*2;g.velocity+=direction*(1.6+Math.min(3,Math.abs(pointerDX)*.05));g.turns++;g.lastKick=time;}previousHover=hovered;}
+  hovered=-1;if(next==='intro'&&holdProgress<.1){scene.updateMatrixWorld(true);ray.setFromCamera(pointer,camera);hovered=ray.intersectObjects(meshes,false)[0]?.object.userData.glyphIndex??-1;if(hovered>=0&&hovered!==previousHover&&time-glyphs[hovered].lastKick>2.1){const g=glyphs[hovered],direction=pointerDX<0?-1:1;g.goal+=direction*Math.PI*2;g.velocity+=direction*(1.6+Math.min(3,Math.abs(pointerDX)*.05));g.turns++;g.lastKick=time;onInteract({type:'title',index:hovered});}previousHover=hovered;}
   if(next==='intro')for(const g of glyphs){const sub=Math.min(.05,dt)/3;for(let i=0;i<3;i++){g.velocity+=(g.goal-g.angle)*25*sub;g.velocity*=Math.exp(-5.8*sub);g.angle+=g.velocity*sub;}g.placement.rotation.y=g.angle;g.placement.rotation.z=Math.sin(g.angle)*.025;}
   const state=flow.update({phase:next,dt});const physicalTime=state?.time||0;
   group.visible=next==='intro'||(next==='morph'&&physicalTime<1.6);for(const g of glyphs)g.release.value=next==='morph'?(physicalTime-.12-g.index*.035)/1.05:-1;

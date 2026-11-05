@@ -4,14 +4,14 @@ import {createR03Stage} from './stage-r03.mjs';
 import {createCompanionActions} from './companion-actions.mjs';
 
 const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),sat=x=>T.MathUtils.clamp(x,0,1),ease=x=>{x=sat(x);return x*x*x*(10+x*(-15+6*x));};
-export async function createDotStage({scene,camera,rig:sharedRig=null,stageRenderer=null,film=document.querySelector('#film'),isPlaying=()=>false}={}){
+export async function createDotStage({scene,camera,rig:sharedRig=null,stageRenderer=null,film=document.querySelector('#film'),isPlaying=()=>false,onAction=()=>{}}={}){
   const trace=(label)=>{const runtime=window.__linggan?.runtime;if(runtime)(runtime.prepTrace??=[]).push({label,at:performance.now()});};trace('rig-start');
   const rig=sharedRig||await loadSharedDot({camera,scene,coordinates:'normalized',context:'stage',state:'trumpet',instrument:true});
   trace('rig-end');
   const nativeScale=rig.model.root.scale.x;
   rig.model.root.position.set(0,0,0);rig.model.root.scale.setScalar(1);
   trace('stage-start');
-  const source=await createR03Stage({rig,film,isPlaying,renderer:stageRenderer}),root=rig.root,actions=createCompanionActions(rig);
+  const source=await createR03Stage({rig,film,isPlaying,renderer:stageRenderer}),root=rig.root,actions=createCompanionActions(rig,{onAction:a=>onAction({...a,edge:'start'}),onEnd:a=>onAction({...a,edge:'end'})});
   trace('stage-end');
   const body=rig.native.body,bodyCentre=body.geometry.boundingBox.getCenter(V()),actorWorldPos=V(),position=V(),velocity=V(),target=V(),offset=V();
   const view=V(),right=V(),up=V(),ndc=V(),ray=new T.Raycaster(),mouse=new T.Vector2(),eyeBase=rig.model.eyeAdapter.frontTargets.map(v=>[...v]);
