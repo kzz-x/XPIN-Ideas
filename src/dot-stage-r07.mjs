@@ -2,6 +2,7 @@ import * as T from 'three';
 import {loadSharedDot,ACCEPTED_ID} from '../assets/dot/index.mjs';
 import {createR03Stage} from './stage-r03.mjs';
 import {createCompanionActions} from './companion-actions.mjs';
+import {CONFIG} from './config.mjs';
 
 const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),sat=x=>T.MathUtils.clamp(x,0,1),ease=x=>{x=sat(x);return x*x*x*(10+x*(-15+6*x));};
 export async function createDotStage({scene,camera,rig:sharedRig=null,stageRenderer=null,film=document.querySelector('#film'),isPlaying=()=>false,onAction=()=>{},deferStage=false}={}){
@@ -79,7 +80,7 @@ export async function createDotStage({scene,camera,rig:sharedRig=null,stageRende
     mode=next;
   }
   return{root,rig,actorWorldPos,guidance,prepareStage,get source(){return source;},get stageGroup(){return source?.stage.scene;},get stageCamera(){return source?.stage.camera;},get screen(){return source?.stage.screen;},get floor(){return source?.stage.floor;},update,
-    renderStage:()=>source?.render(1),beforeRender(){},preparePerformance:()=>({source:'R03',musicEnd:14.809,end:19.35}),
+    renderStage:()=>source?.render(1),beforeRender(){},preparePerformance:()=>({source:'R03',musicEnd:CONFIG.stage.performanceDuration,end:CONFIG.stage.end}),
     setReflectionEnabled:on=>source?.setQuality(on?'balanced':'low'),
     setAttention(point){if(point){attention.copy(point);attentionUntil=lastTime+4;actions.trigger('ambient','attention');}else attentionUntil=0;},
     pointer(x,y){pointer={x:x/innerWidth*2-1,y:1-y/innerHeight*2};},

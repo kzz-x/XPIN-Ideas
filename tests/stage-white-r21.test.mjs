@@ -12,11 +12,11 @@ class Media extends EventTarget{
   pause(){this.pauseCount++;this.paused=true;}
 }
 
-test('film-to-white is smooth, reversible, and remains pure white throughout the stage',()=>{
-  assert.equal(stageWhiteMix(-1),0);assert.equal(stageWhiteMix(0),0);assert.equal(stageWhiteMix(.625),.5);
-  for(const t of [1.25,2.1,10.35,15.7,19.35])assert.equal(stageWhiteMix(t),1);
-  let previous=0;for(let i=0;i<=125;i++){const value=stageWhiteMix(i/100);assert.ok(value>=previous&&value<=1);previous=value;}
-  assert.equal(stageWhiteMix(.625),.5);
+test('film-to-white starts on Dot entry, takes two seconds, and reverses smoothly when seeking',()=>{
+  assert.equal(stageWhiteMix(-1),0);assert.equal(stageWhiteMix(1),0);assert.equal(stageWhiteMix(2),.5);
+  for(const t of [3,10.35,15.7,18.15])assert.equal(stageWhiteMix(t),1);
+  let previous=0;for(let i=0;i<=300;i++){const value=stageWhiteMix(i/100);assert.ok(value>=previous&&value<=1);previous=value;}
+  assert.equal(stageWhiteMix(2),.5);
 });
 
 test('impact never loads or plays through unlock, natural playback, seeks, resume, scrub and mute',async()=>{
@@ -28,7 +28,7 @@ test('impact never loads or plays through unlock, natural playback, seeks, resum
   transport.beginScrub();transport.previewScrub(47);transport.endScrub();await Promise.resolve();
   impact.dispatchEvent(new Event('loadedmetadata'));transport.setMuted(true);transport.setMuted(false);transport.restoreVolumes();
   assert.equal(impact.playCount,0);assert.equal(impact.paused,true);assert.equal(impact.volume,0);assert.ok(film.playCount>0);
-  assert.equal(transport.duration,55.35);transport.dispose();
+  assert.equal(transport.duration,54.15);transport.dispose();
 });
 
 test('stage screen owns no process video and does not interrupt the shared soundtrack',async()=>{

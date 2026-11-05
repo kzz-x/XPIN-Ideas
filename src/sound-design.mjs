@@ -99,7 +99,7 @@ export function createSound({volume=1}={}){
  function typing(count){if(count!==lastTyping){if(count>lastTyping&&count>0)play('typing',{pitch:.92+(count%4)*.06});lastTyping=count;}}
  function dotAction(action){if(!action||action.id==='idle')return;const id=action.id||'';if(action.edge==='end'){if(/response|dash|dodge|celebrate|happy/.test(id))play('land',{intensity:action.reason==='ambient'?.35:.55});return;}const type=/hat|shy|bow/.test(id)?'hat':/orbit|dash|dodge|turn|sway/.test(id)?'turn':'dot';play(type,{intensity:action.reason==='ambient'?.45:.85,pitch:.9+(id.length%5)*.06});}
  // Keep the approved stage particle accent at its r15 level, independent of the softer opening.
- function stageMotion(time,playing){if(!playing){lastStage=time;return;}if(lastStage===null||Math.abs(time-lastStage)>.3){lastStage=time;return;}for(const[t,type]of[[.8,'turn'],[2.1,'hat'],[14.85,'hat'],[15.3,'particle'],[18.2,'turn']])if(lastStage<t&&time>=t)play(type,{intensity:.45*(type==='particle'?dbToGain(-3):1),opening:false});lastStage=time;}
+ function stageMotion(time,playing){if(!playing){lastStage=time;return;}if(lastStage===null||Math.abs(time-lastStage)>.3){lastStage=time;return;}for(const[t,type]of[[.8,'turn'],[2.1,'hat'],[14.85,'hat'],[15.3,'particle'],[15.7,'turn']])if(lastStage<t&&time>=t)play(type,{intensity:.45*(type==='particle'?dbToGain(-3):1),opening:false});lastStage=time;}
  return{ensureContext,unlock,play,updateHold,particleMotion,stopParticles,codeTick,typing,dotAction,stageMotion,levelWin,setVolume,
   prepareOpening(){ensureContext();return Promise.all([glassOpening.load(),sandOpening.load()]);},
   get context(){return context;},get musicBus(){ensureContext();return musicBus;},get playedAt(){return playedAt;},

@@ -13,6 +13,8 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
   const objects=[],cards=[],industrials=[],resources=[],layoutLabels=[],layoutLines=[],titles=[];
   let resourceSeen={};try{resourceSeen=JSON.parse(localStorage.getItem('linggan-resource-seen-r09')||'{}');}catch{}
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let cardHints={};try{cardHints=JSON.parse(localStorage.getItem('linggan-card-hints-r22')||'{}');}catch{}
+  function learnCardHint(key){cardHints[key]=true;try{localStorage.setItem('linggan-card-hints-r22',JSON.stringify(cardHints));}catch{}}
   let animationTime=0,hoveredTitle=null,hoveredIndustrial=null,hoveredResource=null;
   const cardTilt=0,labelTilt=-Math.PI/4;
   function placeLabel(text,width,height,{x=0,y=.65,z=0,chapter=-1,kind='caption',...style}={}){
@@ -55,7 +57,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
   const readingLayer=document.createElement('div');readingLayer.id='reading-layer';Object.assign(readingLayer.style,{position:'fixed',inset:'0',zIndex:'6',pointerEvents:'none'});document.body.append(readingLayer);let readingCard=null;
   function surface(el){const wrapper=document.createElement('div');wrapper.className='spatial-surface';wrapper.append(el);return new CSS3DObject(wrapper);}
   function restoreReading(){if(!readingCard)return;const card=readingCard;card.css.element.append(card.el);for(const key of ['position','left','top','transform','transformOrigin'])card.el.style[key]='';readingCard=null;}
-  function syncReading(){if(!focus||!focusGoal||focusMix<1){restoreReading();return;}const card=focus,rect=card.css.element.getBoundingClientRect();if(readingCard!==card){restoreReading();readingCard=card;readingLayer.append(card.el);}Object.assign(card.el.style,{position:'absolute',left:rect.x+'px',top:rect.y+'px',transformOrigin:'0 0',transform:`scale(${rect.width/card.el.offsetWidth})`,pointerEvents:'auto'});}
+  function syncReading(){if(!focus||!focusGoal||focusMix<1){restoreReading();return;}const card=focus,rect=card.css.element.getBoundingClientRect();if(readingCard!==card){restoreReading();readingCard=card;readingLayer.append(card.el);}Object.assign(card.el.style,{position:'absolute',left:rect.x+'px',top:rect.y+'px',transformOrigin:'0 0',transform:`scale(${rect.width/card.el.offsetWidth})`,pointerEvents:'auto'});const detail=card.el.querySelector('.card-detail');card.el.classList.toggle('needs-scroll-hint',!cardHints.scrolled&&detail.scrollHeight>detail.clientHeight+15);}
   const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function open(card){
     if(focus)return;card.morph?.prepare();focus=card;focusGoal=1;focusAge=0;focusMix=0;
@@ -63,6 +65,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     card.el.classList.add('focused');document.body.classList.add('has-focus');
     if(card.isResource){const r=resources.find(r=>r.card===card);r.visited=true;resourceSeen[r.kind]=true;try{localStorage.setItem('linggan-resource-seen-r09',JSON.stringify(resourceSeen));}catch{}}
     else backdrop.classList.add('open');
+    if(!card.isResource){learnCardHint('opened');for(const c of cards)c.el.classList.remove('needs-open-hint');}
     onFocus(true);onSound('open');
   }
   function close(){if(!focus)return;focus.morph?.beginClose();restoreReading();focusGoal=0;backdrop.classList.remove('open');onSound('close');}
@@ -79,6 +82,9 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
   backdrop.addEventListener('click',()=>{if(backdropPressed)close();backdropPressed=false;});document.querySelector('#close-focus').addEventListener('click',close);window.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
   function detailHTML(c){const paragraphs=(c.body||[]).map(p=>`<p>${escape(p)}</p>`).join('');const comparison=c.id==='review-detail'?`<div class="comparison" style="--split:50%"><div class="compare-half before" style="background-image:url('${c.image}');background-position:left top"></div><div class="compare-half after" style="background-image:url('${c.image}');background-position:right top"></div><div class="compare-line"></div><input aria-label="拖动查看 v05 与 v06 B 候选的同坐标细节" type="range" min="0" max="100" value="50"></div><p class="source-note">拖动分界线：左为 v05，右为 v06 B 候选。取自原图同坐标裁切；右侧尚未标为通过。</p>`:`<figure><img src="${c.image}" alt="${escape(c.title)}"></figure>`;return `<div class="detail-label">${escape(c.subtitle||'CREATIVE ARCHIVE')} / 过程档案</div><h2>${escape(c.title)}</h2>${comparison}${paragraphs}${c.images?.length?`<div class="detail-gallery">${c.images.map((im,i)=>`<button data-image="${im}">画面 ${i+1}</button>`).join('')}</div>`:''}<p class="source-note">${escape(c.sourceNote||'真实历史过程素材；展示编排为当前候选，非最终观众文案。')}</p>`;}
   function makeCard(c,chapter,index){const el=document.createElement('article');el.className=`process-card ${index===0?'hero-card':'support-card'}`;el.style.setProperty('--chapter-color',palette[chapter]);el.style.setProperty('--card-surface',cardSurfaces[chapter]);el.setAttribute('aria-label',`打开过程卡片：${c.title}`);el.setAttribute('tabindex','0');el.dataset.cardId=c.id;el.innerHTML=`<div class="card-meta"><span>${String(chapter+1).padStart(2,'0')} / ${escape(c.subtitle||'PROCESS')}</span><span>↗</span></div><h2>${escape(c.title)}</h2><img class="card-image" src="${c.image}" alt="${escape(c.title)}" draggable="false"><div class="card-bottom"><span>过程档案 · 点击展开</span><span class="card-arrow">↗</span></div><div class="card-detail">${detailHTML(c)}</div>`;
+    if(index===0&&!cardHints.opened){el.classList.add('needs-open-hint');el.querySelector('.card-bottom span').textContent='点击展开 · 可滚动阅读';}
+    const readHint=document.createElement('span');readHint.className='card-read-hint';readHint.textContent='向下滚动阅读 ↓';el.append(readHint);
+    el.querySelector('.card-detail').addEventListener('scroll',e=>{if(e.target.scrollTop>20){learnCardHint('scrolled');el.classList.remove('needs-scroll-hint');}},{passive:true});
     const group=new T.Group(),size=index===0?9.4:5.35,scale=size/640;
     // CSS owns the one visible perimeter. The inset solid board supplies depth,
     // shadow and the same raycast target without a second bright raster edge.

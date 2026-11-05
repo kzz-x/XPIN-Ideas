@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {yieldTask} from './preparation.mjs';
 import {frostedGlass} from './frosted-glass.mjs';
+import {createFirstGameHints} from './first-game-hints.mjs';
 import {createWordCube} from './games-cube.mjs';
 import {createProductCarousel} from './games-products.mjs';
 import {orders} from './games-layout.mjs';
@@ -262,6 +263,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
 
   const guideLine=line([V(),V()],new T.LineBasicMaterial({color:0xcee7ff,transparent:true,opacity:.8}),scene);guideLine.visible=false;guideLine.renderOrder=30;
   const guideDot=new T.Mesh(new T.SphereGeometry(.065,10,8),new T.MeshBasicMaterial({color:0xe5f3ff,toneMapped:false}));scene.add(guideDot);guideDot.visible=false;
+  const firstHints=createFirstGameHints({scene,camera,cube,pieces,slots});
   let guideCurve=null,guideProgress=0;
 
   function say(type,text){onFeedback({type,text,chapter:active});}
@@ -432,7 +434,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
     if(e.key==='Escape'&&drag){cancelDrag();e.preventDefault();return;}
     if(e.key.toLowerCase()==='h'){help();e.preventDefault();}
     if(active===0&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
-      cube.turn(e.key==='ArrowLeft'?-24:e.key==='ArrowRight'?24:0,e.key==='ArrowUp'?-24:e.key==='ArrowDown'?24:0);cube.release();e.preventDefault();e.stopImmediatePropagation();
+      activity();cube.turn(e.key==='ArrowLeft'?-24:e.key==='ArrowRight'?24:0,e.key==='ArrowUp'?-24:e.key==='ArrowDown'?24:0);cube.release();e.preventDefault();e.stopImmediatePropagation();
     }
   },eventOptions);
   let auxiliaryNarrow=null;
@@ -453,6 +455,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
 
   function update(dt,absoluteTime){
     if(disposed)return;dt=Math.min(.05,Math.max(0,dt));time=absoluteTime??time+dt;
+    firstHints.update(time,active,state,!!drag||!!helpSequence);
     cube.update(dt,time,active===0);products.update(dt,time,active===3);
     for(let i=animations.length-1;i>=0;i--){
       const a=animations[i],u=Math.min(1,(a.age+=dt)/a.duration),s=ease(u),p=a.piece;
@@ -544,7 +547,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
     getState(){return structuredClone(state);},
     getTextAudit,
     getTargets(){return {chapter:active,pieces:pieces.filter(p=>p.chapter===active).map(p=>({id:p.id,title:p.title,...screenPoint(p.root),done:p.done,locked:p.locked})),slots:slots.filter(s=>s.chapter===active).map(s=>({id:s.id,...screenPoint(s.root),done:s.done})),cube:screenPoint(cube.root),fault:products.target()?screenPoint(products.target()):null};},
-    snapshot(){return {active,state:structuredClone(state),drag:drag?.kind||null,dragId:drag?.piece?.id||null,help:helpSequence?{chapter:helpSequence.chapter,index:helpSequence.index,age:helpSequence.age}:null,cube:cube.snapshot(),products:products.snapshot(),animations:animations.length};},
-    dispose(){disposed=true;cancelDrag();endHelp();abort.abort();products.dispose();for(const root of roots){root.removeFromParent();root.traverse(o=>{o.geometry?.dispose();for(const m of(Array.isArray(o.material)?o.material:o.material?[o.material]:[])){m.map?.dispose();m.dispose();}});}guideLine.removeFromParent();guideLine.geometry.dispose();guideLine.material.dispose();guideDot.removeFromParent();guideDot.geometry.dispose();guideDot.material.dispose();}
+    snapshot(){return {firstHints:firstHints.snapshot(),active,state:structuredClone(state),drag:drag?.kind||null,dragId:drag?.piece?.id||null,help:helpSequence?{chapter:helpSequence.chapter,index:helpSequence.index,age:helpSequence.age}:null,cube:cube.snapshot(),products:products.snapshot(),animations:animations.length};},
+    dispose(){firstHints.dispose();disposed=true;cancelDrag();endHelp();abort.abort();products.dispose();for(const root of roots){root.removeFromParent();root.traverse(o=>{o.geometry?.dispose();for(const m of(Array.isArray(o.material)?o.material:o.material?[o.material]:[])){m.map?.dispose();m.dispose();}});}guideLine.removeFromParent();guideLine.geometry.dispose();guideLine.material.dispose();guideDot.removeFromParent();guideDot.geometry.dispose();guideDot.material.dispose();}
   };
 }

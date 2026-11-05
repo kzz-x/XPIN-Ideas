@@ -4,7 +4,7 @@ function box(node,parent){let x=0,y=0,o=node;while(o&&o!==parent){x+=o.offsetLef
 // Only secondary text reveals after the card has risen; there is no content swap.
 export function createCardMorph(el){
   const preview=document.createElement('div');preview.className='card-preview';
-  for(const child of [...el.children])if(!child.classList.contains('card-detail'))preview.append(child);
+  for(const child of [...el.children])if(!child.classList.contains('card-detail')&&!child.classList.contains('card-read-hint'))preview.append(child);
   el.prepend(preview);const detail=el.querySelector('.card-detail');
   const image=preview.querySelector('.card-image'),heading=preview.querySelector('h2'),destination=detail.querySelector('figure img')||detail.querySelector('.comparison'),targetHeading=detail.querySelector('h2');
   const layer=document.createElement('div');layer.className='card-morph-layer';

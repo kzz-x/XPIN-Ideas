@@ -62,13 +62,14 @@ export function createParticleAssembly({scene,camera,glyphs,asciiData}){
   }solver.reset();baked=true;welded=false;refine=0;settledAt=null;document.body.style.setProperty('--assembly-detail','0');document.body.classList.remove('assembly-ready');
  }
  function matrices(){
-  const letters=new Array(CHARS.length).fill(0),time=solver.clock,gather=smooth((time-2.7)/2.1);
+  const letters=new Array(CHARS.length).fill(0),time=solver.clock,gather=smooth((time-2.7)/2.1),send=document.querySelector('#send').getBoundingClientRect(),projected=new T.Vector3();
   // All released bodies are extruded ASCII, including the final approach.
   // Physical integration finishes before the same-position optical refinement.
   for(let i=0;i<targets.length;i++){
    const t=targets[i],age=time-solver.release[i];if(age<0||refine>=1)continue;
    const index=Math.floor(random(i+721)*CHARS.length),batch=letterBatches[index];
    dummy.position.fromArray(solver.position,i*3);
+   if(refine>.2&&send.width>0){projected.copy(dummy.position).project(camera);const px=(projected.x*.5+.5)*innerWidth,py=(.5-projected.y*.5)*innerHeight;if(px>send.left-8&&px<send.right+8&&py>send.top-8&&py<send.bottom+8)continue;}
    euler.set(Math.sin(i)*age*.8,Math.cos(i*.7)*age,Math.sin(i*.3)*age*.4);
    q.setFromEuler(euler);dummy.quaternion.copy(q).slerp(camera.quaternion,gather);
    const size=T.MathUtils.lerp(.105+random(i+811)*.045,units(t.type===2?2.2:t.type===1?4.8:6.4),gather);

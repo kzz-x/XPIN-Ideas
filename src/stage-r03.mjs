@@ -17,9 +17,9 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
   configureAudioDuration(51.9833333333);
   const doc=makeDefaults(data.project);
   // Finish the same source pullback before the new, short scroll handoff.
-  SHOT.pullEnd=19.25;
+  SHOT.pullStart=SHOT.musicEnd+.12;SHOT.pullEnd=18.05;SHOT.speechStart=SHOT.musicEnd+.60;SHOT.speechEnd=SHOT.speechStart+3.4;
   doc.camera.dofStrength=.62;doc.camera.dofWidth=1.25;
-  Object.assign(doc.screen,{fadeStart:0,fadeDuration:1.25,whiteEnabled:true,whiteRadiance:1});
+  Object.assign(doc.screen,{fadeStart:1.0,fadeDuration:2,whiteEnabled:true,whiteRadiance:1});
   globalThis.DOT_STAGE_OPENING_SOURCE={kind:'video',status:'approved',label:'同源影片 · 共用解码帧',element:film,uri:film.currentSrc||film.src,inPoint:CONFIG.film.stageAt,fps:60};
   const dot=await loadDot({sharedRig:rig});
   const canvas=document.createElement('canvas');canvas.width=16;canvas.height=9;
@@ -82,7 +82,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
     stage.camera.updateProjectionMatrix();stage.camera.updateMatrixWorld(true);
     stage.focus.configure({enabled:doc.camera.dofEnabled&&time>2.3,distance:-framing.mouthWorld.clone().lerp(framing.actorWorld,.35).applyMatrix4(stage.camera.matrixWorldInverse).z,strength:.4,width:5});
     stage.updateLighting();
-    if(time<=0)dissolve.reset();const horn=dissolve.update(time);dot.horn.visible=time<SHOT.musicEnd+1.65;
+    if(time<=0)dissolve.reset();const horn=dissolve.update(time);dot.horn.visible=time<SHOT.musicEnd+.85;
     const fx=concert.update(time,{stageSettings:doc.stage,project:doc.project,actorWorld:framing.actorWorld});concert.game.visible=false;
     dot.finalizeEyes();lastState={time,screen,horn,fx,camera:stage.camera.position.toArray(),actorWorld:framing.actorWorld.toArray(),actions:dot.stageActionState};
     return lastState;

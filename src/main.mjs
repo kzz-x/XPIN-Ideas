@@ -4,6 +4,7 @@ import {createFilmMedia} from './film-media.mjs';
 import {createStreamingBgm} from './bgm-stream.mjs';
 import {createSound,bindUiSound} from './sound-design.mjs';
 import {createAudioMix,bindAudioMix} from './audio-mix.mjs';
+import {createBubbleEmphasis} from './bubble-emphasis.mjs';
 import {ListeningGate} from './listening-gate.mjs';
 import {createReturnVisit,ReturnHold} from './return-entry.mjs';
 import {COUNTS} from './games-rules.mjs';
@@ -51,6 +52,7 @@ const bgm=createStreamingBgm({getContext:()=>sound.ensureContext(),getOutput:()=
   $('bgm-volume').value=Math.round(s.volume*100);$('bgm-value').value=Math.round(s.volume*100)+'%';
   $('bgm-status').textContent=s.error?'音乐暂未载入':!s.enabled?'背景音乐已关闭 · 影片与互动音效不受影响':s.finished?'本次创作已通关 · 音乐已收尾':s.complete?'已通关 · 音乐将在乐句出口自然收尾':s.active&&!s.ready?'背景音乐正在载入':s.needsGesture?'点击任意位置启用音乐':s.active?(s.section==='opening'?'开场音乐 · 无损连续播放':'卷轴音乐 · 从头播放，通关前循环'):'影片与舞台期间停止背景音乐';
 }});
+const bubbleEmphasis=createBubbleEmphasis($('dot-bubble'),{onCue:()=>sound.play('select',{intensity:.32,cooldown:350})});
 const scrollPointer={x:0,y:0,dx:0,dy:0};
 function unlockAudio(e){if(e.target?.closest?.('#sound'))activateSoundOnly=!ui.muted&&sound.context?.state!=='running';sound.unlock();bgm.unlock();updateSoundButton();}
 window.addEventListener('pointerdown',unlockAudio,{capture:true});
@@ -78,14 +80,14 @@ function setPhase(phase){const priorPhase=ui.phase;ui.phase=phase;ui.phaseAt=tim
   if(scroll&&camera){camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.near=.05;camera.far=220;camera.updateProjectionMatrix();}
   display('intro-copy',intro);display('hold',intro,'flex');$('return-scroll').hidden=!(intro&&returnVisit.eligible);if(intro)requestAnimationFrame(placeReturnButton);display('portal',['morph','chat','launch','black','film','transition'].includes(phase));display('chat',['morph','chat'].includes(phase));display('code',phase==='launch');display('film',['film','transition'].includes(phase));display('film-badge',phase==='film');display('transport',watch,'flex');display('stage-caption',phase==='stage');$('skip-film').style.visibility=watch?'visible':'hidden';$('skip-film').disabled=!watch;$('skip-film').firstChild.textContent=phase==='stage'?'进入卷轴 ':'跳过影片 ';cinemaControls.reveal();$('handoff-white').style.opacity='0';display('chapters',scroll,'flex');display('scroll-footer',scroll,'flex');display('chapter-caption',scroll);display('dot-bubble',false);display('game-controls',false);display('scroll-cue',scroll&&ui.scroll<1);
   $('masthead').style.visibility=['black','listen','return-wait'].includes(phase)?'hidden':'visible';$('listening-overlay').classList.toggle('visible',phase==='listen');$('listening-overlay').setAttribute('aria-hidden',String(phase!=='listen'));$('blackout').style.opacity=phase==='black'?'1':'0';portal.style.opacity='1';$('portal-frame').style.opacity=phase==='film'?'0':'1';if(phase==='film'){$('film-badge').textContent=CONFIG.film.label;portal.style.boxShadow='none';}else portal.style.boxShadow='0 28px 80px #0006';
-  if(phase==='scroll'){bgm.enter({restart:true,section:'scroll'});updateCompletion();}else{space?.cancelFocus();if(['intro','morph','chat','launch','listen','black','film-wait','return-wait'].includes(phase)){const b=bgm.snapshot();if(!b.active||b.section!=='opening')bgm.enter({restart:true,section:'opening'});}else bgm.leave();}
+  if(phase==='scroll'){bgm.enter({restart:true,section:'scroll'});updateCompletion();}else{space?.cancelFocus();if(['intro','morph','chat','launch','return-wait'].includes(phase)){const b=bgm.snapshot();if(!b.active||b.section!=='opening')bgm.enter({restart:true,section:'opening'});}else bgm.leave();}
   if(phase!=='intro')sound.updateHold(0,false);if(phase==='morph')sound.play('charge');if(priorPhase==='morph'&&phase==='chat')sound.stopParticles();if(phase==='launch')sound.play('send');if(phase==='black')sound.play('sweep',{intensity:.6});if(phase==='departure')sound.play('turn',{intensity:.7});if(!['morph','chat'].includes(phase))sound.stopParticles();
-  if(phase==='scroll'){returnVisit.markScrollVisited();ui.target=ui.scroll=ui.scrollVelocity=0;ui.game=-1;ui.bubbleUntil=time+7;$('dot-bubble-text').textContent='你好，我是 Dot。我们把这次创作慢慢展开。';}
-  if(phase==='stage'){ui.scroll=ui.target=ui.scrollVelocity=0;}
+  if(phase==='scroll'){returnVisit.markScrollVisited();ui.target=ui.scroll=ui.scrollVelocity=0;ui.game=-1;setBubble('你好，我是 Dot。我们把这次创作慢慢展开。',7);}
+  if(phase==='stage'){ui.scroll=ui.target=ui.scrollVelocity=0;ui.stageGreeting=false;}
   if(phase==='black'){ui.blackAt=performance.now();ui.events.push({event:'pure-black-start',at:ui.blackAt});}
   if(!scroll){ui.target=0;games?.setActiveChapter(-1);}if(!movingIntro)ui.held=false;
 }
-function setBubble(text,duration=5){if(!text)return;$('dot-bubble-text').textContent=text;ui.bubbleUntil=time+duration;}
+function setBubble(text,duration=5){if(!text)return;bubbleEmphasis.announce();$('dot-bubble-text').textContent=text;ui.bubbleUntil=time+duration;}
 async function init(){
   renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;
   scene=new T.Scene();glassEnvironment(scene);scene.background=new T.Color('#0b0c0e');scene.fog=new T.Fog('#0b0c0e',48,100);camera=new T.PerspectiveCamera(innerWidth<700?48:42,innerWidth/innerHeight,.05,220);camera.position.set(3,18,22);camera.lookAt(0,0,-3);
@@ -103,7 +105,7 @@ async function init(){
   opening=await createOpening({canvas,onInteract:()=>sound.play('select',{pitch:.8,intensity:.75})});resize();bootProgress(.45,'正在准备字符与光影');bgm.enter({restart:true,section:'opening'});
   await Promise.all([fontsReady,chatPresentation.ready,sound.prepareOpening()]);portalLayout(0);await opening.prepare(renderer);bootProgress(.82,'正在准备第一帧');
   opening.update({time:0,dt:0,phase:'intro'});await warmScene(renderer,opening.scene,opening.camera);renderer.render(opening.scene,opening.camera);
-  window.__linggan={ui,bgm,sound,audioMix,listeningGate,returnVisit,returnHold,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,prepareScroll,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),audioMix:audioMix.snapshot(),listening:listeningGate.snapshot(),returnEntry:{...returnVisit.snapshot(),held:returnHold.held,holdProgress:returnHold.progress,busy:returnBusy},games:games?.snapshot()})};
+  window.__linggan={ui,bgm,sound,audioMix,listeningGate,returnVisit,returnHold,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,prepareScroll,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),bubble:bubbleEmphasis.snapshot(),audioMix:audioMix.snapshot(),listening:listeningGate.snapshot(),returnEntry:{...returnVisit.snapshot(),held:returnHold.held,holdProgress:returnHold.progress,busy:returnBusy},games:games?.snapshot()})};
   rigModule=await rigModuleJob;await stageModuleJob;bootProgress(.94,'正在准备连续画面');
   const {makeEnvironment}=await environmentModule;globalThis.DOT_PREWARM_ENVIRONMENT=makeEnvironment();
   stageRenderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});stageRenderer.outputColorSpace=T.SRGBColorSpace;stageRenderer.toneMapping=T.ACESFilmicToneMapping;
@@ -279,6 +281,9 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
       if(space)space.root.visible=false;for(const r of games?.roots||[])r.visible=false;
       dot.update({time,mode:'stage',stageTime:transport.visualStageTime,dt,pixelRatio:renderer.getPixelRatio()});sound.stageMotion(transport.visualStageTime,transport.playing);
       camera.copy(dot.stageCamera,false);camera.layers.set(0);look.copy(camera.position).add(camera.getWorldDirection(vec()).multiplyScalar(10));
+      const greeting=transport.visualStageTime>=CONFIG.stage.performanceDuration+.90;display('stage-caption',ui.phase==='stage'&&!greeting);
+      if(greeting&&!ui.stageGreeting){ui.stageGreeting=true;setBubble('你好呀~我叫Dot',4);}if(!greeting)ui.stageGreeting=false;
+      const greetingAt=project(dot.actorWorldPos.clone().add(vec(0,1.2,0)),camera);$('dot-bubble').style.left=clamp(greetingAt.x+45,25,innerWidth-260)+'px';$('dot-bubble').style.top=clamp(greetingAt.y-80,100,innerHeight-200)+'px';display('dot-bubble',greeting&&greetingAt.visible);
       const reveal=transport.revealProgress;portalLayout(age);portal.style.display=reveal<1?'block':'none';film.style.display='block';portal.style.opacity=String(1-smooth(reveal));
       $('handoff-white').style.opacity='0';css.domElement.style.visibility='hidden';
     }else if(ui.phase==='departure'){
@@ -295,10 +300,11 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
       for(let i=0;i<games.roots.length;i++)games.roots[i].visible=Math.abs(CONFIG.chapters[i].z+ui.scroll)<45;
       if(chapter!==lastChapter){lastChapter=chapter;if(chapter===5){dot.setAttention(null);setBubble('这次创作已经展开。下一次，换你的想法先行。',7);}document.querySelectorAll('#chapters button').forEach((b,i)=>b.classList.toggle('active',i===chapter));$('chapter-kicker').textContent=CHAPTERS[chapter]?.kicker||'06 / 留给下一次创作';$('chapter-title').textContent=CHAPTERS[chapter]?.title||'资源档案';$('chapter-description').textContent=CHAPTERS[chapter]?.description||'方法、工具与工程，都可以继续生长。';}
       display('scroll-cue',ui.scroll<1.2&&!ui.focusLock);display('chapter-caption',ui.scroll>1.2&&gameIndex<0&&!ui.focusLock&&chapter<5);display('game-controls',gameIndex>=0&&!ui.focusLock,'flex');$('game-instruction').textContent=gameIndex<0?'':['拖动旋转 · 清楚停留后自动收词','把步骤板拖入六个顺序槽','拖动工具，连接适合的用途','点击模型的问题区域','先安放三项成果，再拖动印章'][gameIndex];$('position-label').textContent=String(chapter+1).padStart(2,'0')+' / 06';$('scroll-progress').firstElementChild.style.width=(ui.scroll/CONFIG.scroll.max*100)+'%';
-      const body=dot.actorWorldPos.clone().add(vec(0,1.2,0));const screen=project(body,camera);const narrow=innerWidth<700;const bx=narrow?clamp(screen.x-115,55,innerWidth-185):clamp(screen.x-90,35,innerWidth-235),by=narrow?Math.max(90,innerHeight*.105):clamp(screen.y-85,90,innerHeight-180);ui.bubbleX=damp(ui.bubbleX,bx,8,dt);ui.bubbleY=damp(ui.bubbleY,by,8,dt);$('dot-bubble').style.left=ui.bubbleX+'px';$('dot-bubble').style.top=ui.bubbleY+'px';display('dot-bubble',screen.visible&&time<ui.bubbleUntil&&!ui.focusLock);
+      const body=dot.actorWorldPos.clone().add(vec(0,1.2,0));const screen=project(body,camera);const narrow=innerWidth<700;const bx=narrow?clamp(screen.x-115,55,innerWidth-205):clamp(screen.x-90,35,innerWidth-255),by=narrow?Math.max(90,innerHeight*.105):clamp(screen.y-85,90,innerHeight-180);ui.bubbleX=damp(ui.bubbleX,bx,8,dt);ui.bubbleY=damp(ui.bubbleY,by,8,dt);$('dot-bubble').style.left=ui.bubbleX+'px';$('dot-bubble').style.top=ui.bubbleY+'px';display('dot-bubble',screen.visible&&time<ui.bubbleUntil&&!ui.focusLock);
     }
     if(ui.phase==='stage'||ui.phase==='transition'){renderer.setClearColor('#000000',1);renderer.clear();dot.renderStage();}else{camera.lookAt(look);camera.updateMatrixWorld();key.position.set(-6,18,12-ui.scroll);keyTarget.position.set(0,0,-ui.scroll-3);quality.stabilizeShadow({phase:ui.phase});games.update(dt,time);dot.beforeRender(renderer);dotForeground.renderWorld(()=>renderer.render(scene,camera));css.render(scene,camera);space.syncReading();dotForeground.render();}
   }
+  bubbleEmphasis.update($('dot-bubble').style.display!=='none');
   if(['film','transition','stage'].includes(ui.phase)){seekControl.update();$('timecode').textContent=`${timeText(transport.currentTime)} / ${timeText(transport.duration)}`;$('play-pause').textContent=transport.playing?'Ⅱ':'▶';$('play-pause').setAttribute('aria-label',transport.playing?'暂停影片':'继续播放');$('transport-label').textContent=ui.phase==='transition'?'进入创作':ui.phase==='stage'?'Dot 舞台':'影片';}
   quality.sampleFrame({dt:rawDt,time:current,phase:ui.phase});lastPhase=ui.phase;renderedFrames++;requestAnimationFrame(frame);
 }

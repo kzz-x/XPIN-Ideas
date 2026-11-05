@@ -118,3 +118,10 @@ Three.js 使用 MIT 许可，IdeaSans / Noto 字体许可和角色来源随资�
 ## r10 验证入口
 
 `node --test tests/*.test.mjs`。新增影片自然入台、设置预览同起点、跨段寻址与音效主时钟回归。浏览器验证包含桌面与手机模拟、界面细节接续逐帧记录、方块四元数连续性、投影渐显和结尾回滚保留。加载时长是本机预览测量，不代表公网与实体手机速度。最新部署与画面证据见本轮交付记录。
+
+
+## r22 interaction cues and stage pacing
+
+Built on the other window's published r21 source (27c322f), preserving its shared film-to-white screen, disabled impact soundtrack, and existing public audience. The white fade starts as Dot enters the left edge at native stage 1.0 s and lasts 2.0 s. After the actual music end, horn retirement is complete within 0.8 s, attention/speech start sooner, and the scroll handoff begins at stage 18.15 s. The greeting reads “你好呀~我叫Dot”.
+
+First cube and ordering-board interactions have visual guides that retire on real input. Archive cards explain opening and internal scrolling, and persist learned actions. Every newly shown or changed Dot message gets a gentle emphasis. The headphone page stops webpage BGM and omits the extra eyebrow. Background and settling ASCII are masked from the send button. Approved B hold, layered sand, three audio defaults, original music clock and retained r21 settings remain in use.

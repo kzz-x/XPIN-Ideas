@@ -1,7 +1,7 @@
 import * as T from '../assets/dot/model/frozen/r07d/editable-stage/素材/v011/DotSharedWeb/vendor/three.module.js';
 import {createOpeningScreenSource} from '../assets/r03-stage/v020-white-encore-cpu/opening-screen-source-r05.mjs';
 
-export function stageWhiteMix(time,start=0,duration=1.25){
+export function stageWhiteMix(time,start=1,duration=2){
   const p=Math.max(0,Math.min(1,(time-start)/Math.max(.001,duration)));
   return p*p*(3-2*p);
 }
@@ -9,7 +9,7 @@ export function stageWhiteMix(time,start=0,duration=1.25){
 // Keep the film's decoder and audio clock. The stage screen fades directly
 // from that same frame to pure white; no process film is loaded or played.
 export async function createStageScreen(stage,config,{onFrameReady=()=>{},isPlaying=()=>false}={}){
-  let fadeStart=config.fadeStart??0,fadeDuration=config.fadeDuration??1.25;
+  let fadeStart=config.fadeStart??1,fadeDuration=config.fadeDuration??2;
   let opening=await createOpeningScreenSource(globalThis.DOT_STAGE_OPENING_SOURCE,{onFrameReady,isPlaying,end:fadeStart+fadeDuration});
   let revision=0,lastSignature='',disposed=false;
   const uniforms={uOpeningScale:{value:new T.Vector2(1,1)},uWhiteMix:{value:0},uWhiteRadiance:{value:1},uOpeningVideo:{value:opening.texture}};
