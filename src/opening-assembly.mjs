@@ -3,16 +3,15 @@ import {outlineShapes} from './opening-characters.mjs';
 import {ParticlePhysics,saturate} from './particle-physics.mjs';
 import {frostedGlass,glassEdges} from './frosted-glass.mjs';
 const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),smooth=x=>{x=saturate(x);return x*x*(3-2*x);};
-const MAX=11000,CHARS='01<>/=+;';
+const MAX=11000,CHARS='{}[]<>/=+;AGXZ01';
 export function createParticleAssembly({scene,camera,glyphs,asciiData}){
  const root=new T.Group();root.name='Physical particles / Chinese surface to functional AI components';scene.add(root);
  const assembled=new T.Group();assembled.name='Welded AI interface / identical particle destination surfaces';root.add(assembled);
- const unit=new T.BoxGeometry(1,1,1),grain=frostedGlass({roughness:.32,transmission:.73,thickness:.11}),ink=new T.MeshStandardMaterial({color:0xe5edf3,roughness:.64,metalness:0});
- const fragments=new T.InstancedMesh(unit,grain,MAX),marks=new T.InstancedMesh(unit,ink,MAX);for(const m of [fragments,marks]){m.instanceMatrix.setUsage(T.DynamicDrawUsage);m.instanceColor=new T.InstancedBufferAttribute(new Float32Array(MAX*3).fill(1),3);m.instanceColor.setUsage(T.DynamicDrawUsage);m.frustumCulled=false;root.add(m);m.count=0;}
+ const ink=new T.MeshBasicMaterial({color:0xc6dbe8,transparent:true,opacity:1,depthWrite:false});
  const letterBatches=[];
- for(const c of CHARS){const geo=new T.ExtrudeGeometry(outlineShapes(asciiData[c]),{depth:2,bevelEnabled:false,curveSegments:2,steps:1});geo.computeBoundingBox();const center=geo.boundingBox.getCenter(V());geo.translate(-center.x,-center.y,-1);geo.scale(1/75,1/75,1/75);const mesh=new T.InstancedMesh(geo,ink,Math.ceil(MAX/CHARS.length));mesh.count=0;mesh.frustumCulled=false;mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);root.add(mesh);letterBatches.push(mesh);}
- const dummy=new T.Object3D(),q=new T.Quaternion(),spin=new T.Quaternion(),euler=new T.Euler(),color=new T.Color(),white=new T.Color('#d6e5ef');
- let solver=null,targets=[],parts=[],triangles=[],weights=[],totalArea=0,phase='',baked=false,welded=false,priorWidth=0,priorHeight=0;
+ for(const c of CHARS){const geo=new T.ExtrudeGeometry(outlineShapes(asciiData[c]),{depth:2,bevelEnabled:false,curveSegments:2,steps:1});geo.computeBoundingBox();const center=geo.boundingBox.getCenter(V());geo.translate(-center.x,-center.y,-1);geo.scale(1/75,1/75,1/75);const mesh=new T.InstancedMesh(geo,ink,Math.ceil(MAX*2/CHARS.length));mesh.count=0;mesh.frustumCulled=false;mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);root.add(mesh);letterBatches.push(mesh);}
+ const dummy=new T.Object3D(),q=new T.Quaternion(),euler=new T.Euler();
+ let solver=null,targets=[],parts=[],triangles=[],weights=[],totalArea=0,phase='',baked=false,welded=false,priorWidth=0,priorHeight=0,refine=0,settledAt=null;
  const random=i=>{const v=Math.sin(i*127.1+37.7)*43758.5453;return v-Math.floor(v);};
  function world(x,y,z=0){return V((x/innerWidth*2-1)*Math.tan(T.MathUtils.degToRad(camera.fov/2))*22*camera.aspect,(1-y/innerHeight*2)*Math.tan(T.MathUtils.degToRad(camera.fov/2))*22,-22+z).applyMatrix4(camera.matrixWorld);}
  function units(px){return px/innerHeight*2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*22;}
@@ -58,30 +57,48 @@ export function createParticleAssembly({scene,camera,glyphs,asciiData}){
    const sample=random(i+1)*totalArea;let lo=0,hi=weights.length-1;while(lo<hi){const m=(lo+hi)>>1;if(weights[m]<sample)lo=m+1;else hi=m;}const t=triangles[lo],u=Math.sqrt(random(i+343)),v=random(i+871),local=t.a.clone().multiplyScalar(1-u).addScaledVector(t.b,u*(1-v)).addScaledVector(t.c,u*v);
    solver.release[i]=.12+t.glyph.index*.035+saturate(.5-local.y/3.3)*1.05+random(i+32)*.12;
    const start=local.applyMatrix4(t.glyph.mesh.matrixWorld);solver.origin.set(start.toArray(),i*3);solver.target.set(targets[i].world.toArray(),i*3);
-  }solver.reset();baked=true;welded=false;document.body.classList.remove('assembly-ready');
+  }solver.reset();baked=true;welded=false;refine=0;settledAt=null;document.body.style.setProperty('--assembly-detail','0');document.body.classList.remove('assembly-ready');
  }
  function matrices(){
-  let glassCount=0,inkCount=0;const letters=new Array(CHARS.length).fill(0),time=solver.clock,gather=smooth((time-2.7)/2.1);
+  const letters=new Array(CHARS.length).fill(0),time=solver.clock,gather=smooth((time-2.7)/2.1);
+  // All released bodies are extruded ASCII, including the final approach.
+  // Physical integration finishes before the same-position optical refinement.
   for(let i=0;i<targets.length;i++){
-   const t=targets[i],j=i*3,age=time-solver.release[i];if(age<0)continue;
-   if(welded&&t.type!==1)continue;
-   dummy.position.fromArray(solver.position,j);euler.set(Math.sin(i)*age*.8,Math.cos(i*.7)*age,Math.sin(i*.3)*age*.4);q.setFromEuler(euler);dummy.quaternion.copy(q).slerp(camera.quaternion,gather);
-   const flightGlyph=i%7===0&&age>.18&&time<4.1;
-   if(flightGlyph){const index=i%CHARS.length,batch=letterBatches[index];dummy.scale.setScalar(.12*(1-.45*gather));dummy.updateMatrix();batch.setMatrixAt(letters[index]++,dummy.matrix);continue;}
-   dummy.scale.set(T.MathUtils.lerp(.045,units(t.w),gather),T.MathUtils.lerp(.045,units(t.h),gather),T.MathUtils.lerp(.055,t.type===0?units(4):units(.7),gather));dummy.updateMatrix();
-   const batch=t.type===0?fragments:marks,index=t.type===0?glassCount++:inkCount++;batch.setMatrixAt(index,dummy.matrix);color.copy(white).lerp(t.color,gather);batch.setColorAt(index,color);
+   const t=targets[i],age=time-solver.release[i];if(age<0||refine>=1)continue;
+   const index=Math.floor(random(i+721)*CHARS.length),batch=letterBatches[index];
+   dummy.position.fromArray(solver.position,i*3);
+   euler.set(Math.sin(i)*age*.8,Math.cos(i*.7)*age,Math.sin(i*.3)*age*.4);
+   q.setFromEuler(euler);dummy.quaternion.copy(q).slerp(camera.quaternion,gather);
+   const size=T.MathUtils.lerp(.105+random(i+811)*.045,units(t.type===2?2.2:t.type===1?4.8:6.4),gather);
+   dummy.scale.setScalar(size);dummy.updateMatrix();batch.setMatrixAt(letters[index]++,dummy.matrix);
   }
-  for(const [m,n]of [[fragments,glassCount],[marks,inkCount]]){m.count=n;m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;}
+  ink.opacity=1-refine;
   letterBatches.forEach((m,i)=>{m.count=letters[i];m.instanceMatrix.needsUpdate=true;});
+  assembled.visible=refine>0;
+  assembled.traverse(o=>{if(!o.material)return;o.material.transparent=true;o.material.opacity=(o.isLineSegments?.28:1)*refine;});
+  document.body.style.setProperty('--assembly-detail',String(refine));
  }
  function update({phase:next,dt=1/60}){
   if(next==='morph'&&phase!=='morph')bake();
-  root.visible=['morph','chat','launch'].includes(next);if(next==='intro'){baked=false;welded=false;assembled.visible=false;document.body.classList.remove('assembly-ready');}
-  if(baked&&next==='morph'){solver.advance(dt);const state=solver.snapshot();if(state.settled===state.count&&!welded){welded=true;assembled.visible=true;document.body.classList.add('assembly-ready');}matrices();}
-  if(baked&&next==='chat'){if(!welded){solver.advance(dt);if(solver.snapshot().settled===solver.count){welded=true;assembled.visible=true;document.body.classList.add('assembly-ready');}matrices();}else if(priorWidth!==innerWidth||priorHeight!==innerHeight){measureTargets();makeWeld();assembled.visible=true;solver=new ParticlePhysics(targets.length);targets.forEach((t,i)=>solver.target.set(t.world.toArray(),i*3));solver.position.set(solver.target);solver.clock=7;matrices();}}
-  if(next==='launch')root.visible=false;
+  root.visible=['morph','chat'].includes(next);
+  if(next==='intro'){baked=false;welded=false;refine=0;settledAt=null;assembled.visible=false;document.body.classList.remove('assembly-ready');document.body.style.setProperty('--assembly-detail','0');}
+  if(baked&&['morph','chat'].includes(next)){
+   solver.advance(dt);const state=solver.snapshot();
+   if(state.settled===state.count&&settledAt===null){settledAt=solver.clock;document.body.classList.add('assembly-ready');}
+   if(settledAt!==null)refine=smooth((solver.clock-settledAt)/.72);
+   welded=refine>=1;matrices();
+   if(next==='chat'&&(priorWidth!==innerWidth||priorHeight!==innerHeight)){
+    measureTargets();makeWeld();solver=new ParticlePhysics(targets.length);
+    targets.forEach((t,i)=>solver.target.set(t.world.toArray(),i*3));solver.position.set(solver.target);solver.settled.fill(1);solver.clock=8;settledAt=6;refine=1;matrices();
+   }
+  }
   phase=next;return solver?.snapshot();
  }
- function warmup(){measureTargets();sourceTriangles();makeWeld();root.visible=assembled.visible=true;for(const m of [fragments,marks,...letterBatches]){m.count=1;m.setMatrixAt(0,new T.Matrix4());m.instanceMatrix.needsUpdate=true;}return()=>{root.visible=assembled.visible=false;for(const m of [fragments,marks,...letterBatches])m.count=0;};}
- return{root,bake,update,warmup,get ready(){return welded;},snapshot:()=>({...(solver?.snapshot()||{}),ready:welded,components:parts.map(p=>p.name),source:'area-weighted samples of actual extruded Chinese glyph triangles',glyphGeometry:'extruded outline ASCII; no sprites',panelHandoff:'physical target settling then topology weld; no opacity crossfade',targets:targets.length}),dispose(){root.removeFromParent();unit.dispose();grain.dispose();ink.dispose();letterBatches.forEach(m=>m.geometry.dispose());clearWeld();}};
+ function warmup(){
+  measureTargets();sourceTriangles();makeWeld();root.visible=assembled.visible=true;
+  root.traverse(o=>o.layers.set(29));
+  for(const m of letterBatches){m.count=1;m.setMatrixAt(0,new T.Matrix4());m.instanceMatrix.needsUpdate=true;}
+  return()=>{root.visible=assembled.visible=false;root.traverse(o=>o.layers.set(0));letterBatches.forEach(m=>m.count=0);};
+ }
+ return{root,bake,update,warmup,get ready(){return welded;},snapshot:()=>({...(solver?.snapshot()||{}),ready:welded,components:parts.map(p=>p.name),source:'area-weighted samples of actual extruded Chinese glyph triangles',glyphGeometry:'extruded outline ASCII; no sprites',panelHandoff:'physical settling followed by 720ms same-position surface and text refinement',characterOnly:true,characterSet:CHARS,refinement:refine,visibleCharacters:letterBatches.reduce((n,m)=>n+m.count,0),targets:targets.length}),dispose(){root.removeFromParent();ink.dispose();letterBatches.forEach(m=>m.geometry.dispose());clearWeld();}};
 }

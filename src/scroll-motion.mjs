@@ -9,18 +9,40 @@ export function createTitleMotion(title){
     update(dt,time){for(const l of letters){if(l.delay>=0&&time>=l.delay){l.velocity+=2.3;l.delay=-1;}l.velocity+=(-120*l.offset-12*l.velocity)*Math.min(dt,.03);l.offset+=l.velocity*Math.min(dt,.03);l.mesh.position.copy(l.base);l.mesh.position.z+=l.offset;l.mesh.rotation.x=-l.offset*.24;l.mesh.rotation.y=l.offset*.12;}},
     snapshot:()=>({title:title.userData.typography3D.text,hits,offsets:letters.map(l=>l.offset)})};
 }
-export function createEnding(titleMesh){
-  const root=new T.Group();root.name='Final message / falling extruded characters';
+export function createEnding(titleMesh,camera){
+  const root=new T.Group();root.name='Final message / persistent falling extruded characters';
   const lines=[titleMesh('下一次，',1.45,.24),titleMesh('让你的想法先行。',1.9,.28)];
-  lines[0].position.set(-4.7,2.5,0);lines[1].position.set(0,0,0);root.add(...lines);
-  root.rotation.x=-Math.PI/2+T.MathUtils.degToRad(35);root.position.set(0,2.05,-189);
+  lines[0].position.set(-4.7,2.5,0);root.add(...lines);
+  root.rotation.x=-Math.PI/2+T.MathUtils.degToRad(35);root.position.set(0,2.05,-189);root.visible=false;
   let start=null,landed=false;const glyphs=[];
-  lines.forEach(g=>g.children.filter(m=>m.isMesh).forEach(mesh=>glyphs.push({mesh,base:mesh.position.clone(),index:glyphs.length})));
-  function update(scroll,time,reduced){
-    root.visible=scroll>180;if(scroll<176){start=null;landed=false;}if(root.visible&&start===null)start=time;
-    const age=start===null?0:time-start;
-    for(const g of glyphs){const t=(age-g.index*.085)/.72,p=sat(t);let drop=reduced?0:6*(1-p*p);if(t>=1&&!reduced)drop=Math.max(0,Math.sin((t-1)*9))*Math.exp(-(t-1)*6)*.36;g.mesh.position.copy(g.base);g.mesh.position.z+=drop;g.mesh.rotation.x=reduced?0:(1-p)*-.20;g.mesh.rotation.y=reduced?0:(1-p)*(g.index%2?-.08:.08);}
-    landed=age>2.4;
+  lines.forEach(g=>g.children.filter(m=>m.isMesh).forEach(mesh=>{
+    const shadow={value:0},depth=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking});
+    depth.onBeforeCompile=sh=>{sh.uniforms.uLandingShadow=shadow;sh.fragmentShader='uniform float uLandingShadow;\n'+sh.fragmentShader;sh.fragmentShader=sh.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif(fract(sin(dot(floor(gl_FragCoord.xy),vec2(12.9898,78.233)))*43758.5453)>uLandingShadow)discard;');};
+    depth.customProgramCacheKey=()=> 'r10-landing-shadow';mesh.customDepthMaterial=depth;
+    glyphs.push({mesh,base:mesh.position.clone(),index:glyphs.length,fall:new T.Vector3(),shadow,entryNdc:null});
+  }));
+  function begin(time){
+    start=time;root.visible=true;root.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+    const up=new T.Vector3().setFromMatrixColumn(camera.matrixWorld,1);
+    for(const g of glyphs){
+      const world=g.mesh.parent.localToWorld(g.base.clone()),view=world.clone().applyMatrix4(camera.matrixWorldInverse),ndc=world.clone().project(camera);
+      const distance=(1.38-ndc.y)*Math.max(1,-view.z)*Math.tan(T.MathUtils.degToRad(camera.fov/2))+3;
+      const high=world.clone().addScaledVector(up,Math.max(12,distance));g.entryNdc=high.clone().project(camera).toArray();
+      g.fall.copy(g.mesh.parent.worldToLocal(high)).sub(g.base);
+    }
   }
-  return{root,update,snapshot:()=>({glyphCount:glyphs.length,landed,visible:root.visible,positions:glyphs.map(g=>g.mesh.position.z)})};
+  function update(scroll,time,reduced){
+    if(start===null&&scroll>180)begin(time);
+    root.visible=start!==null;if(start===null)return;
+    const age=time-start;
+    for(const g of glyphs){
+      const t=(age-g.index*.10)/1.15,p=sat(t),drop=reduced?0:1-p*p*p;
+      g.mesh.position.copy(g.base).addScaledVector(g.fall,drop);
+      if(t>1&&!reduced)g.mesh.position.z+=Math.max(0,Math.sin((t-1)*10))*Math.exp(-(t-1)*7)*.24;
+      g.mesh.rotation.x=reduced?0:(1-p)*-.20;g.mesh.rotation.y=reduced?0:(1-p)*(g.index%2?-.08:.08);
+      g.shadow.value=reduced?1:smooth((p-.24)/.76);g.mesh.castShadow=g.shadow.value>.001;
+    }
+    landed=age>3.1;
+  }
+  return{root,update,snapshot:()=>({glyphCount:glyphs.length,started:start!==null,landed,visible:root.visible,persistent:true,entryNdc:glyphs.map(g=>g.entryNdc),shadowReveal:glyphs.map(g=>g.shadow.value),positions:glyphs.map(g=>g.mesh.position.toArray())})};
 }

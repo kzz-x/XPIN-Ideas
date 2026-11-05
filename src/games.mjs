@@ -31,10 +31,10 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
     ceramic:new T.MeshStandardMaterial({color:0xf1f3f4,roughness:.4,metalness:.10}),
     silver:new T.MeshStandardMaterial({color:0xd2d8de,roughness:.34,metalness:.68}),
     blue:new T.MeshStandardMaterial({color:0x183bc1,roughness:.34,metalness:.18}),
-    gold:new T.MeshStandardMaterial({color:0xc5ae7a,roughness:.31,metalness:.72}),
+    gold:new T.MeshStandardMaterial({color:0xaebcc8,roughness:.31,metalness:.72}),
     green:new T.MeshStandardMaterial({color:0xb7f2d0,roughness:.32,metalness:.18,emissive:0x2f925b,emissiveIntensity:.12}),
     line:new T.LineBasicMaterial({color:0x8da9d0,transparent:true,opacity:.48}),
-    goldLine:new T.LineBasicMaterial({color:0xf3cf7f,transparent:true,opacity:.85}),
+    goldLine:new T.LineBasicMaterial({color:0xc5d4df,transparent:true,opacity:.85}),
   };
   function box(w,h,d,mat,p,parent){
     const o=new T.Mesh(new T.BoxGeometry(w,h,d),mat);o.position.set(...p);o.castShadow=o.receiveShadow=true;parent.add(o);return o;
@@ -221,7 +221,7 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
     if(id==='film'){
       filmPiece=piece;
       const frame=box(1.45,.80,.10,materials.side,[0,.12,.14],piece.root);
-      const screen=box(1.30,.67,.035,materials.blue,[0,.12,.205],piece.root);screen.material=screen.material.clone();
+      const screen=box(1.30,.67,.035,materials.blue,[0,.12,.205],piece.root);screen.material=screen.material.clone();screen.material.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.rgb=vec3(dot(diffuseColor.rgb,vec3(.2126,.7152,.0722)));');};screen.material.customProgramCacheKey=()=> 'r10-neutral-film-preview';
       const play=new T.Shape();play.moveTo(-.14,-.18);play.lineTo(.20,0);play.lineTo(-.14,.18);play.closePath();
       const icon=new T.Mesh(new T.ShapeGeometry(play),new T.MeshBasicMaterial({color:0xffffff}));icon.position.set(0,.12,.23);piece.root.add(icon);
       const run=line([[-.56,-.16,.232],[.56,-.16,.232]],materials.goldLine,piece.root);run.geometry.setDrawRange(0,0);
@@ -242,7 +242,7 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
     if(id==='project'){
       projectPiece=piece;
       const layers=[];
-      for(let j=0;j<3;j++){const mesh=box(1.15,.63,.09,[materials.blue,materials.side,materials.gold][j],[0,.13,.17+j*.12],piece.root);layers.push(mesh);}
+      for(let j=0;j<3;j++){const mesh=box(1.15,.63,.09,[materials.side,materials.silver,materials.dark][j],[0,.13,.17+j*.12],piece.root);layers.push(mesh);}
       const code=label(layers[2],'{  }',[0,0,.055],.90,.44,{color:'#eaf2fb',font:160});piece.extras={layers,code,open:0};
     }
     if(id==='stamp'){
@@ -270,8 +270,8 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
       const k=idsFor(piece.chapter).indexOf(piece.id);piece.done=state.done[piece.chapter].includes(k);piece.locked=piece.id==='stamp'&&!stampUnlocked(state);
       processTitle(piece);
       if(piece.id==='stamp')piece.extras.lockedLabel.visible=piece.locked;
-      piece.body.material.color.set(piece.chapter===1?(piece.done?0x8baec5:0xb6d3ef):piece.id==='stamp'?0xe2b35b:(piece.done?0x173441:0x101c2e));
-      const slot=slotFor(piece);slot.done=piece.done;slot.border.material.color.set(piece.done?0xb8f1c3:piece.locked?0x657089:0xd4b575);slot.border.material.opacity=piece.done?.9:piece.locked?.35:.7;
+      piece.body.material.color.set(piece.chapter===1?(piece.done?0x8baec5:0xb6d3ef):piece.id==='stamp'?0xaebcc8:(piece.done?0x173441:0x101c2e));
+      const slot=slotFor(piece);slot.done=piece.done;slot.border.material.color.set(piece.done?0xb8f1c3:piece.locked?0x657089:0x9eafbd);slot.border.material.opacity=piece.done?.9:piece.locked?.35:.7;
       if(piece.chapter===1)slot.titleNode.visible=!piece.done;
       if(initial){piece.root.position.copy(piece.done?slot.target:piece.home);piece.root.quaternion.copy(piece.done?new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2,0,0)):piece.homeQ);}
     }

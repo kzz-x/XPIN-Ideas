@@ -34,6 +34,16 @@ export async function createOpening({canvas}){
  }
  function resize(w,h){camera.aspect=w/h;camera.fov=camera.aspect<1.35?T.MathUtils.radToDeg(2*Math.atan(8.2/(22*camera.aspect))):38;camera.updateProjectionMatrix();camera.updateMatrixWorld();}
  resize(innerWidth,innerHeight);
- async function prepare(renderer){const portal=document.querySelector('#portal'),chat=document.querySelector('#chat'),prior=[portal.style.display,chat.style.display,document.body.dataset.phase];portal.style.display=chat.style.display='block';document.body.dataset.phase='morph';let finish;try{finish=flow.warmup();await renderer.compileAsync(scene,camera);renderer.render(scene,camera);}finally{finish?.();portal.style.display=prior[0];chat.style.display=prior[1];document.body.dataset.phase=prior[2]||'loading';}}
- return{scene,camera,glyphs,ascii:flow.root,update,resize,prepare,get ready(){return flow.ready;},snapshot:()=>({phase,time:lastTime,background:BACKGROUND,titleDepth:glyphs.map(g=>g.mesh.geometry.boundingBox.max.z-g.mesh.geometry.boundingBox.min.z),glyphs:glyphs.map(g=>({angle:g.angle,velocity:g.velocity,goal:g.goal,turns:g.turns})),glass:{transmission:.84,roughness:.39,thickness:.47},grid:grid.snapshot(),particles:flow.snapshot()}),dispose(){window.removeEventListener('pointermove',move);flow.dispose();grid.dispose();group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});scene.clear();}};
+ let prepared=false;
+ async function prepare(renderer){
+  const portal=document.querySelector('#portal'),chat=document.querySelector('#chat');
+  const prior=[portal.style.display,chat.style.display,portal.style.visibility,document.body.dataset.phase];
+  portal.style.visibility='hidden';portal.style.display=chat.style.display='block';document.body.dataset.phase='morph';
+  const finish=flow.warmup();
+  portal.style.display=prior[0];chat.style.display=prior[1];portal.style.visibility=prior[2];document.body.dataset.phase=prior[3];
+  const warmCamera=camera.clone();warmCamera.layers.enable(29);
+  try{await renderer.compileAsync(scene,warmCamera);}finally{finish();prepared=true;}
+ }
+
+ return{scene,camera,glyphs,ascii:flow.root,update,resize,prepare,get prepared(){return prepared;},get ready(){return flow.ready;},snapshot:()=>({phase,time:lastTime,background:BACKGROUND,titleDepth:glyphs.map(g=>g.mesh.geometry.boundingBox.max.z-g.mesh.geometry.boundingBox.min.z),glyphs:glyphs.map(g=>({angle:g.angle,velocity:g.velocity,goal:g.goal,turns:g.turns})),glass:{transmission:.84,roughness:.39,thickness:.47},grid:grid.snapshot(),particles:flow.snapshot()}),dispose(){window.removeEventListener('pointermove',move);flow.dispose();grid.dispose();group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});scene.clear();}};
 }

@@ -1,0 +1,18 @@
+/* Immediate entry; later scenes prepare while the opening remains interactive. */
+#loading{display:none}
+#opening-shell{position:fixed;inset:0;z-index:2;pointer-events:none;background-color:#08142f;background-image:linear-gradient(#41607b16 1px,transparent 1px),linear-gradient(90deg,#41607b16 1px,transparent 1px);background-size:30px 30px;transition:opacity .18s}
+#opening-shell img{position:absolute;width:92vh;max-width:88vw;left:50%;top:43.6%;transform:translate(-50%,-50%)}
+body:not([data-phase="loading"]) #opening-shell{opacity:0}
+body[data-phase="loading"] #world{visibility:hidden}
+/* The true character bodies settle first. Refine text at exactly that location. */
+body[data-phase="morph"] #chat,body[data-phase="chat"] #chat{visibility:visible!important;opacity:var(--assembly-detail,0);pointer-events:none}
+body[data-phase="chat"].assembly-ready #chat{pointer-events:auto}
+.ascii-orbit{inset:0;animation:none;transform:none;transition:opacity .55s}
+.ascii-square{position:absolute;inset:-6px;animation:ascii-square-wave 2.8s linear infinite;animation-delay:var(--ring-delay);transform-origin:50% 50%}
+.ascii-orbit i{transform:translate(-50%,-50%);font:9px monospace;animation:none;line-height:1;color:#bed7e6}
+@keyframes ascii-square-wave{0%{transform:scale(1);opacity:0}16%{opacity:.75}55%{opacity:.38}100%{transform:scale(1.8);opacity:0}}
+body[data-phase="launch"] #portal{border:0;background:#05090f;box-shadow:none!important;border-radius:0;overflow:hidden}
+body[data-phase="launch"] #portal-frame,body[data-phase="launch"] #portal:before{display:none}
+body[data-phase="launch"] #masthead{opacity:0;pointer-events:none}
+@media(max-width:700px){#opening-shell img{width:86vw;top:47%}.ascii-orbit i{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.ascii-square{animation:none;opacity:.35;inset:calc(-6px - var(--ring)*7px)}}

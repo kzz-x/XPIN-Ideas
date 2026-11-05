@@ -99,7 +99,7 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
   }
   function update(dt,time,isActive){
     active=isActive;
-    if(active&&!initialized){cube.quaternion.copy(localCameraQuaternion());goal.copy(cube.quaternion);initialized=true;}
+    if(!initialized){cube.quaternion.copy(localCameraQuaternion());goal.copy(cube.quaternion);initialized=true;}
     if(helpTurn){cube.quaternion.slerp(goal,1-Math.exp(-5*dt));if(cube.quaternion.angleTo(goal)<.001)helpTurn=false;}
     if(!held&&!helpTurn&&velocity.lengthSq()>.0000001){
       const screenQ=localCameraQuaternion(),q=new T.Quaternion().setFromEuler(new T.Euler(velocity.y*dt*24,velocity.x*dt*24,0,'YXZ'));
@@ -125,7 +125,7 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
   return {root:holder,cube,glass,turn,release,showFace,setDone,update,
     hit(ray){return ray.intersectObject(glass,false).length>0;},
     helpTarget(index){return {object:holder,face:index};},
-    snapshot(){return {face,clarity:alpha,dwell,held,done:[...done],glyphs:glyphs.map(g=>({name:g.name,vertices:g.geometry.attributes.position.count,scale:g.scale.toArray()})),collected:collected.map(g=>({name:g.name,visible:g.visible,scale:g.scale.toArray(),rotation:g.rotation.toArray(),position:g.position.toArray()})),flights:flights.length};},
+    snapshot(){return {quaternion:cube.quaternion.toArray(),face,clarity:alpha,dwell,held,done:[...done],glyphs:glyphs.map(g=>({name:g.name,vertices:g.geometry.attributes.position.count,scale:g.scale.toArray()})),collected:collected.map(g=>({name:g.name,visible:g.visible,scale:g.scale.toArray(),rotation:g.rotation.toArray(),position:g.position.toArray()})),flights:flights.length};},
     reset(){initialized=false;velocity.set(0,0);held=false;helpTurn=false;dwell=0;flights.length=0;setDone([]);}
   };
 }

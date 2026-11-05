@@ -2,7 +2,7 @@ import {CONFIG} from './config.mjs';
 export {bindSeekControl,createSound} from './transport.mjs';
 
 /** The video is the only music clock, including after its picture leaves at
- * 38s. The auxiliary element contains only the supplied R03 impact sound. */
+ * 36s. The auxiliary element contains only the supplied R03 impact sound. */
 export class PresentationTransport{
   constructor(video,audio,callbacks={}){
     Object.assign(this,{video,audio,callbacks,phase:'film',absolute:0,playing:false,muted:false,generation:0,started:false,scrub:null,pendingSeek:null,awaitingPlay:null,stageRevealComplete:false,previewStage:false,impactPending:false,events:[]});
@@ -76,7 +76,7 @@ export class PresentationTransport{
     if(this.pendingSeek||this.awaitingPlay)return;
     if(this.absolute>=this.filmDuration&&this.filmDuration>0)this.absolute+=Math.min(.1,Math.max(0,dt));
     else if(!this.video.paused||this.video.ended)this.absolute=this.video.currentTime;
-    if(this.phase==='film'&&this.absolute>=CONFIG.film.stageAt){this.stageRevealComplete=false;this.setPhase('stage',{reason:'38-second-cut',at:this.time,revealComplete:false});this.record('visual-cut',{videoTime:this.video.currentTime,stageTime:this.time,videoPaused:this.video.paused});}
+    if(this.phase==='film'&&this.absolute>=CONFIG.film.stageAt){this.stageRevealComplete=false;this.setPhase('stage',{reason:'native-stage-opening',at:this.time,revealComplete:false});this.record('visual-cut',{videoTime:this.video.currentTime,stageTime:this.time,videoPaused:this.video.paused});}
     this.syncImpact();if(this.absolute>=this.duration)this.finish('complete');
   }
   replace(file){this.pause();this.scrub=null;this.pendingSeek=null;if(this.objectURL)URL.revokeObjectURL(this.objectURL);this.objectURL=URL.createObjectURL(file);this.video.src=this.objectURL;CONFIG.film.label='本机替换影片';this.absolute=0;this.phase='film';this.started=false;}
