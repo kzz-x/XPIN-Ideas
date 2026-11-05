@@ -85,11 +85,12 @@ async function init(){
   fontsReady=Promise.all([document.fonts.load('400 48px Idea','想法先行组织步骤资源档案'),document.fonts.load('700 48px Idea','主体构图色彩光影材质氛围')]);
   const environmentModule=import('../assets/r03-stage/v011/DotSharedWeb/stage.mjs');
   const rigModuleJob=import('../assets/dot/index.mjs');
+  const stageModuleJob=import('./dot-stage-r07.mjs');
   opening=await createOpening({canvas});resize();bootProgress(.45,'正在准备字符与光影');
   await fontsReady;portalLayout(0);await opening.prepare(renderer);bootProgress(.82,'正在准备第一帧');
   opening.update({time:0,dt:0,phase:'intro'});await warmScene(renderer,opening.scene,opening.camera);renderer.render(opening.scene,opening.camera);
   window.__linggan={ui,bgm,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),games:games?.snapshot()})};
-  rigModule=await rigModuleJob;bootProgress(.94,'正在准备连续画面');
+  rigModule=await rigModuleJob;await stageModuleJob;bootProgress(.94,'正在准备连续画面');
   const {makeEnvironment}=await environmentModule;globalThis.DOT_PREWARM_ENVIRONMENT=makeEnvironment();
   stageRenderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});stageRenderer.outputColorSpace=T.SRGBColorSpace;stageRenderer.toneMapping=T.ACESFilmicToneMapping;
   dotForeground=createDotForeground({scene,camera,worldRenderer:renderer});
@@ -97,7 +98,7 @@ async function init(){
   opening.update({time:0,dt:0,phase:'intro'});renderer.render(opening.scene,opening.camera);bootProgress(1,'画面已就绪');await delay(Math.max(0,2000-(performance.now()-(window.__bootStart||0))));
   previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');runtime.openingReadyAt=performance.now();requestAnimationFrame(frame);
   await nextPaint();document.body.classList.add('scene-visible');$('loading').classList.add('leave');setTimeout(()=>$('loading').style.display='none',700);
-  prepareRigAssets().catch(()=>{});import('./dot-stage-r07.mjs').catch(()=>{});
+  prepareRigAssets().catch(()=>{});
   worldReady.catch(error=>{ui.errors.push(String(error));console.error(error);toast('下一幕准备失败，请刷新后重试。');});
 }
 // Only the real first shot is on the opening critical path. Fetch later assets

@@ -18,7 +18,7 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
     opening=(async()=>{
       mode='preparing';record('prepare');const response=await fetch(manifestURL,{signal:abort.signal});if(!response.ok)throw Error('影片清单暂未载入');manifest=await response.json();onManifest(manifest);
       video.preload='auto';video.playsInline=true;
-      const network=globalThis.navigator?.connection,limited=network?.saveData||(['slow-2g','2g','3g'].includes(network?.effectiveType)&&network?.downlink>0&&network.downlink<4);
+      const limited=globalThis.navigator?.connection?.saveData;
       if(limited){mode='720p-compatible';video.src=url(manifest.fallback);video.load();}
       else if(globalThis.MediaSource?.isTypeSupported(manifest.mime)){
         mode='1080p-segments';source=new MediaSource();objectURL=URL.createObjectURL(source);
