@@ -27,9 +27,9 @@ class Media extends EventTarget{
  constructor(){super();Object.assign(this,{duration:51.9,currentTime:0,readyState:2,paused:true,seeking:false,volume:1,muted:false});this.wait=null;}
  play(){this.paused=false;return this.wait||Promise.resolve();}pause(){this.paused=true;}
 }
-test('video level scales both native soundtrack components and remains independent of master mute',()=>{
+test('video soundtrack retains independent volume while impact stays silent',()=>{
  let v=.8;const film=new Media(),impact=new Media(),t=new PresentationTransport(film,impact,{getVideoVolume:()=>v});
- assert.equal(film.volume,.8);const ratio=impact.volume/film.volume;v=.25;t.restoreVolumes();assert.equal(film.volume,.25);assert.ok(Math.abs(impact.volume-.25*ratio)<1e-10);
+ assert.equal(film.volume,.8);assert.equal(impact.volume,0);v=.25;t.restoreVolumes();assert.equal(film.volume,.25);assert.equal(impact.volume,0);
  t.setMuted(true);assert.equal(film.muted,true);assert.equal(film.volume,.25);t.setMuted(false);assert.equal(film.volume,.25);
 });
 test('changing video volume while its silent preflight is pending cannot leak sound or restore stale gain',async()=>{

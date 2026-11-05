@@ -8,7 +8,7 @@ import {createConcertRevision} from '../assets/r03-stage/v020-white-encore-cpu/c
 import {createTunableDirector} from '../assets/r03-stage/v020-white-encore-cpu/tunable-director.mjs';
 import {applyRecoveryFraming} from '../assets/r03-stage/v020-white-encore-cpu/recovery-framing-r01.mjs';
 import {createMassFollower} from '../assets/r03-stage/v020-white-encore-cpu/mass-follow.mjs';
-import {createProcessScreenMedia} from '../assets/r03-stage/v020-white-encore-cpu/process-screen-r05.mjs';
+import {createStageScreen} from './stage-screen.mjs';
 import {makeDefaults,SHOT,configureAudioDuration} from '../assets/r03-stage/v020-white-encore-cpu/document.mjs';
 import {createHornDissolve} from '../assets/dot/effects/horn-dissolve-r05.mjs';
 
@@ -19,7 +19,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
   // Finish the same source pullback before the new, short scroll handoff.
   SHOT.pullEnd=19.25;
   doc.camera.dofStrength=.62;doc.camera.dofWidth=1.25;
-  globalThis.DOT_APPROVED_PROCESS_VIDEO=new URL('../assets/media/stage-process-r03.mp4',import.meta.url).href;
+  Object.assign(doc.screen,{fadeStart:0,fadeDuration:1.25,whiteEnabled:true,whiteRadiance:1});
   globalThis.DOT_STAGE_OPENING_SOURCE={kind:'video',status:'approved',label:'同源影片 · 共用解码帧',element:film,uri:film.currentSrc||film.src,inPoint:CONFIG.film.stageAt,fps:60};
   const dot=await loadDot({sharedRig:rig});
   const canvas=document.createElement('canvas');canvas.width=16;canvas.height=9;
@@ -32,8 +32,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
   for(const light of stage.scene.children)if(light.isDirectionalLight&&light!==stage.fill&&light!==stage.rim)light.intensity=.35;
   const finale=createStageFinale(stage,data.layout);trace('finale-end');await yieldTask();const concert=createConcertRevision(stage,dot,data.layout,finale);trace('concert-end');await yieldTask();
   concert.root.traverse(o=>{if(o.isInstancedMesh)o.layers.set(2);});
-  const media=await createProcessScreenMedia(stage,data.white,{isPlaying});
-  media.configure(doc.screen);
+  const media=await createStageScreen(stage,doc.screen,{isPlaying});
   const director=createTunableDirector(stage,dot,{layout:data.layout,document:doc}),mass=createMassFollower(dot,director);
   const stageParent=dot.root.parent,base={position:dot.root.position.clone(),quaternion:dot.root.quaternion.clone(),scale:dot.root.scale.clone()};
   renderer??=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});
@@ -84,15 +83,14 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
     stage.focus.configure({enabled:doc.camera.dofEnabled&&time>2.3,distance:-framing.mouthWorld.clone().lerp(framing.actorWorld,.35).applyMatrix4(stage.camera.matrixWorldInverse).z,strength:.4,width:5});
     stage.updateLighting();
     if(time<=0)dissolve.reset();const horn=dissolve.update(time);dot.horn.visible=time<SHOT.musicEnd+1.65;
-    media.uniforms.uWhiteRadiance.value=T.MathUtils.lerp(doc.screen.whiteRadiance,.32,framing.pullMix);
     const fx=concert.update(time,{stageSettings:doc.stage,project:doc.project,actorWorld:framing.actorWorld});concert.game.visible=false;
     dot.finalizeEyes();lastState={time,screen,horn,fx,camera:stage.camera.position.toArray(),actorWorld:framing.actorWorld.toArray(),actions:dot.stageActionState};
     return lastState;
   }
   return {stage,rig,dot,director,renderer,media,document:doc,normalBase:base,activate,update,resize,
     render(opacity=1){renderer.domElement.style.display=opacity>0?'block':'none';renderer.domElement.style.opacity=String(opacity);if(opacity>0){warmShadows();stage.render(renderer);}},
-    hide(){renderer.domElement.style.display='none';media.video.pause();active=false;},
-    freeze(){media.video.pause();return dot.captureHandoffFrame();},
+    hide(){renderer.domElement.style.display='none';media.pause();active=false;},
+    freeze(){media.pause();return dot.captureHandoffFrame();},
     advanceBackground(elapsed){if(lastState){concert.update(lastState.time+elapsed,{stageSettings:doc.stage,project:doc.project,actorWorld:new T.Vector3(...lastState.actorWorld)});concert.game.visible=false;}},
     async seek(time){await media.seekExact(time);},
     setQuality(mode){doc.camera.dofEnabled=mode!=='low';renderer.shadowMap.enabled=mode!=='low';},

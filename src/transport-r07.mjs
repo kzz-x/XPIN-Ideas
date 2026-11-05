@@ -2,12 +2,12 @@ import {CONFIG} from './config.mjs';
 export {bindSeekControl,createSound} from './transport.mjs';
 
 /** The video is the only music clock, including after its picture leaves at
- * 36s. The auxiliary element contains only the supplied R03 impact sound. */
+ * 36s. The auxiliary R03 impact track is optional and disabled for r21. */
 export class PresentationTransport{
   constructor(video,audio,callbacks={}){
     Object.assign(this,{video,audio,callbacks,phase:'film',absolute:0,playing:false,muted:false,generation:0,started:false,scrub:null,pendingSeek:null,awaitingPlay:null,stageRevealComplete:false,previewStage:false,impactPending:false,events:[]});
     this.abort=new AbortController();const options={signal:this.abort.signal};
-    if(!callbacks.managedMedia)video.src=CONFIG.film.src;audio.src=CONFIG.stage.src;
+    if(!callbacks.managedMedia)video.src=CONFIG.film.src;if(CONFIG.stage.impactEnabled!==false)audio.src=CONFIG.stage.src;
     this.presentedTime=NaN;const decoded=(now,meta)=>{this.presentedTime=meta.mediaTime-this.offset;this.videoFrame=video.requestVideoFrameCallback(decoded);};if(video.requestVideoFrameCallback)this.videoFrame=video.requestVideoFrameCallback(decoded);
     video.addEventListener('loadedmetadata',()=>this.applySeek(),options);video.addEventListener('seeked',()=>this.settleSeek(true),options);
     video.addEventListener('ended',()=>{if(this.playing&&!this.scrub&&!video.seeking&&video.ended){this.absolute=Math.max(this.absolute,this.filmDuration);this.record('source-ended');}},options);
@@ -28,7 +28,7 @@ export class PresentationTransport{
   get revealProgress(){return this.stageRevealComplete?1:Math.max(0,Math.min(1,(this.absolute-CONFIG.film.stageAt)/CONFIG.film.stageReveal));}
   record(event,data={}){this.events.push({event,at:performance.now(),generation:this.generation,...data});if(this.events.length>200)this.events.shift();}
   invalidate(reason){this.generation++;this.awaitingPlay=null;if(this.pendingSeek)this.pendingSeek.generation=this.generation;this.record(reason);return this.generation;}
-  restoreVolumes(){const volume=Math.max(0,Math.min(1,this.callbacks.getVideoVolume?.()??CONFIG.stage.musicGain)),quiet=!!this.unlockPromise&&!this.started;this.video.volume=quiet?0:volume;this.audio.volume=quiet?0:Math.min(1,volume*CONFIG.stage.impactGain/CONFIG.stage.musicGain);this.video.muted=this.audio.muted=this.muted;}
+  restoreVolumes(){const volume=Math.max(0,Math.min(1,this.callbacks.getVideoVolume?.()??CONFIG.stage.musicGain)),quiet=!!this.unlockPromise&&!this.started;this.video.volume=quiet?0:volume;this.audio.volume=quiet||CONFIG.stage.impactEnabled===false?0:Math.min(1,volume*CONFIG.stage.impactGain/CONFIG.stage.musicGain);this.video.muted=this.audio.muted=this.muted;}
   setPhase(next,detail={}){const old=this.phase;this.phase=next;if(old===next)return;if(next==='stage')this.callbacks.onStage?.(detail);if(next==='film')this.callbacks.onFilm?.(detail);}
   setVideoTime(requested){this.pendingSeek={requested,target:Math.min(Math.max(0,this.filmDuration-.001),requested),generation:this.generation};this.applySeek();}
   applySeek(){const p=this.pendingSeek;if(!p||this.video.readyState<1||p.generation!==this.generation)return;p.target=Math.min(Math.max(0,this.filmDuration-.001),p.requested);try{if(!this.video.seeking&&Math.abs(this.video.currentTime-this.offset-p.target)<.001){this.pendingSeek=null;return;}this.video.currentTime=p.target+this.offset;this.settleSeek();}catch{}}
@@ -41,7 +41,7 @@ export class PresentationTransport{
   }
   async unlock(){
     if(this.started||this.unlockPromise)return this.unlockPromise;const generation=this.generation;
-    this.unlockPromise=Promise.all([this.video,this.audio].map(async element=>{
+    this.unlockPromise=Promise.all((CONFIG.stage.impactEnabled===false?[this.video]:[this.video,this.audio]).map(async element=>{
       const t=element.currentTime||0;element.volume=0;try{await element.play();}catch{}
       if(this.generation!==generation||this.started)return;element.pause();try{element.currentTime=t;}catch{}this.restoreVolumes();
     })).finally(()=>{this.unlockPromise=null;this.restoreVolumes();});return this.unlockPromise;
@@ -68,6 +68,7 @@ export class PresentationTransport{
   previewScrub(time){if(!this.scrub&&!this.beginScrub())return this.currentTime;const t=Math.min(this.duration,Math.max(0,Number(time)||0));this.scrub.previewTime=t;this.seekAt(t,{resume:false,reason:'scrub-preview'});return t;}
   endScrub({cancel=false,resume}={}){const s=this.scrub;if(!s)return false;this.scrub=null;this.seekAt(cancel?s.startTime:s.previewTime,{resume:resume??s.wasPlaying,reason:cancel?'scrub-cancel':'scrub-commit'});return true;}
   syncImpact(force=false){
+    if(CONFIG.stage.impactEnabled===false){this.audio.pause();return;}
     const local=this.absolute-(CONFIG.stage.origin+CONFIG.stage.impactStart),duration=Number.isFinite(this.audio.duration)?this.audio.duration:CONFIG.stage.impactDuration;
     if(local<0||local>=duration||this.phase==='departure'){this.audio.pause();return;}
     if(this.audio.readyState<1)return;

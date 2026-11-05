@@ -133,13 +133,13 @@ async function prepareStage(){
     await Promise.all([prepareActor(),media.open()]);await yieldTask();
     await dot.prepareStage();dot.preparePerformance(CONFIG.stage.performanceDuration);
     window.__linggan.dot=dot;dot.source.renderer.domElement.style.visibility='hidden';
-    const screenBuffered=waitFor(()=>{const v=dot.source.media.video;return v.buffered.length>0&&v.buffered.end(v.buffered.length-1)>=v.duration-.1;},{label:'舞台屏幕视频',timeout:120000});screenBuffered.catch(()=>{});await dot.source.seek(0);dot.update({time:0,dt:0,mode:'stage',stageTime:0,pixelRatio:renderer.getPixelRatio()});
+    await dot.source.seek(0);dot.update({time:0,dt:0,mode:'stage',stageTime:0,pixelRatio:renderer.getPixelRatio()});
     (runtime.prepTrace??=[]).push({label:'stage-shader-start',at:performance.now()});
     const mask=dot.stageCamera.layers.mask;for(const layer of [0,2]){dot.stageCamera.layers.set(layer);await warmScene(dot.source.renderer,dot.stageGroup,dot.stageCamera);await yieldTask();}dot.stageCamera.layers.mask=mask;
     runtime.prepTrace.push({label:'stage-draw-start',at:performance.now()});
     for(const at of [0,3,9,15.7]){dot.update({time:0,dt:0,mode:'stage',stageTime:at,pixelRatio:.25});dot.renderStage();await yieldTask();}
     dot.update({time:0,dt:0,mode:'stage',stageTime:0,pixelRatio:renderer.getPixelRatio()});await dot.source.seek(0);dot.renderStage();dot.source.hide();dot.source.renderer.domElement.style.visibility='';
-    runtime.prepTrace.push({label:'stage-draw-end',at:performance.now()});screenReady=screenBuffered.then(()=>{runtime.stageReady=true;runtime.stageReadyAt=performance.now();});screenReady.catch(()=>{});
+    runtime.prepTrace.push({label:'stage-draw-end',at:performance.now()});runtime.stageReady=true;runtime.stageReadyAt=performance.now();screenReady=Promise.resolve();
   })();return stageJob;
 }
 async function prepareScroll(){
