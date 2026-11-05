@@ -87,7 +87,7 @@ async function init(){
   const rigModuleJob=import('../assets/dot/index.mjs');
   const stageModuleJob=import('./dot-stage-r07.mjs');
   opening=await createOpening({canvas});resize();bootProgress(.45,'正在准备字符与光影');
-  await fontsReady;portalLayout(0);await opening.prepare(renderer);bootProgress(.82,'正在准备第一帧');
+  await Promise.all([fontsReady,chatPresentation.ready]);portalLayout(0);await opening.prepare(renderer);bootProgress(.82,'正在准备第一帧');
   opening.update({time:0,dt:0,phase:'intro'});await warmScene(renderer,opening.scene,opening.camera);renderer.render(opening.scene,opening.camera);
   window.__linggan={ui,bgm,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),games:games?.snapshot()})};
   rigModule=await rigModuleJob;await stageModuleJob;bootProgress(.94,'正在准备连续画面');

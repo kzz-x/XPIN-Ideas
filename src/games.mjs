@@ -79,7 +79,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
     const root=new T.Group();root.name=title+' / 可拿起的三维对象';root.position.set(...p);root.rotation.x=-.58;roots[chapter].add(root);
     const body=box(w,h,.12,material.clone(),[0,0,0],root);
     const border=new T.LineSegments(new T.EdgesGeometry(body.geometry),new T.LineBasicMaterial({color:0xc4dafa,transparent:true,opacity:.7}));root.add(border);
-    const titleNode=label(root,title,[0,-.02,.075],w-.12,chapter===1?.32:.40,{color:chapter===1?'#173353':'#ecf5ff',font:68});
+    const titleNode=label(root,title,[0,-.02,.075],w-.12,chapter===1?.32:.40,{color:chapter===1?'#ffffff':'#ecf5ff',font:68});
     const piece={chapter,id,title,root,body,border,titleNode,textNodes:[titleNode],w,h,home:root.position.clone(),homeQ:root.quaternion.clone(),target:root.position.clone(),done:false,locked:false,kind,extras:{}};
     pieces.push(piece);return piece;
   }
@@ -184,7 +184,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
   const toolSlotPoints=[[-3.55,.10,-1.6],[3.55,.10,-1.6],[-3.55,.10,1.15],[3.55,.10,1.15]];
   const toolOrder=orders(state.layoutSeeds[2],TOOL_IDS,USE_IDS);
   for(let k=0;k<4;k++){
-    const id=TOOL_IDS[k],pos=toolOrder.cards.indexOf(id),piece=card(2,id,TOOL_NAMES[k],[-3.6+pos*2.4,1.12,2.95],{w:1.92,h:1.25,material:materials.dark});
+    const id=TOOL_IDS[k],pos=toolOrder.cards.indexOf(id),piece=card(2,id,TOOL_NAMES[k],[-3.6+pos*2.4,1.12,4.85],{w:1.92,h:1.25,material:materials.dark});
     piece.titleNode.position.y=-.42;
     installLogo(piece,k);
     const slotIndex=toolOrder.slots.indexOf(USE_IDS[k]),p=toolSlotPoints[slotIndex],slot=socket(2,USE_IDS[k],USE_NAMES[k],p,2.0,1.1);
@@ -395,7 +395,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
     if(drag.kind==='scene-preview')scenePiece.extras.mini.rotation.y+=dx*.012;
     if(drag.kind==='piece'){
       setRay(e);const point=raycaster.ray.intersectPlane(drag.plane,V());
-      if(point){point.add(drag.offset);drag.piece.root.position.copy(roots[active].worldToLocal(point));drag.piece.root.position.x=T.MathUtils.clamp(drag.piece.root.position.x,-5.8,5.8);drag.piece.root.position.z=T.MathUtils.clamp(drag.piece.root.position.z,-3.3,4.1);}
+      if(point){point.add(drag.offset);drag.piece.root.position.copy(roots[active].worldToLocal(point));drag.piece.root.position.x=T.MathUtils.clamp(drag.piece.root.position.x,-5.8,5.8);drag.piece.root.position.z=T.MathUtils.clamp(drag.piece.root.position.z,-3.3,Math.max(4.1,drag.piece.home.z+.8));}
     }
     drag.x=e.clientX;drag.y=e.clientY;
   }
@@ -443,7 +443,7 @@ export async function createGames({scene,camera,renderer,canvas,chapterPositions
       const ids=chapter===2?TOOL_IDS:CARGO_IDS,order=orders(state.layoutSeeds[chapter],ids,chapter===2?USE_IDS:CARGO_IDS);
       for(const piece of pieces.filter(p=>p.chapter===chapter)){
         const index=order.cards.indexOf(piece.id);
-        piece.home.set(narrow?(index%2===0?-2.05:2.05):-3.6+index*2.4,chapter===2?1.12:1.25,narrow?(index<2?3.3:5.6):(chapter===2?2.95:3.15));
+        piece.home.set(narrow?(index%2===0?-2.05:2.05):-3.6+index*2.4,chapter===2?1.12:1.25,narrow?(chapter===2?(index<2?4.3:6.8):(index<2?3.3:5.6)):(chapter===2?4.85:3.15));
         piece.root.position.copy(piece.done?slotFor(piece).target:piece.home);piece.root.quaternion.copy(piece.done?new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2,0,0)):piece.homeQ);
       }
     }

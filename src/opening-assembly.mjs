@@ -30,11 +30,13 @@ export function createParticleAssembly({scene,camera,glyphs,asciiData}){
   rectangle(outer,'#7a96ac',1);rectangle(input,'#a6bdcd',1);rectangle(button,'#d5e3eb',1,.19);rule(header.x,header.bottom,header.right,header.bottom,'#677d93',.8);
   const walker=document.createTreeWalker(chat,NodeFilter.SHOW_TEXT);let n;
   while(n=walker.nextNode()){
-   const value=n.textContent.trim(),el=n.parentElement;if(!value||el.closest('.ascii-orbit,#prompt-text,.typing-caret,svg'))continue;
+   const value=n.textContent.trim(),el=n.parentElement;if(!value||el.closest('.send-rings,#prompt-text,.typing-caret,svg'))continue;
    const range=document.createRange();range.selectNodeContents(n);const r=range.getBoundingClientRect();if(!r.width||!r.height)continue;
    const st=getComputedStyle(el),c=document.createElement('canvas');c.width=Math.ceil(r.width+4);c.height=Math.ceil(r.height+4);const ctx=c.getContext('2d');ctx.font=`${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(value,2,c.height/2);const data=ctx.getImageData(0,0,c.width,c.height).data,pitch=parseFloat(st.fontSize)>=22?2.3:1.8;
    for(let y=pitch/2;y<c.height;y+=pitch)for(let x=pitch/2;x<c.width;x+=pitch)if(data[(Math.floor(y)*c.width+Math.floor(x))*4+3]>90)addTarget(r.x+x-2,r.y+y-2,pitch*.92,pitch*.92,2,st.color,.18);
   }
+  const icon=chat.querySelector('.chat-sigil img');
+  if(icon?.complete&&icon.naturalWidth){const r=icon.getBoundingClientRect(),c=document.createElement('canvas');c.width=Math.ceil(r.width);c.height=Math.ceil(r.height);const ctx=c.getContext('2d');ctx.drawImage(icon,0,0,c.width,c.height);const data=ctx.getImageData(0,0,c.width,c.height).data,pitch=1.6;for(let y=pitch/2;y<c.height;y+=pitch)for(let x=pitch/2;x<c.width;x+=pitch)if(data[(Math.floor(y)*c.width+Math.floor(x))*4+3]>70)addTarget(r.x+x,r.y+y,pitch,pitch,2,'#d0dce7',.18);}
   // The arrow itself is structural geometry; the live SVG takes over only
   // after this same arrangement has physically settled.
   const bx=button.x+button.width*.28,by=button.y+button.height*.72,ex=button.x+button.width*.72,ey=button.y+button.height*.28,nArrow=14;
