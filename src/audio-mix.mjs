@@ -1,6 +1,6 @@
-// Provisional listening mix. The user will supply the final shared defaults.
-export const AUDIO_MIX_DEFAULTS=Object.freeze({sfx:.8,video:.8,bgm:.15});
-export const AUDIO_MIX_STORAGE='linggan-audio-mix-r14';
+// The user's approved balance; r15 also starts existing browsers at this mix.
+export const AUDIO_MIX_DEFAULTS=Object.freeze({sfx:1,video:.25,bgm:.06});
+export const AUDIO_MIX_STORAGE='linggan-audio-mix-r15';
 export function normalizeAudioMix(value={}){
  return Object.fromEntries(Object.entries(AUDIO_MIX_DEFAULTS).map(([key,fallback])=>[key,Number.isFinite(Number(value[key]))?Math.max(0,Math.min(1,Number(value[key]))):fallback]));
 }

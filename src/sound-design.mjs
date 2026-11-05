@@ -1,4 +1,5 @@
-// Short, quiet physical and digital cues. Continuous gestures own one voice.
+import {createAudioMaster,dbToGain,OPENING_TRIM_DB} from './audio-master.mjs';
+// Short physical and digital cues. Continuous gestures own one voice.
 export const CUES={
  hover:{hz:1700,d:.028,g:.024,kind:'glass',noise:.05},
  click:{hz:620,d:.065,g:.022,kind:'wood',noise:.17},
@@ -50,17 +51,18 @@ export function scheduleCue(context,output,type,{at=context.currentTime+.003,int
  if(spec.noise){const source=context.createBufferSource(),filter=context.createBiquadFilter();source.buffer=noiseBuffer(context);filter.type='bandpass';filter.frequency.value=spec.kind==='wood'?2200:spec.hz*pitch;filter.Q.value=spec.kind==='air'?.65:1.1;source.connect(filter);const gain=context.createGain();gain.gain.setValueAtTime(.00001,at);gain.gain.exponentialRampToValueAtTime(Math.max(.00002,level*spec.noise),at+.006);gain.gain.exponentialRampToValueAtTime(.00001,at+spec.d);filter.connect(gain).connect(bus);left++;source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();disconnect();};source.start(at,.17);source.stop(at+spec.d+.025);nodes.push(source);}
  return{nodes,end:at+spec.d+(notes.length-1)*.035+.025,stop(){for(const n of nodes)try{n.stop(context.currentTime+.01);}catch{}}};
 }
-export function createSound({volume=.8}={}){
- let context,mix,limiter,fxBus,musicBus,recording,muted=false,hold=null,particles=null,lastCode=-1,lastTyping=-1,particleBucket=-1,active=0,unlockAt=-Infinity,lastStage=null,effectVolume=Math.max(0,Math.min(1,volume));
+export function createSound({volume=1}={}){
+ let context,mix,limiter,master,fxBus,openingBus,musicBus,recording,muted=false,hold=null,particles=null,lastCode=-1,lastTyping=-1,particleBucket=-1,active=0,unlockAt=-Infinity,lastStage=null,effectVolume=Math.max(0,Math.min(1,volume));
  const EFFECTS_GAIN=6;
+ const openingCues=new Set(['charge','particle','settle','assembly']);
  const counters={},events=[],last=new Map(),queued=[];let playedAt=-Infinity;
  const record=(type,detail={})=>{counters[type]=(counters[type]||0)+1;events.push({type,at:performance.now(),...detail});if(events.length>240)events.shift();};
  function ensureContext(){
   if(context)return context;
   context=new (globalThis.AudioContext||globalThis.webkitAudioContext)({sampleRate:48000,latencyHint:'interactive'});
-  mix=context.createGain();limiter=context.createDynamicsCompressor();fxBus=context.createGain();musicBus=context.createGain();fxBus.gain.value=muted?0:effectVolume*EFFECTS_GAIN;
+  master=createAudioMaster(context);mix=context.createGain();limiter=context.createDynamicsCompressor();fxBus=context.createGain();openingBus=context.createGain();openingBus.gain.value=dbToGain(OPENING_TRIM_DB);openingBus.connect(fxBus);musicBus=context.createGain();fxBus.gain.value=muted?0:effectVolume*EFFECTS_GAIN;
   limiter.threshold.value=-9;limiter.knee.value=10;limiter.ratio.value=4;limiter.attack.value=.003;limiter.release.value=.12;
-  fxBus.connect(mix);musicBus.connect(mix);mix.connect(limiter).connect(context.destination);
+  fxBus.connect(mix);musicBus.connect(mix);mix.connect(limiter).connect(master.input);
   context.addEventListener('statechange',()=>{if(context.state==='running'){for(const item of queued.splice(0))if(performance.now()-item.at<350)play(item.type,item.options);}});
   return context;
  }
@@ -72,11 +74,11 @@ export function createSound({volume=.8}={}){
   if(ctx.state!=='running'){if(now-unlockAt<350&&queued.length<4)queued.push({type,options,at:now});return false;}
   const interval=options.cooldown??({hover:70,typing:45,code:55,particle:105,settle:100,scrub:90,contact:70,dot:180}[type]??35),key=options.key||type;
   if(now-(last.get(key)??-Infinity)<interval||(active>=12&&type!=='win'))return false;last.set(key,now);active++;playedAt=now;record(type,{intensity:options.intensity??1});if(options.duck!==false){const cue=CUES[type]||CUES.click;duckMusic(.38,true,cue.d+((cue.notes?.length||1)-1)*.035+.03);}
-  scheduleCue(ctx,fxBus,type,{...options,onEnded:()=>active=Math.max(0,active-1)});return true;
+  scheduleCue(ctx,openingCues.has(type)?openingBus:fxBus,type,{...options,onEnded:()=>active=Math.max(0,active-1)});return true;
  }
  function continuous(kind){
-  const ctx=ensureContext(),source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();source.buffer=noiseBuffer(ctx);source.loop=true;filter.type='bandpass';filter.Q.value=.7;gain.gain.value=.00001;source.connect(filter).connect(gain).connect(fxBus);source.start();
-  const o=kind==='hold'?ctx.createOscillator():null,tonal=kind==='hold'?ctx.createGain():null;if(o){o.type='sine';tonal.gain.value=.00001;o.connect(tonal).connect(fxBus);o.start();}
+  const ctx=ensureContext(),source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();source.buffer=noiseBuffer(ctx);source.loop=true;filter.type='bandpass';filter.Q.value=.7;gain.gain.value=.00001;source.connect(filter).connect(gain).connect(openingBus);source.start();
+  const o=kind==='hold'?ctx.createOscillator():null,tonal=kind==='hold'?ctx.createGain():null;if(o){o.type='sine';tonal.gain.value=.00001;o.connect(tonal).connect(openingBus);o.start();}
   record(kind+'-start');return{source,filter,gain,o,tonal,stop(){const at=ctx.currentTime;for(const g of[gain,tonal])if(g){g.gain.cancelAndHoldAtTime(at);g.gain.setTargetAtTime(.00001,at,.025);}source.stop(at+.16);o?.stop(at+.16);source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();o?.disconnect();tonal?.disconnect();};record(kind+'-end');}};
  }
  function updateHold(progress,pressed){
@@ -99,9 +101,10 @@ export function createSound({volume=.8}={}){
  function stageMotion(time,playing){if(!playing){lastStage=time;return;}if(lastStage===null||Math.abs(time-lastStage)>.3){lastStage=time;return;}for(const[t,type]of[[.8,'turn'],[2.1,'hat'],[14.85,'hat'],[15.3,'particle'],[18.2,'turn']])if(lastStage<t&&time>=t)play(type,{intensity:.45});lastStage=time;}
  return{ensureContext,unlock,play,updateHold,particleMotion,stopParticles,codeTick,typing,dotAction,stageMotion,levelWin,setVolume,
   get context(){return context;},get musicBus(){ensureContext();return musicBus;},get playedAt(){return playedAt;},
-  getMixStream(){ensureContext();if(!recording){recording=context.createMediaStreamDestination();limiter.connect(recording);}return recording.stream;},
+  connectMediaElement(element){ensureContext();return master.connectMediaElement(element);},
+  getMixStream(){ensureContext();if(!recording){recording=context.createMediaStreamDestination();master.output.connect(recording);}return recording.stream;},
   setMuted(value){muted=!!value;if(fxBus){const at=context.currentTime;fxBus.gain.cancelAndHoldAtTime(at);fxBus.gain.linearRampToValueAtTime(muted?0:effectVolume*EFFECTS_GAIN,at+.04);}if(muted){updateHold(0,false);stopParticles();}},
-  snapshot:()=>({contextState:context?.state||'uncreated',muted,volume:effectVolume,effectsGain:fxBus?.gain.value||0,musicDuckGain:musicBus?.gain.value??1,active,hold:!!hold,particles:!!particles,holdGain:hold?.gain.gain.value||0,holdToneGain:hold?.tonal.gain.value||0,counters:{...counters},events:[...events]})
+  snapshot:()=>({contextState:context?.state||'uncreated',muted,volume:effectVolume,effectsGain:fxBus?.gain.value||0,musicDuckGain:musicBus?.gain.value??1,master:master?.snapshot(),active,hold:!!hold,particles:!!particles,holdGain:hold?.gain.gain.value||0,holdToneGain:hold?.tonal.gain.value||0,counters:{...counters},events:[...events]})
  };
 }
 export function bindUiSound(sound,{root=document}={}){
