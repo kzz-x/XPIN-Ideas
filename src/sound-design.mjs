@@ -1,5 +1,6 @@
 import {createAudioMaster,dbToGain,OPENING_TRIM_DB} from './audio-master.mjs';
 import {createGlassOpening} from './opening-sound.mjs';
+import {createSandOpening,sandProfile} from './sand-sound.mjs';
 // Short physical and digital cues. Continuous gestures own one voice.
 export const CUES={
  hover:{hz:1700,d:.028,g:.024,kind:'glass',noise:.05},
@@ -53,7 +54,7 @@ export function scheduleCue(context,output,type,{at=context.currentTime+.003,int
  return{nodes,end:at+spec.d+(notes.length-1)*.035+.025,stop(){for(const n of nodes)try{n.stop(context.currentTime+.01);}catch{}}};
 }
 export function createSound({volume=1}={}){
- let context,mix,limiter,master,fxBus,openingBus,glassOpening,musicBus,recording,muted=false,hold=null,particles=null,lastCode=-1,lastTyping=-1,active=0,unlockAt=-Infinity,lastStage=null,effectVolume=Math.max(0,Math.min(1,volume));
+ let context,mix,limiter,master,fxBus,openingBus,glassOpening,sandOpening,musicBus,recording,muted=false,hold=null,particles=null,lastCode=-1,lastTyping=-1,active=0,unlockAt=-Infinity,lastStage=null,effectVolume=Math.max(0,Math.min(1,volume));
  const EFFECTS_GAIN=6;
  const openingCues=new Set(['charge','particle','settle','assembly']);
  const counters={},events=[],last=new Map(),queued=[];let playedAt=-Infinity;
@@ -65,6 +66,7 @@ export function createSound({volume=1}={}){
   limiter.threshold.value=-9;limiter.knee.value=10;limiter.ratio.value=4;limiter.attack.value=.003;limiter.release.value=.12;
   fxBus.connect(mix);musicBus.connect(mix);mix.connect(limiter).connect(master.input);
   glassOpening=createGlassOpening(context,openingBus);
+  sandOpening=createSandOpening(context,openingBus);
   context.addEventListener('statechange',()=>{if(context.state==='running'){for(const item of queued.splice(0))if(performance.now()-item.at<350)play(item.type,item.options);}});
   return context;
  }
@@ -85,9 +87,10 @@ export function createSound({volume=1}={}){
   ensureContext();if(!hold){hold=glassOpening.start('hold');if(hold){record('hold-start');duckMusic(.25,false);}}hold?.update(progress);
  }
  function particleMotion(state){
-  if(muted||effectVolume<=0||!state)return;ensureContext();if(!particles){particles=glassOpening.start('particles');if(particles){record('particles-start');duckMusic(.42,false);}}
-  const settled=(state.settled||0)/Math.max(1,state.count);
-  particles?.update(Math.max((state.time||0)/5.2,settled),{settled,motion:Math.min(1,(state.maxSpeed||0)/8)});
+  if(muted||effectVolume<=0||!state)return;ensureContext();const profile=sandProfile(state);
+  if(profile.complete){if(particles){particles.update(state);particles=null;record('particles-end',{reason:'visual-complete',visualTime:state.time});releaseMusic();}return;}
+  if(!particles&&state.time>=.10){particles=sandOpening.start(state);if(particles){record('particles-start',{visualTime:state.time});duckMusic(.42,false);}}
+  particles?.update(state);
  }
  function stopParticles(){if(particles){particles.stop();particles=null;record('particles-end');releaseMusic();}}
  function levelWin(chapter){const pitch=[1,1.122462,1.259921,1.33484,1.498307][chapter]||1;if(play('win',{pitch,key:'level-win-'+chapter,cooldown:800,at:ensureContext().currentTime+.06}))record('level-win',{chapter});}
@@ -98,12 +101,12 @@ export function createSound({volume=1}={}){
  // Keep the approved stage particle accent at its r15 level, independent of the softer opening.
  function stageMotion(time,playing){if(!playing){lastStage=time;return;}if(lastStage===null||Math.abs(time-lastStage)>.3){lastStage=time;return;}for(const[t,type]of[[.8,'turn'],[2.1,'hat'],[14.85,'hat'],[15.3,'particle'],[18.2,'turn']])if(lastStage<t&&time>=t)play(type,{intensity:.45*(type==='particle'?dbToGain(-3):1),opening:false});lastStage=time;}
  return{ensureContext,unlock,play,updateHold,particleMotion,stopParticles,codeTick,typing,dotAction,stageMotion,levelWin,setVolume,
-  prepareOpening(){ensureContext();return glassOpening.load();},
+  prepareOpening(){ensureContext();return Promise.all([glassOpening.load(),sandOpening.load()]);},
   get context(){return context;},get musicBus(){ensureContext();return musicBus;},get playedAt(){return playedAt;},
   connectMediaElement(element){ensureContext();return master.connectMediaElement(element);},
   getMixStream(){ensureContext();if(!recording){recording=context.createMediaStreamDestination();master.output.connect(recording);}return recording.stream;},
   setMuted(value){muted=!!value;if(fxBus){const at=context.currentTime;fxBus.gain.cancelAndHoldAtTime(at);fxBus.gain.linearRampToValueAtTime(muted?0:effectVolume*EFFECTS_GAIN,at+.04);}if(muted){updateHold(0,false);stopParticles();}},
-  snapshot:()=>({contextState:context?.state||'uncreated',muted,volume:effectVolume,effectsGain:fxBus?.gain.value||0,musicDuckGain:musicBus?.gain.value??1,master:master?.snapshot(),active,hold:!!hold,particles:!!particles,opening:glassOpening?.snapshot(),counters:{...counters},events:[...events]})
+  snapshot:()=>({contextState:context?.state||'uncreated',muted,volume:effectVolume,effectsGain:fxBus?.gain.value||0,musicDuckGain:musicBus?.gain.value??1,master:master?.snapshot(),active,hold:!!hold,particles:!!particles,opening:glassOpening?.snapshot(),sand:sandOpening?.snapshot(),counters:{...counters},events:[...events]})
  };
 }
 export function bindUiSound(sound,{root=document}={}){

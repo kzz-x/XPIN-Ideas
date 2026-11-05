@@ -1,5 +1,5 @@
 const clamp=x=>Math.max(0,Math.min(1,Number(x)||0));
-// Both gestures use the selected B recording. A narrowing gap, shorter grains
+// The accepted button hold uses B. A narrowing gap, shorter grains
 // and rising playback rate make acceleration audible without raising the mix.
 export function glassProfile(progress,kind='hold',settled=0){
  const p=clamp(progress),hold=kind==='hold',curve=p**(hold?1.15:1.45);

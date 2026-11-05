@@ -94,7 +94,7 @@ export function createParticleAssembly({scene,camera,glyphs,asciiData}){
     targets.forEach((t,i)=>solver.target.set(t.world.toArray(),i*3));solver.position.set(solver.target);solver.settled.fill(1);solver.clock=8;settledAt=6;refine=1;matrices();
    }
   }
-  phase=next;return solver?.snapshot();
+  phase=next;return solver?{...solver.snapshot(),refinement:refine,ready:welded}:null;
  }
  function warmup(){
   measureTargets();sourceTriangles();makeWeld();assembled.traverse(o=>{if(o.material){o.material.transparent=true;o.material.opacity=.5;}});root.visible=assembled.visible=true;
