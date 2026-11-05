@@ -5,6 +5,7 @@ import {createStreamingBgm} from './bgm-stream.mjs';
 import {createSound,bindUiSound} from './sound-design.mjs';
 import {createAudioMix,bindAudioMix} from './audio-mix.mjs';
 import {ListeningGate} from './listening-gate.mjs';
+import {createReturnVisit,ReturnHold} from './return-entry.mjs';
 import {COUNTS} from './games-rules.mjs';
 import * as T from 'three';
 import {CSS3DRenderer} from 'three/addons/renderers/CSS3DRenderer.js';
@@ -24,8 +25,8 @@ import {loadType,clamp,smooth,damp,vec,project} from './space-utils.mjs';
 const $=id=>document.getElementById(id),canvas=$('world'),film=$('film'),audio=$('stage-audio'),portal=$('portal');
 const ui={phase:'loading',phaseAt:0,scroll:0,target:0,scrollVelocity:0,held:false,hold:0,holdStart:0,muted:false,gameLock:false,focusLock:false,bubbleUntil:0,bubbleX:0,bubbleY:0,chapter:0,game:-1,stageEntryAt:0,frameTimes:[],blackAt:0,events:[],errors:[]};
 let opening,dot,dotForeground,games,space,renderer,scene,camera,css,key,keyTarget,quality,previous=performance.now()/1000,time=0,startedAt=previous,toastTimer;
-const runtime={ready:false,stageReady:false,scrollReady:false,openingReadyAt:null,stageReadyAt:null,worldReadyAt:null,requested:false,longTasks:[]};
-let stageJob,screenReady,scrollJob,worldJob,fontsReady,rigModule,rigAssets,rigJob,stageRenderer,filmStarting=false;
+const runtime={ready:false,actorReady:false,stageReady:false,scrollReady:false,scrollProgress:0,scrollLabel:'正在准备空间',openingReadyAt:null,stageReadyAt:null,worldReadyAt:null,requested:false,longTasks:[]};
+let actorJob,stageJob,screenReady,scrollJob,worldJob,fontsReady,rigModule,rigAssets,rigJob,stageRenderer,filmStarting=false;
 let cueEdited=false;const media=createFilmMedia(film,{manifestURL:new URL(CONFIG.film.manifest,location.href).href,onManifest:m=>{if(!cueEdited&&Number.isFinite(m.stageAt))applyCue(m.stageAt);$('film-status').textContent=m.label+' · 同源大屏 / 分段预载';}});
 const waitLabel=document.createElement('div');waitLabel.id='media-wait';waitLabel.setAttribute('role','status');waitLabel.textContent='[ · · · ] 正在准备下一幕';document.body.append(waitLabel);
 function buffering(on){waitLabel.classList.toggle('visible',!!on);}
@@ -41,7 +42,7 @@ async function readyAction(action,button){
   try{await prepareWorld();action();}catch(error){toast('场景暂未就绪，请稍后重试。');}
   finally{if(button){button.disabled=false;if(label)button.textContent=label;}}
 }
-const audioMix=createAudioMix(),listeningGate=new ListeningGate(2);let listenGeneration=0;
+const audioMix=createAudioMix(),listeningGate=new ListeningGate(2),returnVisit=createReturnVisit(),returnHold=new ReturnHold(1000);let listenGeneration=0,returnGeneration=0,returnBusy=false;
 const sound=createSound({volume:audioMix.snapshot().sfx}),chatPresentation=createChatPresentation({onTyping:count=>sound.typing(count)});bindUiSound(sound);let activateSoundOnly=false;
 const bgm=createStreamingBgm({getContext:()=>sound.ensureContext(),getOutput:()=>sound.musicBus,onError:toast,onChange:s=>{
   updateSoundButton();
@@ -72,13 +73,14 @@ function updateSoundButton(){const blocked=!ui.muted&&sound.context?.state!=='ru
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4200);}
 function display(id,show,mode='block'){$(id).style.display=show?mode:'none';}
 function setPhase(phase){const priorPhase=ui.phase;ui.phase=phase;ui.phaseAt=time;document.body.dataset.phase=phase;ui.events.push({phase,time,at:performance.now()});const scroll=phase==='scroll',intro=phase==='intro',movingIntro=['intro','morph','chat','launch','black'].includes(phase),watch=['film','transition','stage'].includes(phase);
-  if(!['stage','transition','departure'].includes(phase))dot?.source.hide();
+  if(intro)dot?.update({mode:'hidden'});
+  if(!['stage','transition','departure'].includes(phase))dot?.source?.hide();
   if(scroll&&camera){camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.near=.05;camera.far=220;camera.updateProjectionMatrix();}
-  display('intro-copy',intro);display('hold',intro,'flex');display('portal',['morph','chat','launch','black','film','transition'].includes(phase));display('chat',['morph','chat'].includes(phase));display('code',phase==='launch');display('film',['film','transition'].includes(phase));display('film-badge',phase==='film');display('transport',watch,'flex');display('stage-caption',phase==='stage');$('skip-film').style.visibility=watch?'visible':'hidden';$('skip-film').disabled=!watch;$('skip-film').firstChild.textContent=phase==='stage'?'进入卷轴 ':'跳过影片 ';cinemaControls.reveal();$('handoff-white').style.opacity='0';display('chapters',scroll,'flex');display('scroll-footer',scroll,'flex');display('chapter-caption',scroll);display('dot-bubble',false);display('game-controls',false);display('scroll-cue',scroll&&ui.scroll<1);
-  $('masthead').style.visibility=['black','listen'].includes(phase)?'hidden':'visible';$('listening-overlay').classList.toggle('visible',phase==='listen');$('listening-overlay').setAttribute('aria-hidden',String(phase!=='listen'));$('blackout').style.opacity=phase==='black'?'1':'0';portal.style.opacity='1';$('portal-frame').style.opacity=phase==='film'?'0':'1';if(phase==='film'){$('film-badge').textContent=CONFIG.film.label;portal.style.boxShadow='none';}else portal.style.boxShadow='0 28px 80px #0006';
-  if(phase==='scroll'){bgm.enter({restart:true,section:'scroll'});updateCompletion();}else{space?.cancelFocus();if(['intro','morph','chat','launch','listen','black','film-wait'].includes(phase)){const b=bgm.snapshot();if(!b.active||b.section!=='opening')bgm.enter({restart:true,section:'opening'});}else bgm.leave();}
+  display('intro-copy',intro);display('hold',intro,'flex');$('return-scroll').hidden=!(intro&&returnVisit.eligible);if(intro)requestAnimationFrame(placeReturnButton);display('portal',['morph','chat','launch','black','film','transition'].includes(phase));display('chat',['morph','chat'].includes(phase));display('code',phase==='launch');display('film',['film','transition'].includes(phase));display('film-badge',phase==='film');display('transport',watch,'flex');display('stage-caption',phase==='stage');$('skip-film').style.visibility=watch?'visible':'hidden';$('skip-film').disabled=!watch;$('skip-film').firstChild.textContent=phase==='stage'?'进入卷轴 ':'跳过影片 ';cinemaControls.reveal();$('handoff-white').style.opacity='0';display('chapters',scroll,'flex');display('scroll-footer',scroll,'flex');display('chapter-caption',scroll);display('dot-bubble',false);display('game-controls',false);display('scroll-cue',scroll&&ui.scroll<1);
+  $('masthead').style.visibility=['black','listen','return-wait'].includes(phase)?'hidden':'visible';$('listening-overlay').classList.toggle('visible',phase==='listen');$('listening-overlay').setAttribute('aria-hidden',String(phase!=='listen'));$('blackout').style.opacity=phase==='black'?'1':'0';portal.style.opacity='1';$('portal-frame').style.opacity=phase==='film'?'0':'1';if(phase==='film'){$('film-badge').textContent=CONFIG.film.label;portal.style.boxShadow='none';}else portal.style.boxShadow='0 28px 80px #0006';
+  if(phase==='scroll'){bgm.enter({restart:true,section:'scroll'});updateCompletion();}else{space?.cancelFocus();if(['intro','morph','chat','launch','listen','black','film-wait','return-wait'].includes(phase)){const b=bgm.snapshot();if(!b.active||b.section!=='opening')bgm.enter({restart:true,section:'opening'});}else bgm.leave();}
   if(phase!=='intro')sound.updateHold(0,false);if(phase==='morph')sound.play('charge');if(priorPhase==='morph'&&phase==='chat'){sound.stopParticles();sound.play('assembly');}if(phase==='launch')sound.play('send');if(phase==='black')sound.play('sweep',{intensity:.6});if(phase==='departure')sound.play('turn',{intensity:.7});if(!['morph','chat'].includes(phase))sound.stopParticles();
-  if(phase==='scroll'){ui.target=ui.scroll=ui.scrollVelocity=0;ui.game=-1;ui.bubbleUntil=time+7;$('dot-bubble-text').textContent='你好，我是 Dot。我们把这次创作慢慢展开。';}
+  if(phase==='scroll'){returnVisit.markScrollVisited();ui.target=ui.scroll=ui.scrollVelocity=0;ui.game=-1;ui.bubbleUntil=time+7;$('dot-bubble-text').textContent='你好，我是 Dot。我们把这次创作慢慢展开。';}
   if(phase==='stage'){ui.scroll=ui.target=ui.scrollVelocity=0;}
   if(phase==='black'){ui.blackAt=performance.now();ui.events.push({event:'pure-black-start',at:ui.blackAt});}
   if(!scroll){ui.target=0;games?.setActiveChapter(-1);}if(!movingIntro)ui.held=false;
@@ -101,7 +103,7 @@ async function init(){
   opening=await createOpening({canvas,onInteract:()=>sound.play('select',{pitch:.8,intensity:.75})});resize();bootProgress(.45,'正在准备字符与光影');bgm.enter({restart:true,section:'opening'});
   await Promise.all([fontsReady,chatPresentation.ready]);portalLayout(0);await opening.prepare(renderer);bootProgress(.82,'正在准备第一帧');
   opening.update({time:0,dt:0,phase:'intro'});await warmScene(renderer,opening.scene,opening.camera);renderer.render(opening.scene,opening.camera);
-  window.__linggan={ui,bgm,sound,audioMix,listeningGate,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),audioMix:audioMix.snapshot(),listening:listeningGate.snapshot(),games:games?.snapshot()})};
+  window.__linggan={ui,bgm,sound,audioMix,listeningGate,returnVisit,returnHold,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,prepareScroll,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),audioMix:audioMix.snapshot(),listening:listeningGate.snapshot(),returnEntry:{...returnVisit.snapshot(),held:returnHold.held,holdProgress:returnHold.progress,busy:returnBusy},games:games?.snapshot()})};
   rigModule=await rigModuleJob;await stageModuleJob;bootProgress(.94,'正在准备连续画面');
   const {makeEnvironment}=await environmentModule;globalThis.DOT_PREWARM_ENVIRONMENT=makeEnvironment();
   stageRenderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});stageRenderer.outputColorSpace=T.SRGBColorSpace;stageRenderer.toneMapping=T.ACESFilmicToneMapping;
@@ -111,17 +113,25 @@ async function init(){
   previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');runtime.openingReadyAt=performance.now();requestAnimationFrame(frame);
   await nextPaint();document.body.classList.add('scene-visible');$('loading').classList.add('leave');setTimeout(()=>$('loading').style.display='none',700);
   prepareRigAssets().catch(()=>{});
+  if(returnVisit.eligible)setTimeout(()=>{if(ui.phase==='intro'&&!ui.held)prepareScroll().catch(()=>{});},900);
   worldReady.catch(error=>{ui.errors.push(String(error));console.error(error);toast('下一幕准备失败，请刷新后重试。');});
 }
 // Only the real first shot is on the opening critical path. Fetch later assets
 // while the viewer reads, then build the rig in the existing black beat.
 function prepareRigAssets(){return rigAssets??=Promise.all([rigModule||import('../assets/dot/index.mjs'),fetch(new URL('../assets/dot/model/assets/dot-character.glb',import.meta.url),{priority:'low'}).then(r=>{if(!r.ok)throw Error('Dot 模型暂未载入');return r.blob();})]);}
 function prepareRig(){return rigJob??=(async()=>{const [{loadSharedDot},blob]=await prepareRigAssets(),asset=URL.createObjectURL(blob);try{const rig=await loadSharedDot({asset,camera,scene,coordinates:'normalized',context:'stage',state:'trumpet',instrument:true});dotForeground.bindRoot(rig.root);return rig;}finally{URL.revokeObjectURL(asset);}})();}
+async function prepareActor(){
+  if(actorJob)return actorJob;actorJob=(async()=>{
+    const rig=await prepareRig();await yieldTask();
+    const {createDotStage}=await import('./dot-stage-r07.mjs');
+    dot=await createDotStage({scene,camera,film,rig,stageRenderer,deferStage:true,isPlaying:()=>transport.playing,onAction:action=>{if(['scroll','departure'].includes(ui.phase))sound.dotAction(action);}});
+    window.__linggan.dot=dot;runtime.actorReady=true;advanceScrollProgress(.14,'正在准备空间');
+  })();return actorJob;
+}
 async function prepareStage(){
   if(stageJob)return stageJob;stageJob=(async()=>{
-    const [rig]=await Promise.all([prepareRig(),media.open()]);await yieldTask();
-    const {createDotStage}=await import('./dot-stage-r07.mjs');await yieldTask();
-    dot=await createDotStage({scene,camera,film,rig,stageRenderer,isPlaying:()=>transport.playing,onAction:action=>{if(['scroll','departure'].includes(ui.phase))sound.dotAction(action);}});dot.preparePerformance(CONFIG.stage.performanceDuration);
+    await Promise.all([prepareActor(),media.open()]);await yieldTask();
+    await dot.prepareStage();dot.preparePerformance(CONFIG.stage.performanceDuration);
     window.__linggan.dot=dot;dot.source.renderer.domElement.style.visibility='hidden';
     const screenBuffered=waitFor(()=>{const v=dot.source.media.video;return v.buffered.length>0&&v.buffered.end(v.buffered.length-1)>=v.duration-.1;},{label:'舞台屏幕视频',timeout:120000});screenBuffered.catch(()=>{});await dot.source.seek(0);dot.update({time:0,dt:0,mode:'stage',stageTime:0,pixelRatio:renderer.getPixelRatio()});
     (runtime.prepTrace??=[]).push({label:'stage-shader-start',at:performance.now()});
@@ -134,27 +144,82 @@ async function prepareStage(){
 }
 async function prepareScroll(){
   if(scrollJob)return scrollJob;scrollJob=(async()=>{
-    await prepareStage();await fontsReady;
-    const [{createGames},{createScrollSpace}]=await Promise.all([import('./games.mjs'),import('./scroll-space.mjs')]);await loadType();await yieldTask();
+    await prepareActor();await fontsReady;advanceScrollProgress(.16,'正在准备卷轴');
+    const [{createGames},{createScrollSpace}]=await Promise.all([import('./games.mjs'),import('./scroll-space.mjs')]);await loadType();advanceScrollProgress(.20,'正在准备卷轴');await yieldTask();
     space=await createScrollSpace({scene,camera,onFocus:v=>{ui.focusLock=v;if(v){ui.target=ui.scroll;ui.scrollVelocity=0;}},onSound:t=>sound.play(t)});
-    await yieldTask();games=await createGames({scene,camera,renderer,canvas,chapterPositions:CONFIG.chapters,onFeedback:event=>{if(event.type==='level-success')sound.levelWin(event.chapter);else if(!['info','warning','complete'].includes(event.type))sound.play(event.type,event);if(event.text)setBubble(event.text,event.type==='complete'?7:4);},onProgress:()=>updateCompletion(),onInteractionLock:locked=>{ui.gameLock=locked;if(locked){ui.target=ui.scroll;ui.scrollVelocity=0;}},onGuide:guide=>{if(guide.text)setBubble(guide.text,7);const target=guide.target?.isVector3?guide.target:guide.target?.getWorldPosition?.(vec());if(target)dot?.setAttention(target);}});
+    advanceScrollProgress(.30,'内容正在就位');await yieldTask();games=await createGames({scene,camera,renderer,canvas,chapterPositions:CONFIG.chapters,onFeedback:event=>{if(event.type==='level-success')sound.levelWin(event.chapter);else if(!['info','warning','complete'].includes(event.type))sound.play(event.type,event);if(event.text)setBubble(event.text,event.type==='complete'?7:4);},onProgress:()=>updateCompletion(),onInteractionLock:locked=>{ui.gameLock=locked;if(locked){ui.target=ui.scroll;ui.scrollVelocity=0;}},onGuide:guide=>{if(guide.text)setBubble(guide.text,7);const target=guide.target?.isVector3?guide.target:guide.target?.getWorldPosition?.(vec());if(target)dot?.setAttention(target);}});
     // Await actual model/texture decode, not just the creation of their loaders.
-    await Promise.all(games.loads);await Promise.all([...document.querySelectorAll('.process-card img')].map(img=>img.decode().catch(()=>{})));
+    advanceScrollProgress(.42,'内容正在就位');
+    const images=[...document.querySelectorAll('.process-card img')],assets=[...games.loads,...images.map(img=>img.decode())];let finishedAssets=0;
+    await Promise.all(assets.map(job=>Promise.resolve(job).then(()=>advanceScrollProgress(.42+(++finishedAssets/Math.max(1,assets.length))*.21,'内容正在就位'))));
+    if(games.snapshot().products.models.some(model=>!model.loaded)||images.some(img=>!img.naturalWidth))throw Error('部分卷轴内容尚未载入，请重新加载。');
     Object.assign(window.__linggan,{games,space,dotForeground});
     const warmCamera=camera.clone();warmCamera.position.set(innerWidth<700?2.04:1.2,innerWidth<700?28.9:17,innerWidth<700?40.8:24);warmCamera.lookAt(0,0,-3);warmCamera.updateMatrixWorld();
     // Use the exact production light lists and draw passes. A combined layer
     // compile would create different shader variants and defer work until entry.
     camera.copy(warmCamera,false);camera.layers.set(0);dot.update({time:0,dt:0,mode:'scroll',companionTarget:vec(8.7,2.7,4)});
-    runtime.prepTrace.push({label:'scroll-shader-start',at:performance.now()});await warmScene(renderer,scene,camera);await yieldTask();
+    runtime.prepTrace.push({label:'scroll-shader-start',at:performance.now()});await warmScene(renderer,scene,camera,{onProgress:p=>advanceScrollProgress(.64+p*.25,'正在展开画面')});await yieldTask();
     runtime.prepTrace.push({label:'scroll-draw-start',at:performance.now()});const oldTarget=renderer.getRenderTarget(),warmTarget=new T.WebGLRenderTarget(8,8);
-    for(const z of [0,34,68,102,136,174]){space.update({scroll:z,time:0,dt:0});camera.position.z=24-z;camera.lookAt(0,0,-3-z);camera.updateMatrixWorld();try{renderer.setRenderTarget(warmTarget);renderer.render(scene,camera);}finally{renderer.setRenderTarget(oldTarget);}await yieldTask();}
+    for(const [index,z] of [0,34,68,102,136,174].entries()){space.update({scroll:z,time:0,dt:0});camera.position.z=24-z;camera.lookAt(0,0,-3-z);camera.updateMatrixWorld();try{renderer.setRenderTarget(warmTarget);renderer.render(scene,camera);}finally{renderer.setRenderTarget(oldTarget);}advanceScrollProgress(.89+(index+1)/6*.06,'正在展开画面');await yieldTask();}
     warmTarget.dispose();camera.copy(warmCamera,false);space.update({scroll:0,time:0,dt:0});
-    const foregroundMask=camera.layers.mask;camera.layers.set(30);await warmScene(dotForeground.renderer,scene,camera);camera.layers.mask=foregroundMask;
+    const foregroundMask=camera.layers.mask;camera.layers.set(30);await warmScene(dotForeground.renderer,scene,camera,{onProgress:p=>advanceScrollProgress(.95+p*.04,'正在展开画面')});camera.layers.mask=foregroundMask;
     dotForeground.canvas.style.visibility='hidden';dotForeground.setActive(true);dotForeground.render();dotForeground.setActive(false);dotForeground.canvas.style.visibility='';
-    dot.update({mode:'hidden'});runtime.prepTrace.push({label:'scroll-draw-end',at:performance.now()});runtime.scrollReady=true;bgm.prepare().catch(()=>{});await screenReady;runtime.ready=true;runtime.worldReadyAt=performance.now();
-  })();return scrollJob;
+    dot.update({mode:'hidden'});runtime.prepTrace.push({label:'scroll-draw-end',at:performance.now()});runtime.scrollReady=true;runtime.scrollReadyAt=performance.now();advanceScrollProgress(1,'准备就绪');bgm.prepare().catch(()=>{});
+  })().catch(error=>{runtime.scrollError=error.message;throw error;});return scrollJob;
 }
-function prepareWorld(){if(worldJob)return worldJob;worldJob=prepareScroll().then(resolveWorld,error=>{rejectWorld(error);throw error;});worldJob.catch(()=>{});return worldJob;}
+function prepareWorld(){
+  if(worldJob)return worldJob;worldJob=(async()=>{
+    // A return visit may already be assembling the scroll. Complete that work
+    // before the cinema re-parents the shared character.
+    if(scrollJob)await scrollJob;
+    await prepareStage();await prepareScroll();await screenReady;
+    runtime.ready=true;runtime.worldReadyAt=performance.now();resolveWorld();
+  })().catch(error=>{rejectWorld(error);throw error;});worldJob.catch(()=>{});return worldJob;
+}
+function placeReturnButton(){
+  const button=$('return-scroll');if(button.hidden)return;const rect=$('hold').getBoundingClientRect();if(!rect.height)return;
+  button.style.width=Math.min(rect.width,innerWidth-40)+'px';button.style.top=Math.min(rect.bottom+12,innerHeight-74)+'px';
+}
+let lastReturnPercent=-1;
+function advanceScrollProgress(value,label){
+  if(runtime.scrollError)return;
+  runtime.scrollProgress=Math.max(runtime.scrollProgress,Math.min(1,value));runtime.scrollLabel=label;
+  const percent=Math.floor(runtime.scrollProgress*100);$('return-progress-fill').style.transform='scaleX('+runtime.scrollProgress+')';
+  if(percent!==lastReturnPercent){$('return-progress-value').textContent=percent+'%';$('return-progress-fill').parentElement.setAttribute('aria-valuenow',String(percent));lastReturnPercent=percent;}
+  $('return-progress-label').textContent=label;
+}
+function cancelReturnEntry(){
+  returnGeneration++;returnBusy=false;returnHold.reset();sound.updateHold(0,false);document.body.classList.remove('return-entering');
+  $('return-entry').classList.remove('visible','leaving');$('return-entry').setAttribute('aria-hidden','true');$('return-loading').classList.remove('visible');$('return-scroll').disabled=false;setPhase('intro');
+}
+async function enterScrollDirect(){
+  if(returnBusy||!returnVisit.eligible)return;const generation=++returnGeneration;returnBusy=true;ui.held=false;ui.hold=0;sound.updateHold(0,false);sound.play('charge',{intensity:.6});
+  $('return-scroll').disabled=true;$('return-loading-title').textContent='正在展开创作卷轴';$('return-loading').querySelector('.return-note').textContent='准备就绪后，将自动进入。';$('return-reload').hidden=true;$('return-loading').classList.remove('visible');
+  $('return-entry').classList.remove('leaving');$('return-entry').classList.add('visible');$('return-entry').setAttribute('aria-hidden','false');setPhase('return-wait');
+  const shownAt=performance.now(),timer=setTimeout(()=>{if(generation===returnGeneration&&!runtime.scrollReady)$('return-loading').classList.add('visible');},300);
+  try{
+    await prepareScroll();if(generation!==returnGeneration)return;clearTimeout(timer);
+    await delay(Math.max(0,190-(performance.now()-shownAt)));if(generation!==returnGeneration)return;
+    document.body.classList.add('return-entering');setPhase('scroll');
+    // Settle the real CSS3D layers and GPU passes beneath the opaque cover.
+    await nextPaint();await nextPaint();await nextPaint();if(generation!==returnGeneration)return;
+    $('return-entry').classList.remove('visible');$('return-entry').classList.add('leaving');sound.play('open',{intensity:.45});
+    await delay(matchMedia('(prefers-reduced-motion: reduce)').matches?160:620);if(generation!==returnGeneration)return;
+    $('return-entry').classList.remove('leaving');$('return-entry').setAttribute('aria-hidden','true');$('return-loading').classList.remove('visible');document.body.classList.remove('return-entering');returnBusy=false;returnHold.reset();$('return-scroll').disabled=false;
+  }catch(error){if(generation===returnGeneration){$('return-loading').classList.add('visible');$('return-loading-title').textContent='内容暂时未能载入';$('return-progress-label').textContent='请重新加载后继续';$('return-loading').querySelector('.return-note').textContent='重新加载后，可继续进入卷轴。';$('return-reload').hidden=false;}}
+  finally{clearTimeout(timer);}
+}
+const returnButton=$('return-scroll');
+function startReturnHold(){if(ui.phase!=='intro'||returnBusy||!returnVisit.eligible)return;ui.held=false;ui.hold=0;returnHold.press(performance.now());sound.unlock();prepareScroll().catch(()=>{});}
+returnButton.addEventListener('pointerdown',e=>{if(ui.phase!=='intro')return;e.preventDefault();returnButton.setPointerCapture(e.pointerId);startReturnHold();});
+for(const type of ['pointerup','pointercancel'])returnButton.addEventListener(type,()=>returnHold.release());
+returnButton.addEventListener('keydown',e=>{if([' ','Enter'].includes(e.key)){e.preventDefault();startReturnHold();}});
+returnButton.addEventListener('keyup',e=>{if([' ','Enter'].includes(e.key)){e.preventDefault();returnHold.release();}});
+$('return-cancel').addEventListener('click',cancelReturnEntry);$('return-reload').addEventListener('click',()=>location.reload());
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.phase==='return-wait'){e.preventDefault();cancelReturnEntry();}});
+window.addEventListener('blur',()=>returnHold.cancel());document.addEventListener('visibilitychange',()=>{if(document.hidden)returnHold.cancel();});
+for(const type of ['pointerdown','keydown'])$('hold').addEventListener(type,()=>returnHold.cancel(),{capture:true});
+
 function beginListening(){
   const generation=++listenGeneration;listeningGate.reset();setPhase('listen');ui.listenStartedAt=performance.now();ui.listenFinishedAt=null;$('listening-status').textContent='正在准备影片';sound.play('headphones');
   media.prime().catch(()=>{});media.ensure(0,8).then(()=>{if(generation!==listenGeneration)return;listeningGate.ready=true;$('listening-status').textContent='准备就绪，即将开始';}).catch(error=>{if(generation===listenGeneration&&ui.phase==='listen'){toast(error.message);setPhase('chat');}});
@@ -171,7 +236,7 @@ async function startFilm(at=0){
   catch(error){toast(error.message);setPhase('chat');}
   finally{clearTimeout(timer);if(shown)buffering(false);filmStarting=false;}
 }
-function resize(){if(!renderer)return;quality.resize(innerWidth,innerHeight);css.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.updateProjectionMatrix();opening?.resize(innerWidth,innerHeight);const code=$('code');code.width=Math.round(innerWidth*Math.min(devicePixelRatio,2));code.height=Math.round(innerHeight*Math.min(devicePixelRatio,2));}
+function resize(){if(!renderer)return;quality.resize(innerWidth,innerHeight);css.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.updateProjectionMatrix();opening?.resize(innerWidth,innerHeight);placeReturnButton();const code=$('code');code.width=Math.round(innerWidth*Math.min(devicePixelRatio,2));code.height=Math.round(innerHeight*Math.min(devicePixelRatio,2));}
 window.addEventListener('resize',resize);
 const codeCtx=$('code').getContext('2d');
 const sourceLines=['const idea = observe({ subject, frame, light });','await create.space({ depth: true, continuity: 1 });','timeline.connect(reference, intention, result);','for (const part of thought) {','  geometry.extrude(part.outline, { precision: 0.001 });','  motion.follow(curve, ease.inOut);','  material.respond(light, atmosphere);','}','await render({ camera, scene, sound });','frame.read();  // 让每一个选择，都能被看见','return experience({ watch, interact, continue });'];
@@ -192,7 +257,9 @@ function fitCompanionTarget(){
 }
 let lastPhase='loading',lastChapter=-1,renderedFrames=0,departureFov=42;
 function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.05,Math.max(.001,rawDt));previous=current;time=current-startedAt;ui.frameTimes.push(rawDt*1000);if(ui.frameTimes.length>600)ui.frameTimes.shift();const age=time-ui.phaseAt;
-  sound.updateHold(ui.hold,ui.phase==='intro'&&ui.held);
+  if(ui.phase==='intro'&&returnHold.update(now))enterScrollDirect();
+  $('return-scroll').style.setProperty('--return-hold',returnHold.progress);
+  sound.updateHold(returnHold.held?returnHold.progress:ui.hold,ui.phase==='intro'&&(ui.held||returnHold.held));
   if(ui.phase==='intro'){ui.hold=ui.held?clamp(current-ui.holdStart):clamp(ui.hold-dt*1.65);$('hold').style.setProperty('--hold',ui.hold);if(ui.hold>=1&&opening.prepared){sound.unlock();ui.held=false;setPhase('morph');}}
   else if(ui.phase==='morph'&&age>=OPENING_TIMING.morph&&opening.ready)setPhase('chat');
   else if(ui.phase==='launch'&&age>=4.35)beginListening();
@@ -239,10 +306,10 @@ const hold=$('hold');hold.addEventListener('pointermove',e=>{const r=hold.getBou
 $('send').addEventListener('click',()=>{if(ui.phase!=='chat')return;sound.unlock();media.prime().catch(()=>{});media.ensure(0,2).then(()=>transport.unlock()).catch(()=>{});setPhase('launch');});
 $('sound').addEventListener('click',()=>{sound.unlock();ui.muted=activateSoundOnly?false:!ui.muted;activateSoundOnly=false;transport.setMuted(ui.muted);sound.setMuted(ui.muted);bgm.setMasterMuted(ui.muted);updateSoundButton();});
 $('play-pause').addEventListener('click',()=>{sound.unlock();transport.toggle();});$('skip-film').addEventListener('click',()=>{sound.unlock();readyAction(()=>transport.skipFilm(),$('skip-film'));});
-function scrollInput(delta){if(ui.phase!=='scroll'||ui.gameLock||ui.focusLock||$('settings').open)return;ui.target=clamp(ui.target+delta,0,CONFIG.scroll.max);}
+function scrollInput(delta){if(ui.phase!=='scroll'||returnBusy||ui.gameLock||ui.focusLock||$('settings').open)return;ui.target=clamp(ui.target+delta,0,CONFIG.scroll.max);}
 window.addEventListener('wheel',e=>{if(e.target.closest('.card-detail,dialog'))return;e.preventDefault();scrollInput(e.deltaY*(e.deltaMode===1?15:1)*CONFIG.scroll.speed);},{passive:false});
 let touch=null,downPoint=null;window.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&!dot?.hitTest(e.clientX,e.clientY)&&!e.target.closest('button,input,dialog,.card-detail'))touch={id:e.pointerId,y:e.clientY};},true);window.addEventListener('pointermove',e=>{if(touch&&e.pointerId===touch.id){scrollInput((touch.y-e.clientY)*.045);touch.y=e.clientY;}});window.addEventListener('pointerup',()=>touch=null,true);window.addEventListener('pointercancel',()=>touch=null,true);canvas.addEventListener('pointerdown',e=>{downPoint={x:e.clientX,y:e.clientY};});canvas.addEventListener('pointerup',e=>{if(!downPoint||Math.hypot(e.clientX-downPoint.x,e.clientY-downPoint.y)>5||ui.phase!=='scroll'||ui.gameLock)return;if(ui.chapter===5&&space.pointerHit(e))return;const p=project(dot.actorWorldPos,camera);if(Math.hypot(p.x-e.clientX,p.y-e.clientY)<55){if(ui.game>=0)games.help();else setBubble('沿着长卷走一走。想看细节，就点开一张过程卡片。',6);}else if(ui.chapter!==5)space.pointerHit(e);});
-window.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea')||$('settings').open)return;if(ui.phase==='scroll'){if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();scrollInput(e.key==='PageDown'?9:2);}if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();scrollInput(e.key==='PageUp'?-9:-2);}if(e.key==='Home'){e.preventDefault();ui.target=0;}if(e.key==='End'){e.preventDefault();ui.target=CONFIG.scroll.max;}}else if(e.key===' '&&['film','transition','stage'].includes(ui.phase)){e.preventDefault();transport.toggle();}});
+window.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea')||$('settings').open)return;if(ui.phase==='scroll'&&!returnBusy){if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();scrollInput(e.key==='PageDown'?9:2);}if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();scrollInput(e.key==='PageUp'?-9:-2);}if(e.key==='Home'){e.preventDefault();ui.target=0;}if(e.key==='End'){e.preventDefault();ui.target=CONFIG.scroll.max;}}else if(e.key===' '&&['film','transition','stage'].includes(ui.phase)){e.preventDefault();transport.toggle();}});
 document.querySelectorAll('#chapters button').forEach((b,i)=>b.addEventListener('click',()=>{if(ui.gameLock||ui.focusLock)return;ui.target=i===5?174:i*34;}));$('game-help').addEventListener('click',()=>games.help());$('dot-bubble').addEventListener('click',()=>{if(ui.game>=0)games.help();else setBubble('点击卡片可以立起阅读，点空白就回到长卷。',5);});$('game-reset').addEventListener('click',()=>games.reset(ui.game));
 $('settings-button').addEventListener('click',()=>{$('settings').showModal();});
 $('preview-scroll').addEventListener('click',()=>readyAction(()=>{$('settings').close();transport.pause();setPhase('scroll');},$('preview-scroll')));
