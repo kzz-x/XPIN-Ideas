@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {constrainedDevice} from './performance-budget.mjs';
 import {SVGLoader} from 'three/addons/loaders/SVGLoader.js';
 export const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
 export const smooth=x=>{x=clamp(x);return x*x*x*(x*(x*6-15)+10);};
@@ -17,7 +18,7 @@ export function titleMesh(text,size=2,depth=.25){
 export function label(text,width=5,height=.55,{color='#e8edf4',size=38,background=null,align='center'}={}){
   // Texture and world-plane aspect ratios must agree. A minimum canvas height
   // silently compressed narrow labels even before the camera foreshortened them.
-  const c=document.createElement('canvas');c.width=2048;c.height=Math.max(1,Math.round(c.width*height/width));
+  const c=document.createElement('canvas');c.width=constrainedDevice()?1024:2048;c.height=Math.max(1,Math.round(c.width*height/width));
   const ctx=c.getContext('2d'),rows=String(text).split('\n'),padding=24;
   let fontPx=Math.min(size*c.width/1024,(c.height-padding)/(rows.length*1.25));
   const setFont=()=>{ctx.font=`400 ${fontPx}px "Idea","Microsoft YaHei",sans-serif`;};

@@ -56,8 +56,26 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
   const backdrop=document.querySelector('#focus-backdrop');
   const readingLayer=document.createElement('div');readingLayer.id='reading-layer';Object.assign(readingLayer.style,{position:'fixed',inset:'0',zIndex:'6',pointerEvents:'none'});document.body.append(readingLayer);let readingCard=null;
   function surface(el){const wrapper=document.createElement('div');wrapper.className='spatial-surface';wrapper.append(el);return new CSS3DObject(wrapper);}
-  function restoreReading(){if(!readingCard)return;const card=readingCard;card.css.element.append(card.el);for(const key of ['position','left','top','transform','transformOrigin'])card.el.style[key]='';readingCard=null;}
-  function syncReading(){if(!focus||!focusGoal||focusMix<1){restoreReading();return;}const card=focus,rect=card.css.element.getBoundingClientRect();if(readingCard!==card){restoreReading();readingCard=card;readingLayer.append(card.el);}Object.assign(card.el.style,{position:'absolute',left:rect.x+'px',top:rect.y+'px',transformOrigin:'0 0',transform:`scale(${rect.width/card.el.offsetWidth})`,pointerEvents:'auto'});const detail=card.el.querySelector('.card-detail');card.el.classList.toggle('needs-scroll-hint',!cardHints.scrolled&&detail.scrollHeight>detail.clientHeight+15);}
+  function restoreReading(){
+    if(!readingCard)return;const card=readingCard;card.css.element.append(card.el);card.el.classList.remove('native-reading');
+    for(const key of ['position','left','top','transform','transformOrigin'])card.el.style[key]='';
+    card.el.style.width=card.readerDesign.width;card.el.style.height=card.readerDesign.height;card.el.style.removeProperty('--reader-scale');readingCard=null;document.body.classList.remove('native-reader-open');
+  }
+  // Address-bar/rotation changes invalidate once. Native document scrolling never
+  // measures or transforms its text, and is independent of the CSS3D camera.
+  window.addEventListener('resize',restoreReading);
+
+  function syncReading(){
+    if(!focus||!focusGoal||focusMix<1){restoreReading();return;}
+    if(readingCard===focus)return;
+    const card=focus,rect=card.css.element.getBoundingClientRect(),dpr=devicePixelRatio||1,snap=n=>Math.round(n*dpr)/dpr;
+    restoreReading();card.readerDesign={width:card.el.style.width,height:card.el.style.height};
+    const scale=rect.width/card.el.offsetWidth;readingCard=card;readingLayer.append(card.el);card.el.classList.add('native-reading');document.body.classList.add('native-reader-open');
+    const topEdge=Math.max(80,document.querySelector('#masthead').getBoundingClientRect().bottom+12,document.querySelector('#close-focus').getBoundingClientRect().bottom+12),bottomEdge=Math.min(innerHeight-12,document.querySelector('#scroll-footer').getBoundingClientRect().top-12),height=Math.min(rect.height,Math.max(100,bottomEdge-topEdge)),top=Math.max(topEdge,Math.min(rect.y,bottomEdge-height));
+    Object.assign(card.el.style,{position:'absolute',left:snap(rect.x)+'px',top:snap(top)+'px',width:snap(rect.width)+'px',height:snap(height)+'px',transform:'none',pointerEvents:'auto'});
+    card.el.style.setProperty('--reader-scale',scale);
+    const detail=card.el.querySelector('.card-detail');card.el.classList.toggle('needs-scroll-hint',!cardHints.scrolled&&detail.scrollHeight>detail.clientHeight+15);
+  }
   const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function open(card){
     if(focus)return;card.morph?.prepare();focus=card;focusGoal=1;focusAge=0;focusMix=0;
@@ -260,7 +278,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     const lines=layoutLines.filter(visible).map(o=>{const a=o.geometry.attributes.position,points=[];for(let i=0;i<a.count;i++)points.push(project(vec(a.getX(i),a.getY(i),a.getZ(i)).applyMatrix4(o.matrixWorld)));return {id:o.name,points};});
     return {viewport:{width:innerWidth,height:innerHeight},records,lines};
   }
-  return {root,ribbon,grid,cards,resources,industrials,titles,ending,close,cancelFocus,open,pointerHit,pointerMove,clearHover,syncReading,snapshotLayout,get focused(){return !!focus;},get focusMix(){return focusMix;},get focusState(){return{age:focusAge,goal:focusGoal,isResource:!!focus?.isResource,resourcePlaybackRate:2};},cameraFocus(){if(!focus)return null;const target=focus.base.clone();target.y=focus.isResource?5:6;target.z+=1;const widthPx=Math.min(innerWidth*.84,920),distance=focus.width*innerHeight/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*widthPx);const position=target.clone().add(vec(0,.25,1).normalize().multiplyScalar(distance));return {target,position,mix:smooth(focusMix)};},update({scroll,time,dt,unfold=1}){
+  return {root,ribbon,grid,cards,resources,industrials,titles,ending,close,cancelFocus,open,pointerHit,pointerMove,clearHover,syncReading,invalidateReading:restoreReading,get readingStable(){return !!readingCard&&!!focusGoal&&focusMix===1;},readingSnapshot:()=>({stable:!!readingCard,card:readingCard?.el.dataset.cardId,transform:readingCard?.el.style.transform}),snapshotLayout,get focused(){return !!focus;},get focusMix(){return focusMix;},get focusState(){return{age:focusAge,goal:focusGoal,isResource:!!focus?.isResource,resourcePlaybackRate:2};},cameraFocus(){if(!focus)return null;const target=focus.base.clone();target.y=focus.isResource?5:6;target.z+=1;const widthPx=Math.min(innerWidth*.84,920),distance=focus.width*innerHeight/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*widthPx);const position=target.clone().add(vec(0,.25,1).normalize().multiplyScalar(distance));return {target,position,mix:smooth(focusMix)};},update({scroll,time,dt,unfold=1}){
       animationTime=time;
       uniforms.scroll.value=scroll;uniforms.unfold.value=unfold;ribbon.position.z=-scroll;rails.position.z=-scroll;
       // The side grid is fixed in the same world coordinates as the content.
@@ -291,6 +309,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
         r.guide.scale.setScalar((r.kind==='book'?1.45:1.65)*(1+.025*Math.sin(time*2.4)));r.guide.material.opacity=.30+.20*(.5+.5*Math.sin(time*2.4));
       }
       for(const card of cards){
+        if(card===readingCard)continue;
         if(card.isResource&&card!==focus)continue;
         const layoutMix=card===focus&&innerWidth<700?fm:0,domW=T.MathUtils.lerp(640,340,layoutMix),domH=T.MathUtils.lerp(420,640,layoutMix);
         card.el.style.width=domW+'px';card.el.style.height=domH+'px';card.css.element.style.width=domW+'px';card.css.element.style.height=domH+'px';card.css.element.style.pointerEvents=focus&&card!==focus?'none':'auto';card.css.scale.setScalar(card.width/domW);
@@ -314,7 +333,8 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
           const readable=nearZ<-camera.near?smooth((ratio-.28)/.12)*nearFade*passedFade:0,nearContent=1-smooth((Math.abs(card.base.z+scroll)-13)/4);
           const screenScale=Math.hypot((qx.x-px.x)*innerWidth/2,(qx.y-px.y)*innerHeight/2)*card.width/640;
           const fontScale=screenScale*Math.min(1,Math.max(.70,ratio));
-          card.el.style.setProperty('--thumb-title',Math.max(29,Math.min(innerWidth<700?100:60,14/Math.max(.08,fontScale)))+'px');card.el.style.setProperty('--thumb-meta',Math.max(20,Math.min(innerWidth<700?90:48,11.5/Math.max(.08,fontScale)))+'px');card.el.style.setProperty('--thumb-foot',Math.max(22,Math.min(innerWidth<700?95:50,12/Math.max(.08,fontScale)))+'px');
+          if(!card.thumbFonts||Math.abs(Math.log(Math.max(.01,fontScale)/card.thumbFonts))>.08){card.thumbFonts=Math.max(.01,fontScale);
+          card.el.style.setProperty('--thumb-title',Math.max(29,Math.min(innerWidth<700?100:60,14/Math.max(.08,fontScale)))+'px');card.el.style.setProperty('--thumb-meta',Math.max(20,Math.min(innerWidth<700?90:48,11.5/Math.max(.08,fontScale)))+'px');card.el.style.setProperty('--thumb-foot',Math.max(22,Math.min(innerWidth<700?95:50,12/Math.max(.08,fontScale)))+'px');}
           card.el.dataset.screenScale=screenScale.toFixed(4);card.readable=readable*nearContent;card.group.visible=card.group.visible&&card.readable>.01;card.el.style.opacity=String((1-fm*.9)*contentReveal*card.readable);
           if(backing)backing.visible=card.readable>.5;if(card.frame)card.frame.visible=card.readable>.5;card.el.style.pointerEvents=focus||card.readable<.5?'none':'auto';card.css.element.style.pointerEvents=card.el.style.pointerEvents;card.el.tabIndex=card.readable>=.5?0:-1;
         }

@@ -1,9 +1,11 @@
 import * as T from 'three';
+import {constrainedDevice,nextRasterScale} from './performance-budget.mjs';
 
 // Raster quality only. This controller never changes presentation time,
 // geometry, scene composition, or any of Dot's independent stage lights.
 export function createRenderQuality({renderer,key,width=innerWidth,height=innerHeight,nativeDpr=devicePixelRatio}){
   let mode='balanced',w=width,h=height,scale=1,ratio=1,lastChange=performance.now()/1000,lastSample=lastChange;
+  const constrained=constrainedDevice();
   let phase='',samples=[],changes=0;
   const gl=renderer.getContext(),msaaSamples=gl.getParameter(gl.SAMPLES),maxTexture=renderer.capabilities.maxTextureSize;
   const right=new T.Vector3(),up=new T.Vector3(),lightPosition=new T.Vector3(),shift=new T.Vector3();
@@ -14,7 +16,7 @@ export function createRenderQuality({renderer,key,width=innerWidth,height=innerH
     const budgetLimit=Math.sqrt(profiles[mode].budget/(w*h));
     // Supersample a 1x desktop too. A native-DPR upper bound would silently
     // leave both Balanced and Fine rendering at 1x on common external screens.
-    return Math.round(Math.max(.75,Math.min(preferred*scale,budgetLimit))*100)/100;
+    return Math.round(Math.max(.75,Math.min(preferred*scale*(mode==='balanced'&&constrained?.8:1),budgetLimit))*100)/100;
   }
   function applyRaster(){
     const next=desiredRatio();
@@ -36,17 +38,15 @@ export function createRenderQuality({renderer,key,width=innerWidth,height=innerH
   }
   function resize(nextWidth,nextHeight){w=Math.max(1,nextWidth);h=Math.max(1,nextHeight);samples=[];applyShadow();applyRaster();}
   function sampleFrame({dt,time,phase:nextPhase}){
-    // time is RAF now / 1000 (performance clock), not the presentation clock.
-    // Adapt the default only after sustained evidence in the scroll scene.
-    // Ignore loading, film, stage choreography, background tabs and long stalls.
     if(nextPhase!==phase){phase=nextPhase;samples=[];lastSample=time;}
-    if(mode!=='balanced'||phase!=='scroll'||document.hidden||dt<=0||dt>.12)return;
-    samples.push(dt*1000);if(samples.length>240)samples.shift();
-    if(samples.length<180||time-lastSample<3.5)return;lastSample=time;
-    const ordered=[...samples].sort((a,b)=>a-b),p75=ordered[Math.floor(ordered.length*.75)],p90=ordered[Math.floor(ordered.length*.9)];
-    if(p75>25&&time-lastChange>5&&scale>.72){scale=Math.max(.72,scale-.12);lastChange=time;changes++;samples=[];applyRaster();}
-    else if(p90<18.4&&time-lastChange>20&&scale<1){scale=Math.min(1,scale+.06);lastChange=time;changes++;samples=[];applyRaster();}
+    if(mode!=='balanced'||!['intro','morph','chat','launch','scroll','stage'].includes(phase)||document.hidden||dt<=0||dt>1)return;
+    // Sustained slow frames count too; ignoring them concealed weak devices.
+    samples.push(dt*1000);if(samples.length>120)samples.shift();
+    if(samples.length<60||time-lastSample<1.5)return;lastSample=time;
+    const next=nextRasterScale(samples,scale,time-lastChange);
+    if(next!==scale){scale=next;lastChange=time;changes++;samples=[];applyRaster();}
   }
+
   function stabilizeShadow({phase}){
     if(phase!=='scroll'||mode==='low')return;
     // Quantize the light translation in its own orthographic plane. Moving the
@@ -59,6 +59,6 @@ export function createRenderQuality({renderer,key,width=innerWidth,height=innerH
     shift.copy(right).multiplyScalar(Math.round(x/texelX)*texelX-x).addScaledVector(up,Math.round(y/texelY)*texelY-y);
     key.position.add(shift);key.target.position.add(shift);key.updateWorldMatrix(true,false);key.target.updateWorldMatrix(true,false);
   }
-  function snapshot(){const camera=key.shadow.camera;return{mode,nativeDpr,renderDpr:ratio,adaptiveScale:scale,adaptiveChanges:changes,buffer:[renderer.domElement.width,renderer.domElement.height],msaaSamples,shadow:{enabled:renderer.shadowMap.enabled,type:'PCF',map:key.shadow.mapSize.toArray(),worldScope:[camera.right-camera.left,camera.top-camera.bottom],worldTexel:[(camera.right-camera.left)/key.shadow.mapSize.x,(camera.top-camera.bottom)/key.shadow.mapSize.y],radius:key.shadow.radius,bias:key.shadow.bias,normalBias:key.shadow.normalBias,stabilized:phase==='scroll'}};}
+  function snapshot(){const camera=key.shadow.camera;return{mode,constrained,nativeDpr,renderDpr:ratio,adaptiveScale:scale,adaptiveChanges:changes,buffer:[renderer.domElement.width,renderer.domElement.height],msaaSamples,shadow:{enabled:renderer.shadowMap.enabled,type:'PCF',map:key.shadow.mapSize.toArray(),worldScope:[camera.right-camera.left,camera.top-camera.bottom],worldTexel:[(camera.right-camera.left)/key.shadow.mapSize.x,(camera.top-camera.bottom)/key.shadow.mapSize.y],radius:key.shadow.radius,bias:key.shadow.bias,normalBias:key.shadow.normalBias,stabilized:phase==='scroll'}};}
   setMode(mode);return{setMode,resize,sampleFrame,stabilizeShadow,snapshot};
 }

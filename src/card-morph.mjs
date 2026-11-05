@@ -10,6 +10,7 @@ export function createCardMorph(el){
   const layer=document.createElement('div');layer.className='card-morph-layer';
   const travelingImage=image.cloneNode(),travelingHeading=heading.cloneNode(true);
   travelingImage.className='traveling-image';travelingHeading.className='traveling-title';layer.append(travelingImage,travelingHeading);el.append(layer);
+  let lastProgress=-1,lastWidth=-1;
   let prepared=false,startImage,startTitle,startFont,startLine,startWeight,progress=0;
   function prepare(){
     // At rest the preview always has the original 640 x 420 design coordinates.
@@ -18,8 +19,10 @@ export function createCardMorph(el){
   }
   function place(node,a,b,t){Object.assign(node.style,{left:mix(a.x,b.x,t)+'px',top:mix(a.y,b.y,t)+'px',width:mix(a.w,b.w,t)+'px',height:mix(a.h,b.h,t)+'px'});}
   function update(p){
-    progress=p;if(!prepared&&p>0)prepare();
-    const width=el.offsetWidth,scale=width/640;
+    const width=el.offsetWidth;
+    if(p===lastProgress&&width===lastWidth)return;
+    lastProgress=p;lastWidth=width;progress=p;if(!prepared&&p>0)prepare();
+    const scale=width/640;
     preview.style.transform=`scale(${scale})`;el.style.setProperty('--reading',p);
     const traveling=p>0&&p<1;el.classList.toggle('morphing',traveling);layer.style.display=traveling?'block':'none';
     detail.style.visibility=p>0?'visible':'hidden';detail.style.pointerEvents=p===1?'auto':'none';

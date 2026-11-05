@@ -14,6 +14,11 @@ export class PresentationTransport{
     video.addEventListener('error',()=>{this.pause();callbacks.onError?.('影片读取失败，请在设置中重新选择影片。');},options);
     audio.addEventListener('loadedmetadata',()=>this.syncImpact(true),options);
     this.restoreVolumes();
+    // Freeze the media clock and Dot together if decoding is unavailable.
+    for(const name of ['waiting','stalled'])video.addEventListener(name,()=>{
+      if(!this.playing||this.scrub||this.waitingAt||this.phase==='departure'||this.pendingSeek||callbacks.canPlayAt?.(this.absolute+this.offset)!==false)return;
+      this.waitingAt='media';video.pause();audio.pause();callbacks.onBuffering?.(true);callbacks.requestMedia?.(this.absolute);this.record('media-wait');
+    },options);
   }
   get offset(){return this.callbacks.getMediaOffset?.()||0;}
   get filmDuration(){return Number.isFinite(this.video.duration)?this.video.duration-this.offset:0;}
@@ -35,6 +40,7 @@ export class PresentationTransport{
   settleSeek(seeked=false){const p=this.pendingSeek;if(p&&p.generation===this.generation&&!this.video.seeking&&(seeked||Math.abs(this.video.currentTime-this.offset-p.target)<.075))this.pendingSeek=null;}
   async playSource(){
     if(this.filmDuration>0&&this.absolute>=this.filmDuration)return true;
+    if(this.callbacks.canPlayAt?.(this.absolute+this.offset)===false){this.waitingAt='media';this.video.pause();this.audio.pause();this.callbacks.onBuffering?.(true);this.callbacks.requestMedia?.(this.absolute);return false;}
     const generation=this.generation;this.awaitingPlay={generation,kind:'video'};
     try{await this.video.play();if(generation===this.generation){this.awaitingPlay=null;this.record('source-playing');}return true;}
     catch(error){if(generation!==this.generation)return false;this.awaitingPlay=null;this.playing=false;this.callbacks.onError?.('请按播放键继续影片。');return false;}
@@ -47,7 +53,7 @@ export class PresentationTransport{
     })).finally(()=>{this.unlockPromise=null;this.restoreVolumes();});return this.unlockPromise;
   }
   start(at=0){this.invalidate('start');this.waitingAt=null;this.scrub=null;this.previewStage=false;this.absolute=Math.max(0,at);this.stageRevealComplete=false;this.video.pause();this.audio.pause();this.started=true;this.playing=true;this.restoreVolumes();this.phase='film';this.setVideoTime(this.absolute);this.callbacks.onFilm?.({reason:'start'});return this.playSource();}
-  pause(){this.invalidate('pause');this.playing=false;if(this.scrub)this.scrub.wasPlaying=false;this.video.pause();this.audio.pause();}
+  pause(){this.invalidate('pause');if(this.waitingAt==='media'){this.waitingAt=null;this.callbacks.onBuffering?.(false);}this.playing=false;if(this.scrub)this.scrub.wasPlaying=false;this.video.pause();this.audio.pause();}
   resume(){this.invalidate('resume');this.playing=true;this.restoreVolumes();this.syncImpact(true);return this.playSource();}
   toggle(){return this.playing?this.pause():this.resume();}
   setMuted(value){this.muted=!!value;this.video.muted=this.audio.muted=this.muted;}
@@ -80,7 +86,7 @@ export class PresentationTransport{
   finish(reason){if(this.callbacks.canDepart?.()===false){this.waitingAt='scroll';this.waitingReason=reason;this.video.pause();this.audio.pause();this.playing=true;this.callbacks.onBuffering?.(true);return;}this.invalidate(reason);this.playing=false;this.video.pause();this.audio.pause();this.pendingSeek=null;this.scrub=null;this.absolute=this.duration;this.phase='departure';this.callbacks.onDeparture?.({reason});}
   update(dt){
     this.settleSeek();if(this.deferredSeek){if(this.callbacks.canEnterStage?.()===false)return;const d=this.deferredSeek;this.seekAt(d.target,{reason:d.reason,resume:this.playing,forceStage:d.forceStage});return;}if(!this.playing||this.scrub||this.phase==='departure')return;
-    if(this.waitingAt){const ready=this.waitingAt==='stage'?this.callbacks.canEnterStage?.():this.callbacks.canDepart?.();if(ready===false)return;const target=this.waitingAt;this.waitingAt=null;this.callbacks.onBuffering?.(false);if(target==='scroll'){this.finish(this.waitingReason);return;}this.playSource();}
+    if(this.waitingAt){const ready=this.waitingAt==='media'?this.callbacks.canPlayAt?.(this.absolute+this.offset):this.waitingAt==='stage'?this.callbacks.canEnterStage?.():this.callbacks.canDepart?.();if(ready===false)return;const target=this.waitingAt;this.waitingAt=null;this.callbacks.onBuffering?.(false);if(target==='media')this.record('media-resume');if(target==='scroll'){this.finish(this.waitingReason);return;}this.playSource();}
     if(this.pendingSeek||this.awaitingPlay)return;
     if(this.absolute>=this.filmDuration&&this.filmDuration>0)this.absolute+=Math.min(.1,Math.max(0,dt));
     else if(!this.video.paused||this.video.ended)this.absolute=this.video.currentTime-this.offset;

@@ -13,3 +13,17 @@ body[data-phase="stage"] #dot-bubble{max-width:230px;background:#111d2beb;color:
 #listening-title{text-align:center}
 #listening-title span{display:block;text-align:center}
 .listening-card #listening-status{text-align:center}
+
+/* r24: after the spatial travel, the article is a fixed, unscaled native reader.
+   An opaque reading surface avoids continuously re-rasterising text through a
+   live WebGL backdrop. The animated glass appearance remains on the previews. */
+#reading-layer .native-reading{box-sizing:border-box;contain:layout paint;transform:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#reading-layer .native-reading .card-detail{background:#101c2b!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;overscroll-behavior:contain;touch-action:pan-y;contain:layout paint;padding:calc(22px * var(--reader-scale,1));overflow:auto;scroll-behavior:auto}
+#reading-layer .native-reading .card-detail h2{font-size:calc(24px * var(--reader-scale,1));margin:calc(15px * var(--reader-scale,1)) 0}
+#reading-layer .native-reading .card-detail p{font-size:calc(17px * var(--reader-scale,1));line-height:1.85}
+#reading-layer .native-reading .detail-label{font-size:calc(12px * var(--reader-scale,1))}
+#reading-layer .native-reading .card-detail .source-note{font-size:calc(13px * var(--reader-scale,1))}
+#reading-layer .native-reading .card-detail img{max-height:calc(360px * var(--reader-scale,1))}
+@media(max-width:700px){#reading-layer .native-reading .card-detail img{max-height:calc(230px * var(--reader-scale,1))}}
+
+body.native-reader-open #dot-foreground,body.native-reader-open #chapters{visibility:hidden!important}

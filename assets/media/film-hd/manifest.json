@@ -176,5 +176,8 @@
     "maxrate": "12M",
     "audio": "original AAC copied",
     "noFramesRemoved": true
-  }
+  },
+  "mobileFallback": "../film-mobile.mp4",
+  "mobileBytes": 23699278,
+  "mobileFps": 30
 }
