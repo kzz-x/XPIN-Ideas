@@ -76,7 +76,10 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
 
   // A touch on a model opens this layer on pointerup. Its following compatibility
   // click must not be mistaken for a new press on the newly visible backdrop.
-  let backdropPressed=false;
+  let backdropPressed=false,resourceOutsidePress=null;
+  window.addEventListener('pointerdown',e=>{resourceOutsidePress=focus?.isResource&&!e.target.closest('.process-card,button,input,dialog')?{id:e.pointerId,x:e.clientX,y:e.clientY}:null;},true);
+  window.addEventListener('pointerup',e=>{const press=resourceOutsidePress;resourceOutsidePress=null;if(press&&press.id===e.pointerId&&focus?.isResource&&!e.target.closest('.process-card,button,input,dialog')&&Math.hypot(e.clientX-press.x,e.clientY-press.y)<8)close();},true);
+  window.addEventListener('pointercancel',()=>resourceOutsidePress=null,true);
   window.addEventListener('pointerdown',e=>{backdropPressed=e.target===backdrop;},true);
   window.addEventListener('pointercancel',()=>{backdropPressed=false;},true);
   backdrop.addEventListener('click',()=>{if(backdropPressed)close();backdropPressed=false;});document.querySelector('#close-focus').addEventListener('click',close);window.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
@@ -257,14 +260,14 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     const lines=layoutLines.filter(visible).map(o=>{const a=o.geometry.attributes.position,points=[];for(let i=0;i<a.count;i++)points.push(project(vec(a.getX(i),a.getY(i),a.getZ(i)).applyMatrix4(o.matrixWorld)));return {id:o.name,points};});
     return {viewport:{width:innerWidth,height:innerHeight},records,lines};
   }
-  return {root,ribbon,grid,cards,resources,industrials,titles,ending,close,cancelFocus,open,pointerHit,pointerMove,clearHover,syncReading,snapshotLayout,get focused(){return !!focus;},get focusMix(){return focusMix;},cameraFocus(){if(!focus)return null;const target=focus.base.clone();target.y=focus.isResource?5:6;target.z+=1;const widthPx=Math.min(innerWidth*.84,920),distance=focus.width*innerHeight/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*widthPx);const position=target.clone().add(vec(0,.25,1).normalize().multiplyScalar(distance));return {target,position,mix:smooth(focusMix)};},update({scroll,time,dt,unfold=1}){
+  return {root,ribbon,grid,cards,resources,industrials,titles,ending,close,cancelFocus,open,pointerHit,pointerMove,clearHover,syncReading,snapshotLayout,get focused(){return !!focus;},get focusMix(){return focusMix;},get focusState(){return{age:focusAge,goal:focusGoal,isResource:!!focus?.isResource,resourcePlaybackRate:2};},cameraFocus(){if(!focus)return null;const target=focus.base.clone();target.y=focus.isResource?5:6;target.z+=1;const widthPx=Math.min(innerWidth*.84,920),distance=focus.width*innerHeight/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*widthPx);const position=target.clone().add(vec(0,.25,1).normalize().multiplyScalar(distance));return {target,position,mix:smooth(focusMix)};},update({scroll,time,dt,unfold=1}){
       animationTime=time;
       uniforms.scroll.value=scroll;uniforms.unfold.value=unfold;ribbon.position.z=-scroll;rails.position.z=-scroll;
       // The side grid is fixed in the same world coordinates as the content.
       // Both respond to the shared camera, including scrolling and mouse parallax.
       grid.position.z=-96;root.visible=unfold>.001;
       const resource=focus?.isResource?resources.find(r=>r.card===focus):null;
-      if(focus){focusAge=clamp(focusAge+(focusGoal?1:-1)*dt,0,resource?RESOURCE_DURATION:.95);focusMix=resource?clamp((focusAge-1.9)/.95):clamp(focusAge/.95);
+      if(focus){focusAge=clamp(focusAge+(focusGoal?1:-1)*dt*(resource?2:1),0,resource?RESOURCE_DURATION:.95);focusMix=resource?clamp((focusAge-1.9)/.95):clamp(focusAge/.95);
         if(resource&&focusAge>1.9&&focusGoal)backdrop.classList.add('open');
         if(focusAge===0&&!focusGoal){focus.el.classList.remove('focused');focus.morph?.reset();if(focus.isResource)focus.group.visible=false;focus=null;focusMix=0;document.body.classList.remove('has-focus');onFocus(false);}
       }

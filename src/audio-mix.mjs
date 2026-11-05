@@ -1,11 +1,14 @@
-// The user's approved balance; r15 also starts existing browsers at this mix.
-export const AUDIO_MIX_DEFAULTS=Object.freeze({sfx:1,video:.25,bgm:.06});
+// The approved balance; r23 applies the revised video default once.
+export const AUDIO_MIX_DEFAULTS=Object.freeze({sfx:1,video:.15,bgm:.06});
 export const AUDIO_MIX_STORAGE='linggan-audio-mix-r15';
+export const VIDEO_DEFAULT_REVISION='linggan-video-default-r23';
 export function normalizeAudioMix(value={}){
  return Object.fromEntries(Object.entries(AUDIO_MIX_DEFAULTS).map(([key,fallback])=>[key,Number.isFinite(Number(value[key]))?Math.max(0,Math.min(1,Number(value[key]))):fallback]));
 }
 export function createAudioMix({storage=globalThis.localStorage}={}){
  let current={...AUDIO_MIX_DEFAULTS};try{const saved=JSON.parse(storage?.getItem(AUDIO_MIX_STORAGE)||'null');if(saved)current=normalizeAudioMix(saved);}catch{}
+ // Apply the new video default once, keeping the two independently tuned channels.
+ try{if(storage?.getItem(VIDEO_DEFAULT_REVISION)!=='15'){current.video=AUDIO_MIX_DEFAULTS.video;storage?.setItem(AUDIO_MIX_STORAGE,JSON.stringify(current));storage?.setItem(VIDEO_DEFAULT_REVISION,'15');}}catch{current.video=AUDIO_MIX_DEFAULTS.video;}
  const listeners=new Set();
  const snapshot=()=>({...current});
  return{snapshot,set(key,value){if(!(key in AUDIO_MIX_DEFAULTS))throw Error('Unknown audio channel');current=normalizeAudioMix({...current,[key]:value});try{storage?.setItem(AUDIO_MIX_STORAGE,JSON.stringify(current));}catch{}for(const fn of listeners)fn(snapshot());return snapshot();},

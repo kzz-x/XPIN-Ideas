@@ -8,7 +8,7 @@ export function sampleRecoveryActions(time){
  const attentionStart=cues.hornGone-.16,attentionLocal=(time-attentionStart)*1.9;
  const attention=time>=attentionStart&&attentionLocal<=3?sampleMotion('attention',attentionLocal):null;
  const talk=time>=SHOT.speechStart?sampleMotion('talk',(time-SHOT.speechStart)*1.4):null;
- const beckonStart=SHOT.speechStart+.35,beckonLocal=(time-beckonStart)*1.45;
+ const beckonStart=SHOT.speechStart+.15,beckonLocal=(time-beckonStart)*2.4;
  const beckon=time>=beckonStart&&beckonLocal<=3.8?sampleMotion('beckon',beckonLocal):null;
  const follow=time>=SHOT.islandStart?sampleMotion('follow',(time-SHOT.islandStart)*1.35):null;
  return {cues,idle,sway,attention,talk,beckon,follow,attentionLocal,beckonLocal};

@@ -11,7 +11,7 @@ test('new dialogue pulses while already visible, and a newly shown bubble gets a
 test('reduced-motion dialogue uses colour emphasis without a scaling animation',()=>{
  let frames;const cue=createBubbleEmphasis({animate:f=>{frames=f;return{cancel(){}};}},{reduced:()=>true});cue.update(true);assert.ok(frames.every(f=>!f.transform));
 });
-test('the horn is retired within 0.8 seconds of the actual music ending, with consistent grain births',()=>{
- assert.equal(progress(14.809),0);assert.equal(progress(14.809+.80),1);assert.equal(progress(14.809+.425),.5);
+test('the horn is retired within 0.45 seconds of the actual music ending, with consistent grain births',()=>{
+ assert.equal(progress(14.809),0);assert.equal(progress(14.809+.45),1);assert.equal(progress(14.809+.25),.5);
  for(const threshold of [.1,.25,.5,.75,.9])assert.ok(Math.abs(progress(birthForThreshold(threshold))-threshold)<.00001);
 });

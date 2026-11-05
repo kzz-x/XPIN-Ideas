@@ -28,7 +28,7 @@ test('impact never loads or plays through unlock, natural playback, seeks, resum
   transport.beginScrub();transport.previewScrub(47);transport.endScrub();await Promise.resolve();
   impact.dispatchEvent(new Event('loadedmetadata'));transport.setMuted(true);transport.setMuted(false);transport.restoreVolumes();
   assert.equal(impact.playCount,0);assert.equal(impact.paused,true);assert.equal(impact.volume,0);assert.ok(film.playCount>0);
-  assert.equal(transport.duration,54.15);transport.dispose();
+  assert.equal(transport.duration,52.45);transport.dispose();
 });
 
 test('stage screen owns no process video and does not interrupt the shared soundtrack',async()=>{

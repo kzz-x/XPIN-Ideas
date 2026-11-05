@@ -5,7 +5,7 @@ import {ListeningGate} from '../src/listening-gate.mjs';
 import {PresentationTransport} from '../src/transport-r07.mjs';
 test('the approved r15 balance replaces provisional r14 settings on first entry',()=>{
  const storage={getItem:key=>key==='linggan-audio-mix-r14'?JSON.stringify({sfx:.8,video:.8,bgm:.15}):null,setItem(){}};
- assert.deepEqual(createAudioMix({storage}).snapshot(),{sfx:1,video:.25,bgm:.06});
+ assert.deepEqual(createAudioMix({storage}).snapshot(),{sfx:1,video:.15,bgm:.06});
 });
 test('three independent volumes clamp and survive a browser-settings round trip',()=>{
  const data=new Map(),storage={getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v)},mix=createAudioMix({storage});

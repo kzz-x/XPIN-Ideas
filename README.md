@@ -125,3 +125,12 @@ Three.js 使用 MIT 许可，IdeaSans / Noto 字体许可和角色来源随资�
 Built on the other window's published r21 source (27c322f), preserving its shared film-to-white screen, disabled impact soundtrack, and existing public audience. The white fade starts as Dot enters the left edge at native stage 1.0 s and lasts 2.0 s. After the actual music end, horn retirement is complete within 0.8 s, attention/speech start sooner, and the scroll handoff begins at stage 18.15 s. The greeting reads “你好呀~我叫Dot”.
 
 First cube and ordering-board interactions have visual guides that retire on real input. Archive cards explain opening and internal scrolling, and persist learned actions. Every newly shown or changed Dot message gets a gentle emphasis. The headphone page stops webpage BGM and omits the extra eyebrow. Background and settling ASCII are masked from the send button. Approved B hold, layered sand, three audio defaults, original music clock and retained r21 settings remain in use.
+
+
+## r23 touch, audio default and shorter resource/stage timing
+
+Phone swipes now advance the main scroll when moving down and return when moving up. Native internal card scrolling keeps its reading behavior. The headphone heading uses two centred lines without punctuation. Video migrates once to 15 percent while independently adjusted effects/music are preserved; later user changes survive refresh.
+
+The cube guide is tilted 45 degrees into an oblique plane. Resource extraction/read/return phases run at double speed and can reverse from their current progress when a genuine outside click/tap occurs, including before the reading backdrop appears. Internal clicks and drags do not falsely dismiss the resource.
+
+The full original soundtrack remains intact. Horn retirement ends 0.45 s after the audible music end, greeting starts after 0.55 s, native stage ends at 16.45 s and departure takes 0.85 s. Ready playback reaches the scroll about 2.5 s after music ends. The opening B sound, layered sand, stage shared-video fade, 100 percent SFX and 6 percent webpage BGM are retained.

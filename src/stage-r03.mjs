@@ -17,7 +17,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
   configureAudioDuration(51.9833333333);
   const doc=makeDefaults(data.project);
   // Finish the same source pullback before the new, short scroll handoff.
-  SHOT.pullStart=SHOT.musicEnd+.12;SHOT.pullEnd=18.05;SHOT.speechStart=SHOT.musicEnd+.60;SHOT.speechEnd=SHOT.speechStart+3.4;
+  SHOT.pullStart=SHOT.musicEnd+.05;SHOT.pullEnd=16.30;SHOT.speechStart=SHOT.musicEnd+.30;SHOT.speechEnd=SHOT.speechStart+3.4;
   doc.camera.dofStrength=.62;doc.camera.dofWidth=1.25;
   Object.assign(doc.screen,{fadeStart:1.0,fadeDuration:2,whiteEnabled:true,whiteRadiance:1});
   globalThis.DOT_STAGE_OPENING_SOURCE={kind:'video',status:'approved',label:'同源影片 · 共用解码帧',element:film,uri:film.currentSrc||film.src,inPoint:CONFIG.film.stageAt,fps:60};
@@ -54,7 +54,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
     dot.addBodyRoll(-bow);dot.addMotionOffset(0,-bow*.10,0);dot.applyStageActions(time);dot.faceCamera(stage.camera);dot.root.updateMatrixWorld(true);return state;
   }
   const poseMatrices=new Map();
-  for(let key=Math.floor((SHOT.musicEnd+.05)*120);key<=Math.ceil((SHOT.musicEnd+1.55)*120);key++){const t=key/120,state=actor(t);applyRecoveryFraming(stage,dot,t,state,data.layout);dot.finalizeEyes();poseMatrices.set(key,dot.horn.matrixWorld.clone());if(key%2===0)await yieldTask();}
+  for(let key=Math.floor((SHOT.musicEnd+.05)*120);key<=Math.ceil((SHOT.musicEnd+.45)*120);key++){const t=key/120,state=actor(t);applyRecoveryFraming(stage,dot,t,state,data.layout);dot.finalizeEyes();poseMatrices.set(key,dot.horn.matrixWorld.clone());if(key%2===0)await yieldTask();}
   const dissolve=createHornDissolve(stage.scene,dot.horn,{matrixAt(t){return poseMatrices.get(Math.round(t*120)).clone();}});
   stage.scene.traverse(o=>{if(/dissolv|grain/i.test(o.name)&&o.isPoints)o.layers.set(2);});
   const stageMasks=new Map();dot.root.traverse(o=>stageMasks.set(o,o.layers.mask));
@@ -82,7 +82,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
     stage.camera.updateProjectionMatrix();stage.camera.updateMatrixWorld(true);
     stage.focus.configure({enabled:doc.camera.dofEnabled&&time>2.3,distance:-framing.mouthWorld.clone().lerp(framing.actorWorld,.35).applyMatrix4(stage.camera.matrixWorldInverse).z,strength:.4,width:5});
     stage.updateLighting();
-    if(time<=0)dissolve.reset();const horn=dissolve.update(time);dot.horn.visible=time<SHOT.musicEnd+.85;
+    if(time<=0)dissolve.reset();const horn=dissolve.update(time);dot.horn.visible=time<SHOT.musicEnd+.50;
     const fx=concert.update(time,{stageSettings:doc.stage,project:doc.project,actorWorld:framing.actorWorld});concert.game.visible=false;
     dot.finalizeEyes();lastState={time,screen,horn,fx,camera:stage.camera.position.toArray(),actorWorld:framing.actorWorld.toArray(),actions:dot.stageActionState};
     return lastState;

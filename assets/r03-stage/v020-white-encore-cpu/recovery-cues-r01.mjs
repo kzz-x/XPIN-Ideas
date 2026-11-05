@@ -5,8 +5,8 @@ export function recoveryCues(time){
  const backgroundPhase=Math.max(0,(time-SHOT.islandStart)/1.3),backgroundProgress=clamp(backgroundPhase),backgroundMix=smooth(0,1,backgroundProgress);
  return {backgroundPhase,backgroundProgress,backgroundMix,oldStageShadowGain:1-backgroundMix,
   musicEnd:SHOT.musicEnd,pullStart:SHOT.pullStart,pullEnd:SHOT.pullEnd,
-  hornDissolveStart:SHOT.musicEnd+.05,hornGone:SHOT.musicEnd+.80,
-  eyeFront:smooth(SHOT.musicEnd+.05,SHOT.musicEnd+.80,time),
+  hornDissolveStart:SHOT.musicEnd+.05,hornGone:SHOT.musicEnd+.45,
+  eyeFront:smooth(SHOT.musicEnd+.05,SHOT.musicEnd+.45,time),
   speaking:time>=SHOT.speechStart&&time<SHOT.speechEnd,
   islandStart:SHOT.islandStart,transferStart:SHOT.transferStart,
   colourStart:SHOT.colourStart,colourEnd:SHOT.colourEnd,

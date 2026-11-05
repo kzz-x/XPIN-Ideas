@@ -8,13 +8,14 @@ export function createFirstGameHints({scene,camera,cube,pieces,slots}){
  const arrow=new T.Line(new T.BufferGeometry().setFromPoints([points[80].clone().add(new T.Vector3(-.23,.02,0)),points[80],points[80].clone().add(new T.Vector3(.03,.23,0))]),material);orbit.add(arrow);
  const path=new T.Line(new T.BufferGeometry(),material);root.add(path);
  const bead=new T.Mesh(new T.SphereGeometry(.075,10,8),new T.MeshBasicMaterial({color:0xecf8ff,depthTest:false,depthWrite:false}));root.add(bead);
+ const tilt=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),-Math.PI/4).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),Math.PI/4));
  let mode='hidden',curve=null,signature='';
  function update(time,active,state,busy){
   mode=!busy&&!state.seen[active]&&active===0?'rotate':!busy&&!state.seen[active]&&active===1?'drag':'hidden';
   root.visible=mode!=='hidden';orbit.visible=mode==='rotate';path.visible=mode==='drag';bead.visible=root.visible;if(!root.visible)return;
   material.opacity=.50+.32*(.5+.5*Math.sin(time*3.2));
   if(mode==='rotate'){
-   orbit.position.copy(cube.root.getWorldPosition(new T.Vector3()));orbit.quaternion.copy(camera.quaternion);
+   orbit.position.copy(cube.root.getWorldPosition(new T.Vector3()));orbit.quaternion.copy(camera.quaternion).multiply(tilt);
    const p=points[Math.floor((time*.32%1)*80)].clone().applyQuaternion(orbit.quaternion).add(orbit.position);bead.position.copy(p);
   }else{
    const piece=pieces.find(p=>p.chapter===1&&!p.done),slot=piece&&slots.find(s=>s.chapter===1&&s.id===piece.id);if(!slot){root.visible=false;mode='hidden';return;}
@@ -24,5 +25,5 @@ export function createFirstGameHints({scene,camera,cube,pieces,slots}){
    bead.position.copy(curve.getPoint((time*.48)%1));
   }
  }
- return{update,snapshot:()=>({mode,visible:root.visible}),dispose(){root.removeFromParent();arc.geometry.dispose();arrow.geometry.dispose();path.geometry.dispose();bead.geometry.dispose();material.dispose();bead.material.dispose();}};
+ return{update,snapshot:()=>({mode,visible:root.visible,rotationTiltDegrees:45}),dispose(){root.removeFromParent();arc.geometry.dispose();arrow.geometry.dispose();path.geometry.dispose();bead.geometry.dispose();material.dispose();bead.material.dispose();}};
 }
