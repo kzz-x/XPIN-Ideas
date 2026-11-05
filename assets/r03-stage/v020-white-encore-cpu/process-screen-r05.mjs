@@ -10,14 +10,16 @@ export async function createProcessScreenMedia(stage,config,{onFrameReady=()=>{}
  const texture=new T.VideoTexture(video);texture.colorSpace=T.NoColorSpace;texture.minFilter=T.LinearFilter;texture.magFilter=T.LinearFilter;texture.generateMipmaps=false;
  let fadeStart=14.1,fadeDuration=1.25,whiteEnabled=true,revision=0,lastSignature='',disposed=false;
  let opening=await createOpeningScreenSource(globalThis.DOT_STAGE_OPENING_SOURCE,{onFrameReady,isPlaying,end:START});
- const uniforms={uWhiteMix:{value:0},uWhiteRadiance:{value:config.whiteScreenRadianceLinear},uProcessMix:{value:0},uProcessVideo:{value:texture},uOpeningVideo:{value:opening.texture}};
+ const uniforms={uOpeningScale:{value:new T.Vector2(1,1)},uWhiteMix:{value:0},uWhiteRadiance:{value:config.whiteScreenRadianceLinear},uProcessMix:{value:0},uProcessVideo:{value:texture},uOpeningVideo:{value:opening.texture}};
  const material=stage.screenMat,prior=material.onBeforeCompile,priorKey=material.customProgramCacheKey;
- material.onBeforeCompile=function(shader,renderer){prior.call(this,shader,renderer);Object.assign(shader.uniforms,uniforms);shader.fragmentShader=`uniform float uWhiteMix,uWhiteRadiance,uProcessMix;uniform sampler2D uProcessVideo,uOpeningVideo;
+ material.onBeforeCompile=function(shader,renderer){prior.call(this,shader,renderer);Object.assign(shader.uniforms,uniforms);shader.fragmentShader=`uniform float uWhiteMix,uWhiteRadiance,uProcessMix;uniform sampler2D uProcessVideo,uOpeningVideo;uniform vec2 uOpeningScale;
 vec3 cdxSrgbToLinear(vec3 c){return mix(c/12.92,pow((c+.055)/1.055,vec3(2.4)),step(vec3(.04045),c));}
 `+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#ifdef USE_MAP
 // The current S24 tail has not been handed off. Never revive the historical
 // cosmos image, or mislabel the S26 process as the missing S25 opening.
-vec3 openingPending=cdxSrgbToLinear(texture2D(uOpeningVideo,vMapUv).rgb);
+vec2 openingUV=(vMapUv-.5)/uOpeningScale+.5;
+float openingMask=step(0.,openingUV.x)*step(openingUV.x,1.)*step(0.,openingUV.y)*step(openingUV.y,1.);
+vec3 openingPending=cdxSrgbToLinear(texture2D(uOpeningVideo,clamp(openingUV,0.,1.)).rgb)*openingMask;
 vec3 process=cdxSrgbToLinear(texture2D(uProcessVideo,vMapUv).rgb);
 vec3 screenContent=mix(openingPending,process,uProcessMix);
 diffuseColor*=vec4(mix(screenContent,vec3(uWhiteRadiance),uWhiteMix),1.);
@@ -28,7 +30,7 @@ diffuseColor*=vec4(mix(screenContent,vec3(uWhiteRadiance),uWhiteMix),1.);
  async function seekExact(time){video.pause();await Promise.all([requestSeek(targetFor(time)),opening.seekExact(time)]);texture.needsUpdate=true;return state(time)}
  function state(time){const source=opening.snapshot();return{time,source:'S26 approved v10 / Library version9 / originalSHA242fc92f…e99afcf',sourceDuration:duration,sourceTime:targetFor(time),videoClock:clock.snapshot(),mediaCount:22,processMix:uniforms.uProcessMix.value,whiteMix:uniforms.uWhiteMix.value,emptyWhitePlaceholder:false,openingSource:source,openingSourceReady:!source.placeholder,requiresCurrentS24Tail:!source.approved,historicalCosmosUsed:false,revision}}
  function update(time,{sync=true}={}){
-  if(disposed)throw Error('Disposed process media');opening.update(time,{sync});uniforms.uProcessMix.value=smooth(1.72,START,time);uniforms.uWhiteMix.value=whiteEnabled?smooth(fadeStart,fadeStart+fadeDuration,time):0;
+  if(disposed)throw Error('Disposed process media');const input=globalThis.DOT_STAGE_OPENING_SOURCE?.element;const aspect=input?.videoWidth/input?.videoHeight||16/9;uniforms.uOpeningScale.value.set(Math.min(1,aspect/(16/9)),Math.min(1,(16/9)/aspect));opening.update(time,{sync});uniforms.uProcessMix.value=smooth(1.72,START,time);uniforms.uWhiteMix.value=whiteEnabled?smooth(fadeStart,fadeStart+fadeDuration,time):0;
   if(sync){const target=targetFor(time),active=time>=START&&time<START+duration;if(isPlaying()&&active){if(Math.abs(video.currentTime-(time-START))>.16&&!clock.busy)void requestSeek(target,true).catch(error=>console.error(error));if(video.paused&&!clock.busy)video.play().catch(()=>{});}else{video.pause();if(Math.abs(video.currentTime-target)>.0005||video.seeking)void requestSeek(target,true).catch(error=>console.error(error));}}
   const signature=[uniforms.uWhiteMix.value,uniforms.uProcessMix.value,Math.floor(video.currentTime*FPS)].join(':');if(signature!==lastSignature){revision++;lastSignature=signature;stage.backdrop.invalidate()}
   return state(time);

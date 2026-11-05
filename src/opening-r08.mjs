@@ -42,7 +42,7 @@ export async function createOpening({canvas}){
   const finish=flow.warmup();
   portal.style.display=prior[0];chat.style.display=prior[1];portal.style.visibility=prior[2];document.body.dataset.phase=prior[3];
   const warmCamera=camera.clone();warmCamera.layers.enable(29);
-  try{await renderer.compileAsync(scene,warmCamera);}finally{finish();prepared=true;}
+  try{await renderer.compileAsync(scene,warmCamera);const target=new T.WebGLRenderTarget(8,8),priorTarget=renderer.getRenderTarget();try{renderer.setRenderTarget(target);renderer.render(scene,warmCamera);}finally{renderer.setRenderTarget(priorTarget);target.dispose();}}finally{finish();prepared=true;}
  }
 
  return{scene,camera,glyphs,ascii:flow.root,update,resize,prepare,get prepared(){return prepared;},get ready(){return flow.ready;},snapshot:()=>({phase,time:lastTime,background:BACKGROUND,titleDepth:glyphs.map(g=>g.mesh.geometry.boundingBox.max.z-g.mesh.geometry.boundingBox.min.z),glyphs:glyphs.map(g=>({angle:g.angle,velocity:g.velocity,goal:g.goal,turns:g.turns})),glass:{transmission:.84,roughness:.39,thickness:.47},grid:grid.snapshot(),particles:flow.snapshot()}),dispose(){window.removeEventListener('pointermove',move);flow.dispose();grid.dispose();group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});scene.clear();}};

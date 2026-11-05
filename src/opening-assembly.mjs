@@ -95,7 +95,7 @@ export function createParticleAssembly({scene,camera,glyphs,asciiData}){
   phase=next;return solver?.snapshot();
  }
  function warmup(){
-  measureTargets();sourceTriangles();makeWeld();root.visible=assembled.visible=true;
+  measureTargets();sourceTriangles();makeWeld();assembled.traverse(o=>{if(o.material){o.material.transparent=true;o.material.opacity=.5;}});root.visible=assembled.visible=true;
   root.traverse(o=>o.layers.set(29));
   for(const m of letterBatches){m.count=1;m.setMatrixAt(0,new T.Matrix4());m.instanceMatrix.needsUpdate=true;}
   return()=>{root.visible=assembled.visible=false;root.traverse(o=>o.layers.set(0));letterBatches.forEach(m=>m.count=0);};

@@ -18,9 +18,6 @@ export function createBgm({onChange=()=>{},onError=()=>{}}={}){
   let context,master,buffers,loading,unlocked=false,active=false,complete=false,masterMuted=false;
   let voice=null,outro=null,epoch=0,offset=0,exitAt=null,mode='intro-loop',finished=false,error=null,starts=0;
   const events=[];
-  const raw=Promise.all(['intro','loop','outro'].map(async name=>{const r=await fetch(`./assets/media/bgm/tank-b-${name}.flac`);if(!r.ok)throw Error(`BGM ${name}: ${r.status}`);return r.arrayBuffer();}));
-  raw.catch(e=>{error=e.message;onError('背景音乐暂未载入，可在设置中重新打开。');});
-  const metadata=fetch('./assets/media/bgm/tank-b-loop.json').then(r=>r.json());metadata.catch(()=>{});
   function emit(){onChange(snapshot());}
   function save(){try{localStorage.setItem(BGM_STORAGE,JSON.stringify(settings));}catch{}emit();}
   function volume(){if(master){const now=context.currentTime;master.gain.cancelAndHoldAtTime(now);master.gain.linearRampToValueAtTime(settings.enabled&&!masterMuted?settings.volume:0,now+.08);}emit();}
@@ -28,7 +25,11 @@ export function createBgm({onChange=()=>{},onError=()=>{}}={}){
     unlocked=true;
     if(!context){context=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});master=context.createGain();master.gain.value=settings.enabled&&!masterMuted?settings.volume:0;master.connect(context.destination);}
     await context.resume();
-    if(!loading)loading=Promise.all([raw,metadata]).then(async([data,meta])=>{
+    if(active)await prepare();
+  }
+  async function prepare(){
+    if(!context)return;
+    if(!loading)loading=Promise.all([Promise.all(['intro','loop','outro'].map(async name=>{const r=await fetch(`./assets/media/bgm/tank-b-${name}.flac`,{priority:'low'});if(!r.ok)throw Error(`BGM ${name}: ${r.status}`);return r.arrayBuffer();})),fetch('./assets/media/bgm/tank-b-loop.json').then(r=>r.json())]).then(async([data,meta])=>{
       const [intro,loop,outro]=await Promise.all(data.map(x=>context.decodeAudioData(x.slice(0))));
       buffers={intro,loop,outro,joined:joinIntroLoop(context,intro,loop),gates:meta.estimated_phrase_exit_gates.map(g=>g.seconds),meta};
       error=null;emit();
@@ -76,7 +77,7 @@ export function createBgm({onChange=()=>{},onError=()=>{}}={}){
     }emit();
   }
   function snapshot(){const t=context?.currentTime||0;return{ready:!!buffers,contextState:context?.state||'locked',sampleRate:context?.sampleRate||0,active,enabled:settings.enabled,volume:settings.volume,masterMuted,outputGain:master?.gain.value||0,complete,finished,mode:finished?'done':exitAt!==null&&t>=exitAt?'outro':mode,elapsed:elapsed(),exitAt,wait:exitAt===null?null:Math.max(0,exitAt-t),starts,error,loopStart:voice?.source.loopStart||0,loopEnd:voice?.source.loopEnd||0,loopFrames:buffers?.loop.length||0,events:events.slice(-20)};}
-  return {unlock,leave,setComplete,snapshot,get buffers(){return buffers;},get context(){return context;},
+  return {unlock,prepare,leave,setComplete,snapshot,get buffers(){return buffers;},get context(){return context;},
     enter(){active=true;if(unlocked)unlock();emit();},
     setEnabled(value){settings.enabled=!!value;volume();save();if(value)unlock();},
     setVolume(value){settings.volume=Math.max(0,Math.min(1,Number(value)||0));volume();save();},

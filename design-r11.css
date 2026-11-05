@@ -1,0 +1,17 @@
+/* The opening is revealed only after its real geometry and glyphs are ready. */
+#loading{display:flex;position:fixed;inset:0;z-index:80;background:#08142f;align-items:center;justify-content:center;flex-direction:column;opacity:1;transition:opacity .65s ease;pointer-events:auto}
+#loading.leave{opacity:0;pointer-events:none}
+.loading-eyebrow{font:10px monospace;letter-spacing:.28em;color:#a0b5ca;margin-bottom:24px}
+#loading-bar{font:13px/1.8 Consolas,monospace;color:#c1d5e4;letter-spacing:.06em;margin:0 0 15px;font-variant-numeric:tabular-nums}
+#loading-status{font:11px/1.8 sans-serif;letter-spacing:.1em;color:#839db8}
+body:not(.scene-visible) #world,body:not(.scene-visible) #masthead,body:not(.scene-visible) #intro-copy,body:not(.scene-visible) #hold{opacity:0;pointer-events:none}
+#world,#intro-copy,#hold{transition:opacity .75s ease}
+#masthead{transition:opacity .75s ease}
+body[data-phase="loading"] #world{visibility:hidden}
+body[data-phase="film"] #world{visibility:hidden}
+.film-cue-settings input{width:104px;padding:8px 10px;border:1px solid #68809c;background:#152235;color:#dce7f3;font:13px monospace}
+.film-cue-settings p{font-size:12px}
+.film-cue-settings .settings-actions{margin:10px 0;flex-wrap:wrap}
+#media-wait{position:fixed;z-index:61;left:50%;bottom:12%;transform:translateX(-50%);padding:10px 18px;background:#091324e8;border:1px solid #526b8566;color:#bfd2e2;font:12px monospace;opacity:0;pointer-events:none;transition:opacity .3s}
+#media-wait.visible{opacity:1}
+@media(max-width:700px){#loading-bar{font-size:11px}.film-cue-settings .settings-actions button{padding:10px;font-size:11px}}

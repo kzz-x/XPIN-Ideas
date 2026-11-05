@@ -13,10 +13,10 @@ export function createDotForeground({scene,camera,worldRenderer,root}){
   renderer.toneMapping=worldRenderer.toneMapping;
   renderer.toneMappingExposure=worldRenderer.toneMappingExposure;
   const materials=new Set(),savedMasks=new Map(),size=new T.Vector2();
-  root.traverse(o=>{
+  function bindRoot(actor){actor.traverse(o=>{
     savedMasks.set(o,o.layers.mask);o.layers.enable(layer);
     if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);
-  });
+  });}if(root)bindRoot(root);
   scene.traverse(o=>{if(o.isLight){savedMasks.set(o,o.layers.mask);o.layers.enable(layer);}});
   let active=false,width=0,height=0,dpr=0,passes=0;
   function resize(){
@@ -43,7 +43,7 @@ export function createDotForeground({scene,camera,worldRenderer,root}){
       renderer.render(scene,camera);passes++;
     }finally{scene.background=background;camera.layers.mask=mask;}
   }
-  return {canvas,renderer,setActive,renderWorld,render,resize,
+  return {canvas,renderer,bindRoot,setActive,renderWorld,render,resize,
     snapshot:()=>({active,layer,passes,width,height,dpr,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,characterCount:1}),
     dispose(){for(const [o,mask]of savedMasks)o.layers.mask=mask;renderer.dispose();canvas.remove();}
   };

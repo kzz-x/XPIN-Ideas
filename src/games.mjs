@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {yieldTask} from './preparation.mjs';
 import {frostedGlass} from './frosted-glass.mjs';
 import {createWordCube} from './games-cube.mjs';
 import {createProductCarousel} from './games-products.mjs';
@@ -16,7 +17,7 @@ const tips=[
 ];
 const chapterNames=['看清想法','组织步骤','选择工具','发现问题','完成交付'];
 
-export function createGames({scene,camera,renderer,canvas,chapterPositions,onFeedback=()=>{},onProgress=()=>{},onInteractionLock=()=>{},onGuide=()=>{}}) {
+export async function createGames({scene,camera,renderer,canvas,chapterPositions,onFeedback=()=>{},onProgress=()=>{},onInteractionLock=()=>{},onGuide=()=>{}}) {
   const abort=new AbortController(),eventOptions={signal:abort.signal,capture:true};
   let state=readProgress(),active=-1,time=0,disposed=false,drag=null,helpSequence=null,lastHover=null;
   const roots=[],pieces=[],slots=[],paths=[],animations=[],labels=[],resources=[],loads=[];
@@ -67,12 +68,12 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
     return o;
   }
   for(let i=0;i<5;i++){
-    const root=new T.Group();root.name='卷轴互动 '+(i+1)+' / '+chapterNames[i];const p=chapterPositions?.[i]||{x:0,y:.15,z:-17-i*34};root.position.set(p.x||0,p.y||0,p.z||0);scene.add(root);roots.push(root);
+    await yieldTask();const root=new T.Group();root.name='卷轴互动 '+(i+1)+' / '+chapterNames[i];const p=chapterPositions?.[i]||{x:0,y:.15,z:-17-i*34};root.position.set(p.x||0,p.y||0,p.z||0);scene.add(root);roots.push(root);
     label(root,`0${i+1} / 亲手试一试`,[0,.12,-5.95],5.2,.58,{surface:true,color:'#eef3f7',weight:600});
     line([[-5.5,.025,-5.40],[5.5,.025,-5.40]],materials.line,root);
     for(const x of [-5.45,5.45])for(const z of [-3.58,3.95])line([[x,.028,z],[x+(x<0?.24:-.24),.028,z]],materials.line,root);
   }
-  const cube=createWordCube({root:roots[0],camera,box,label,line,materials,onCollect:index=>mark(0,index)});
+  const cube=await createWordCube({root:roots[0],camera,box,label,line,materials,onCollect:index=>mark(0,index)});
 
   function card(chapter,id,title,p,{w=1.65,h=.96,material=materials.glass,kind='panel'}={}){
     const root=new T.Group();root.name=title+' / 可拿起的三维对象';root.position.set(...p);root.rotation.x=-.58;roots[chapter].add(root);
@@ -103,6 +104,7 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
     const path={chapter,curve,track,lit,glow,progress:0,target:0};paths.push(path);return path;
   }
 
+  await yieldTask();
   // 02: precise translucent process plates over one continuous drawn route.
   const processOrder=[3,0,5,1,4,2];
   let processNarrow=null;
@@ -201,11 +203,13 @@ export function createGames({scene,camera,renderer,canvas,chapterPositions,onFee
     }).catch(()=>{});loads.push(load);
   }
 
+  await yieldTask();
   const products=createProductCarousel({root:roots[3],camera,box,label,line,materials,
     onRepair:(index,assisted)=>mark(3,index,assisted),
     onTurn:index=>{state.product=index;save();say('info',tips[3]);},onFeedback});
   loads.push(...products.loads);
 
+  await yieldTask();
   // 05: three different physical deliverables, then the gated completion stamp.
   const cargoOrder=orders(state.layoutSeeds[4],CARGO_IDS,CARGO_IDS);
   const cargoSlotPos={film:[-3.4,.10,-1.55],island:[0,.10,-1.55],project:[3.4,.10,-1.55],stamp:[0,.10,.65]};

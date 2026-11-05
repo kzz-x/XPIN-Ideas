@@ -1,3 +1,4 @@
+import {yieldTask} from './preparation.mjs';
 import {createCardMorph} from './card-morph.mjs';
 import {resourcePhases,RESOURCE_DURATION,createTitleMotion,createEnding} from './scroll-motion.mjs';
 import * as T from 'three';
@@ -7,7 +8,7 @@ import {CHAPTERS,RESOURCES} from './content.mjs';
 import {createResourceShelf,createResourceModel} from './resource-models.mjs';
 import {clamp,smooth,damp,vec,titleMesh,label,line,box} from './space-utils.mjs';
 
-export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},onReplay=()=>{}}){
+export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},onReplay=()=>{}}){
   const root=new T.Group();root.name='Continuous creative scroll';scene.add(root);
   const objects=[],cards=[],industrials=[],resources=[],layoutLabels=[],layoutLines=[],titles=[];
   let resourceSeen={};try{resourceSeen=JSON.parse(localStorage.getItem('linggan-resource-seen-r09')||'{}');}catch{}
@@ -92,7 +93,7 @@ export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},on
     group.position.set(x,Math.sin(cardTilt)*height/2+.195,z);group.rotation.set(-Math.PI/2+cardTilt,0,0);root.add(group);
     const card={group,el,css,frame,c,chapter,width:size,height,base:group.position.clone(),baseQ:group.quaternion.clone(),hover:0,morph:createCardMorph(el)};cards.push(card);objects.push({group,z});el.addEventListener('pointerenter',()=>hover=card);el.addEventListener('pointerleave',()=>{if(hover===card)hover=null;});let down=null;el.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});el.addEventListener('click',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)return;if(!focus){open(card);e.stopPropagation();}});el.addEventListener('keydown',e=>{if(e.key==='Enter'){open(card);e.preventDefault();}});el.querySelector('.card-detail').addEventListener('wheel',e=>e.stopPropagation(),{passive:true});el.querySelector('.card-detail').addEventListener('pointerdown',e=>e.stopPropagation());el.querySelectorAll('[data-image]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();el.querySelector('.card-detail figure img').src=btn.dataset.image;}));el.querySelector('.comparison input')?.addEventListener('input',e=>e.target.parentElement.style.setProperty('--split',e.target.value+'%'));return card;
   }
-  CHAPTERS.forEach((chapter,i)=>{const z=-i*34,mainSide=i===2?1:-1;const title=styleTitle(titleMesh(chapter.title,1.85,.22));title.name=`Chapter ${i+1} / title`;title.position.set(mainSide*3.6,0,z+4.0);root.add(raiseTitle(title));titles.push(createTitleMotion(title));objects.push({group:title,z:z+4.0});
+  for(const [i,chapter] of CHAPTERS.entries()){await yieldTask();const z=-i*34,mainSide=i===2?1:-1;const title=styleTitle(titleMesh(chapter.title,1.85,.22));title.name=`Chapter ${i+1} / title`;title.position.set(mainSide*3.6,0,z+4.0);root.add(raiseTitle(title));titles.push(createTitleMotion(title));objects.push({group:title,z:z+4.0});
     placeLabel(chapter.kicker,7,.42,{x:mainSide*3.6,y:.22,z:z+5.9,chapter:i,kind:'kicker',size:25,color:'#e1e1dc'});
     placeLabel(chapter.description,10.8,.58,{x:0,y:.40,z:z+7.2,chapter:i,kind:'description',size:29,color:'#f0f0ea'});
     const headingRule=line([vec(mainSide*9.5,.055,z+1.0),vec(mainSide*9.5,.055,z+7.3)],0xe8e8df,.27);headingRule.name=`Chapter ${i+1} / header separator`;root.add(headingRule);objects.push({group:headingRule,z:z+.7});layoutLines.push(headingRule);
@@ -100,7 +101,7 @@ export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},on
     const connection=line([vec(mainSide*10.2,.065,z-8.5),vec(mainSide*10.2,.065,z-14.2),vec(mainSide*10.45,.065,z-14.2)],0xe5e5df,.48);connection.name=`Chapter ${i+1} / outside connector`;root.add(connection);objects.push({group:connection,z:z-11});layoutLines.push(connection);
     placeLabel(['转动观察','排出步骤','连接用途','找出问题','整理交付'][i],3.0,.60,{x:mainSide*5.3,y:1.45,z:z-11.9,chapter:i,kind:'action',color:'#efefea',size:150});
     makeIndustrial(i,z-6);
-  });
+  }
   function makeIndustrial(i,z){
     const side=i%2===0?1:-1;
     function artifact(minor=false){
@@ -181,6 +182,7 @@ export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},on
     }
     artifact(false);artifact(true);
   }
+  await yieldTask();
   const shelf=createResourceShelf();shelf.position.set(0,0,-177);root.add(shelf);objects.push({group:shelf,z:-177});
   const resourceTitle=styleTitle(titleMesh('资源档案',1.85,.22));resourceTitle.name='Chapter 6 / title';resourceTitle.position.set(-3,0,-169);root.add(raiseTitle(resourceTitle));titles.push(createTitleMotion(resourceTitle));objects.push({group:resourceTitle,z:-169});
   RESOURCES.forEach((r,i)=>{
@@ -194,6 +196,7 @@ export function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=>{},on
     const record={group:g,lid,parts,model,kind:r.kind,card,guide,tagEl,base:g.position.clone(),hover:0,visited:!!resourceSeen[r.kind],phases:resourcePhases(0)};resources.push(record);tagEl.addEventListener('click',e=>{e.stopPropagation();dg.visible=true;open(card);});tagEl.addEventListener('pointerenter',()=>record.hover=1);tagEl.addEventListener('pointerleave',()=>record.hover=0);tagEl.addEventListener('pointerleave',()=>record.hover=0);detailEl.querySelector('.card-detail').addEventListener('wheel',e=>e.stopPropagation(),{passive:true});
   });
   const noteEl=document.createElement('div');noteEl.className='end-note';noteEl.innerHTML='从一个想法，到一次完成。<small>回看影片 · 返回任一章节 · 留在这里看看资源</small>';const note=new CSS3DObject(noteEl);note.scale.setScalar(.014);note.rotation.x=labelTilt;note.position.set(0,.7,-194);root.add(note);objects.push({group:note,z:-194});
+  await yieldTask();
   const ending=createEnding(titleMesh,camera);root.add(ending.root);
   const raycaster=new T.Raycaster();raycaster.params.Line.threshold=.065;const pointer=new T.Vector2();
   const industrialDark=new T.Color('#101113'),industrialSolid=new T.Color('#92969B');

@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {yieldTask} from './preparation.mjs';
 import {frostedGlass} from './frosted-glass.mjs';
 import {wordGeometry} from './games-glyphs.mjs';
 import {WORDS} from './games-rules.mjs';
@@ -8,7 +9,7 @@ const V = (x=0,y=0,z=0) => new T.Vector3(x,y,z);
 const ease = t => t*t*t*(t*(6*t-15)+10);
 
 /** Real R03 r03 outlined/extruded glyphs with a physical, angle-gated glass volume. */
-export function createWordCube({root, camera, box, label, line, materials, onCollect}) {
+export async function createWordCube({root, camera, box, label, line, materials, onCollect}) {
   const holder = new T.Group(); holder.name = '六词 / 磨砂玻璃观察装置'; root.add(holder);
   holder.position.set(-2.35, 1.92, 0);
   const cube = new T.Group(); holder.add(cube);
@@ -27,7 +28,7 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
   edges.renderOrder=7; cube.add(edges);
   const word = new T.Group(); word.name = '实体挤出字 / 位于玻璃内部'; cube.add(word);
   const windowUniforms={inverseCube:{value:new T.Matrix4()}};
-  const glyphs=WORDS.map((text,index)=>{
+  const glyphs=[];for(const [index,text] of WORDS.entries()){await yieldTask();
     const mats=[0xeaf5ff,0x3a67aa].map(color=>{
       const m=new T.MeshStandardMaterial({color,metalness:.18,roughness:.32,transparent:true,opacity:0,depthWrite:false,depthTest:true});
       m.onBeforeCompile=sh=>{
@@ -51,8 +52,8 @@ export function createWordCube({root, camera, box, label, line, materials, onCol
     });
     const g=new T.Mesh(wordGeometry(text),mats);g.name='Internal extruded '+text;g.geometry.computeBoundingBox();
     const size=g.geometry.boundingBox.getSize(V());g.scale.setScalar(Math.min(1.65/size.x,1.24/size.y));
-    g.renderOrder=4;word.add(g);return g;
-  });
+    g.renderOrder=4;word.add(g);glyphs.push(g);
+  }
   const footprint = box(3.25,.05,3.25,materials.dark,[-2.35,.04,0],root);
   footprint.name='观察定位面 / 直接位于卷面';
   line([[-3.98,.075,-1.63],[-.72,.075,-1.63],[-.72,.075,1.63],[-3.98,.075,1.63],[-3.98,.075,-1.63]],materials.line,root);

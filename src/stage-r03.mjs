@@ -1,4 +1,6 @@
 import * as T from 'three';
+import {CONFIG} from './config.mjs';
+import {yieldTask} from './preparation.mjs';
 import {loadDot} from '../assets/r03-stage/v020-white-encore-cpu/stage-character-d02-r01.mjs';
 import {createBridgeStage} from '../assets/r03-stage/v020-white-encore-cpu/stage-base.mjs';
 import {createStageFinale} from '../assets/r03-stage/v020-white-encore-cpu/stage-design.mjs';
@@ -10,7 +12,7 @@ import {createProcessScreenMedia} from '../assets/r03-stage/v020-white-encore-cp
 import {makeDefaults,SHOT,configureAudioDuration} from '../assets/r03-stage/v020-white-encore-cpu/document.mjs';
 import {createHornDissolve} from '../assets/dot/effects/horn-dissolve-r05.mjs';
 
-export async function createR03Stage({rig,film,isPlaying=()=>false}){
+export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null}){
   const data=await fetch(new URL('../assets/r03-stage/document-source.json',import.meta.url)).then(r=>r.json());
   configureAudioDuration(51.9833333333);
   const doc=makeDefaults(data.project);
@@ -18,22 +20,23 @@ export async function createR03Stage({rig,film,isPlaying=()=>false}){
   SHOT.pullEnd=19.25;
   doc.camera.dofStrength=.62;doc.camera.dofWidth=1.25;
   globalThis.DOT_APPROVED_PROCESS_VIDEO=new URL('../assets/media/stage-process-r03.mp4',import.meta.url).href;
-  globalThis.DOT_STAGE_OPENING_SOURCE={kind:'video',status:'approved',label:'当前影片 · 36 秒起',uri:film.currentSrc||film.src,inPoint:36,fps:60};
+  globalThis.DOT_STAGE_OPENING_SOURCE={kind:'video',status:'approved',label:'同源影片 · 共用解码帧',element:film,uri:film.currentSrc||film.src,inPoint:CONFIG.film.stageAt,fps:60};
   const dot=await loadDot({sharedRig:rig});
   const canvas=document.createElement('canvas');canvas.width=16;canvas.height=9;
   canvas.getContext('2d').fillRect(0,0,16,9);
   const texture=new T.CanvasTexture(canvas);
   const universe={texture,displayReferred:true,revision:0,update:time=>({time})};
-  const stage=createBridgeStage(dot,{layout:data.layout,universe});
+  const trace=label=>{const r=window.__linggan?.runtime;if(r)(r.prepTrace??=[]).push({label,at:performance.now()});};
+  trace('bridge-start');const stage=createBridgeStage(dot,{layout:data.layout,universe});trace('bridge-end');await yieldTask();
   stage.hemi.intensity=.075;stage.fill.intensity=.60;stage.rim.intensity=4;
   for(const light of stage.scene.children)if(light.isDirectionalLight&&light!==stage.fill&&light!==stage.rim)light.intensity=.35;
-  const finale=createStageFinale(stage,data.layout),concert=createConcertRevision(stage,dot,data.layout,finale);
+  const finale=createStageFinale(stage,data.layout);trace('finale-end');await yieldTask();const concert=createConcertRevision(stage,dot,data.layout,finale);trace('concert-end');await yieldTask();
   concert.root.traverse(o=>{if(o.isInstancedMesh)o.layers.set(2);});
   const media=await createProcessScreenMedia(stage,data.white,{isPlaying});
   media.configure(doc.screen);
   const director=createTunableDirector(stage,dot,{layout:data.layout,document:doc}),mass=createMassFollower(dot,director);
   const stageParent=dot.root.parent,base={position:dot.root.position.clone(),quaternion:dot.root.quaternion.clone(),scale:dot.root.scale.clone()};
-  const renderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});
+  renderer??=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});
   renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;
   renderer.domElement.id='r03-stage';renderer.domElement.setAttribute('aria-hidden','true');
@@ -51,7 +54,9 @@ export async function createR03Stage({rig,film,isPlaying=()=>false}){
     const state=director.update(time),bow=.12*Math.sin(Math.PI*T.MathUtils.smoothstep(time,SHOT.musicEnd-.65,SHOT.musicEnd+.8));
     dot.addBodyRoll(-bow);dot.addMotionOffset(0,-bow*.10,0);dot.applyStageActions(time);dot.faceCamera(stage.camera);dot.root.updateMatrixWorld(true);return state;
   }
-  const dissolve=createHornDissolve(stage.scene,dot.horn,{matrixAt(t){const state=actor(t);applyRecoveryFraming(stage,dot,t,state,data.layout);dot.finalizeEyes();return dot.horn.matrixWorld.clone();}});
+  const poseMatrices=new Map();
+  for(let key=Math.floor((SHOT.musicEnd+.05)*120);key<=Math.ceil((SHOT.musicEnd+1.55)*120);key++){const t=key/120,state=actor(t);applyRecoveryFraming(stage,dot,t,state,data.layout);dot.finalizeEyes();poseMatrices.set(key,dot.horn.matrixWorld.clone());if(key%2===0)await yieldTask();}
+  const dissolve=createHornDissolve(stage.scene,dot.horn,{matrixAt(t){return poseMatrices.get(Math.round(t*120)).clone();}});
   stage.scene.traverse(o=>{if(/dissolv|grain/i.test(o.name)&&o.isPoints)o.layers.set(2);});
   const stageMasks=new Map();dot.root.traverse(o=>stageMasks.set(o,o.layers.mask));
   function activate(){
@@ -60,7 +65,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false}){
     dot.root.visible=true;active=true;
   }
   function resize(ratio=1.5){
-    const next=Math.min(ratio,innerWidth<700?1.5:1.5);
+    const next=Math.min(ratio,1.5);
     if(width===innerWidth&&height===innerHeight&&dpr===next)return;
     width=innerWidth;height=innerHeight;dpr=next;renderer.setPixelRatio(dpr);renderer.setSize(width,height,false);stage.backdrop.invalidate();
   }
@@ -72,9 +77,11 @@ export async function createR03Stage({rig,film,isPlaying=()=>false}){
     const framing=applyRecoveryFraming(stage,dot,time,state,data.layout);
     // Preserve the source horizontal composition on narrow viewports.
     stage.camera.aspect=width/height;
-    stage.camera.fov=T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(stage.camera.fov/2))*Math.max(1,(16/9)/stage.camera.aspect)));
+    const sourceAspect=film.videoWidth/film.videoHeight||16/9,nativeFit=Math.max(1,(16/9)/stage.camera.aspect),contentFit=Math.min(1,(16/9)/sourceAspect)*Math.max(1,sourceAspect/stage.camera.aspect);
+    const fit=T.MathUtils.lerp(contentFit,nativeFit,T.MathUtils.smoothstep(time,0,1.8));
+    stage.camera.fov=T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(stage.camera.fov/2))*fit));
     stage.camera.updateProjectionMatrix();stage.camera.updateMatrixWorld(true);
-    stage.focus.configure({enabled:doc.camera.dofEnabled,distance:-framing.mouthWorld.clone().lerp(framing.actorWorld,.35).applyMatrix4(stage.camera.matrixWorldInverse).z,strength:.4,width:5});
+    stage.focus.configure({enabled:doc.camera.dofEnabled&&time>2.3,distance:-framing.mouthWorld.clone().lerp(framing.actorWorld,.35).applyMatrix4(stage.camera.matrixWorldInverse).z,strength:.4,width:5});
     stage.updateLighting();
     if(time<=0)dissolve.reset();const horn=dissolve.update(time);dot.horn.visible=time<SHOT.musicEnd+1.65;
     media.uniforms.uWhiteRadiance.value=T.MathUtils.lerp(doc.screen.whiteRadiance,.32,framing.pullMix);

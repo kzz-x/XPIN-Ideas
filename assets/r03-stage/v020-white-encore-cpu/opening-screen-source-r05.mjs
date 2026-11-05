@@ -8,7 +8,7 @@ export async function createOpeningScreenSource(input,{onFrameReady=()=>{},isPla
  if(!['pending','candidate','approved'].includes(spec.status))throw Error('S25 source status is invalid');
  if(!Number.isFinite(spec.inPoint)||spec.inPoint<0||![24,25,30,50,60].includes(spec.fps))throw Error('S25 media timing is invalid');
  if(spec.kind!=='placeholder'&&!(/^(data:|blob:)/.test(spec.uri||'')||new URL(spec.uri,location.href).origin===location.origin))throw Error('S25 source must be an embedded or explicitly chosen local blob');
- let element,texture,clock,disposed=false;
+ let element,texture,clock,disposed=false;const shared=spec.element instanceof HTMLVideoElement;
  if(spec.kind==='placeholder'){
   const canvas=document.createElement('canvas');canvas.width=1280;canvas.height=720;
   const ctx=canvas.getContext('2d');ctx.fillStyle='#080b10';ctx.fillRect(0,0,1280,720);
@@ -17,6 +17,8 @@ export async function createOpeningScreenSource(input,{onFrameReady=()=>{},isPla
   texture=new T.CanvasTexture(canvas);
  }else if(spec.kind==='image'){
   element=new Image();element.src=spec.uri;await element.decode();texture=new T.Texture(element);texture.needsUpdate=true;
+ }else if(shared){
+  element=spec.element;texture=new T.VideoTexture(element);
  }else{
   element=document.createElement('video');element.muted=true;element.playsInline=true;element.preload='auto';element.setAttribute('aria-hidden','true');
   element.style.cssText='position:fixed;left:-20000px;top:0;width:1px;height:1px;pointer-events:none';document.body.append(element);
@@ -26,7 +28,7 @@ export async function createOpeningScreenSource(input,{onFrameReady=()=>{},isPla
  }
  texture.colorSpace=T.NoColorSpace;texture.minFilter=T.LinearFilter;texture.magFilter=T.LinearFilter;texture.generateMipmaps=false;
  const target=time=>spec.inPoint+Math.max(0,Math.min(end,time));
- function snapshot(){return{kind:spec.kind,label:spec.label,status:spec.status,placeholder:spec.kind==='placeholder',approved:spec.kind!=='placeholder'&&spec.status==='approved',sha256:spec.sha256||null,inPoint:spec.inPoint,fps:spec.fps,duration:spec.kind==='video'?element.duration:null,sourceTooShort:spec.kind==='video'&&element.duration<spec.inPoint+end,clock:clock?.snapshot()||null};}
+ function snapshot(){return{kind:spec.kind,label:spec.label,status:spec.status,placeholder:spec.kind==='placeholder',approved:spec.kind!=='placeholder'&&spec.status==='approved',sha256:spec.sha256||null,inPoint:spec.inPoint,fps:spec.fps,sharedDecoder:shared,videoTime:element?.currentTime||0,duration:spec.kind==='video'?element.duration:null,sourceTooShort:spec.kind==='video'&&element.duration<spec.inPoint+end,clock:clock?.snapshot()||null};}
  async function seekExact(time){if(disposed)throw Error('Disposed S25 source');if(clock)await clock.seek(target(time));texture.needsUpdate=true;return snapshot();}
  function update(time,{sync=true}={}){
   if(disposed)throw Error('Disposed S25 source');
@@ -36,5 +38,5 @@ export async function createOpeningScreenSource(input,{onFrameReady=()=>{},isPla
   }
   return snapshot();
  }
- return{texture,seekExact,update,snapshot,dispose(){disposed=true;clock?.dispose();if(spec.kind==='video'){element.pause();element.removeAttribute('src');element.load();element.remove();}texture.dispose();}};
+ return{texture,seekExact,update,snapshot,dispose(){disposed=true;clock?.dispose();if(spec.kind==='video'&&!shared){element.pause();element.removeAttribute('src');element.load();element.remove();}texture.dispose();}};
 }

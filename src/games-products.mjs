@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {yieldTask} from './preparation.mjs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {PRODUCT_IDS} from './games-rules.mjs';
 import {productFinish,makeProductMaterial} from './product-finishes.mjs';
@@ -54,8 +55,8 @@ export function createProductCarousel({root,camera,box,label,line,materials,onRe
       const scale=(k===0?2.45:k===1?3.75:k===2?2.55:2.65)/Math.max(size.x,size.y,size.z);
       const normalization=new T.Matrix4().makeScale(scale,scale,scale).multiply(new T.Matrix4().makeTranslation(-center.x,-bounds.min.y,-center.z));
       const bucket=new Map();
-      source.traverse(o=>{
-        if(!o.isMesh)return;
+      const sourceMeshes=[];source.traverse(o=>{if(o.isMesh)sourceMeshes.push(o);});
+      for(const o of sourceMeshes){await yieldTask();
         let p=o,lineage='';while(p){lineage+=' '+p.name;p=p.parent;}
         const materialsIn=Array.isArray(o.material)?o.material:[o.material];
         const groups=o.geometry.groups.length?o.geometry.groups:[{start:0,count:o.geometry.index?.count||o.geometry.attributes.position.count,materialIndex:0}];
@@ -71,7 +72,7 @@ export function createProductCarousel({root,camera,box,label,line,materials,onRe
           if(!bucket.has(key))bucket.set(key,{special,parts:[],material:makeProductMaterial(finish)});
           bucket.get(key).parts.push(part);geom.dispose();
         }
-      });
+      }
       const model=new T.Group();model.name=id+' / 用户提供的真实轻量模型';model.rotation.y=[-Math.PI/2,-.4,.4,0][k];mount.add(model);
       const payload=new T.Group();payload.name='完整产品体';model.add(payload);
       const partGroup=new T.Group();partGroup.name='可修正真实子件';payload.add(partGroup);

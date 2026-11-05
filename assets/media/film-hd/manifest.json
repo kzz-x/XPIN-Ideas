@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "label": "1080p / 60 fps",
+  "width": 1920,
+  "height": 1080,
+  "fps": 60,
+  "duration": 51.983333,
+  "timestampOffset": -0.03333333333333333,
+  "mime": "video/mp4; codecs=\"avc1.64002a, mp4a.40.2\"",
+  "init": "init.mp4",
+  "playlist": "index.m3u8",
+  "fallback": "../film-preview.mp4",
+  "stageAt": 36,
+  "segments": [
+    {
+      "src": "segment-000.m4s",
+      "start": 0,
+      "duration": 2.0,
+      "bytes": 1363059
+    },
+    {
+      "src": "segment-001.m4s",
+      "start": 2.0,
+      "duration": 2.0,
+      "bytes": 1296738
+    },
+    {
+      "src": "segment-002.m4s",
+      "start": 4.0,
+      "duration": 2.0,
+      "bytes": 1628288
+    },
+    {
+      "src": "segment-003.m4s",
+      "start": 6.0,
+      "duration": 2.0,
+      "bytes": 1539306
+    },
+    {
+      "src": "segment-004.m4s",
+      "start": 8.0,
+      "duration": 2.0,
+      "bytes": 4039406
+    },
+    {
+      "src": "segment-005.m4s",
+      "start": 10.0,
+      "duration": 2.0,
+      "bytes": 2960292
+    },
+    {
+      "src": "segment-006.m4s",
+      "start": 12.0,
+      "duration": 2.0,
+      "bytes": 2441721
+    },
+    {
+      "src": "segment-007.m4s",
+      "start": 14.0,
+      "duration": 2.0,
+      "bytes": 2567077
+    },
+    {
+      "src": "segment-008.m4s",
+      "start": 16.0,
+      "duration": 2.0,
+      "bytes": 3100359
+    },
+    {
+      "src": "segment-009.m4s",
+      "start": 18.0,
+      "duration": 2.0,
+      "bytes": 3166887
+    },
+    {
+      "src": "segment-010.m4s",
+      "start": 20.0,
+      "duration": 2.0,
+      "bytes": 2751947
+    },
+    {
+      "src": "segment-011.m4s",
+      "start": 22.0,
+      "duration": 2.0,
+      "bytes": 1649642
+    },
+    {
+      "src": "segment-012.m4s",
+      "start": 24.0,
+      "duration": 2.0,
+      "bytes": 3863127
+    },
+    {
+      "src": "segment-013.m4s",
+      "start": 26.0,
+      "duration": 2.0,
+      "bytes": 3454630
+    },
+    {
+      "src": "segment-014.m4s",
+      "start": 28.0,
+      "duration": 2.0,
+      "bytes": 3189235
+    },
+    {
+      "src": "segment-015.m4s",
+      "start": 30.0,
+      "duration": 2.0,
+      "bytes": 3255882
+    },
+    {
+      "src": "segment-016.m4s",
+      "start": 32.0,
+      "duration": 2.0,
+      "bytes": 2728546
+    },
+    {
+      "src": "segment-017.m4s",
+      "start": 34.0,
+      "duration": 2.0,
+      "bytes": 3188532
+    },
+    {
+      "src": "segment-018.m4s",
+      "start": 36.0,
+      "duration": 2.0,
+      "bytes": 3077432
+    },
+    {
+      "src": "segment-019.m4s",
+      "start": 38.0,
+      "duration": 2.0,
+      "bytes": 1957787
+    },
+    {
+      "src": "segment-020.m4s",
+      "start": 40.0,
+      "duration": 2.0,
+      "bytes": 209881
+    },
+    {
+      "src": "segment-021.m4s",
+      "start": 42.0,
+      "duration": 2.0,
+      "bytes": 185118
+    },
+    {
+      "src": "segment-022.m4s",
+      "start": 44.0,
+      "duration": 2.0,
+      "bytes": 186062
+    },
+    {
+      "src": "segment-023.m4s",
+      "start": 46.0,
+      "duration": 2.0,
+      "bytes": 208019
+    },
+    {
+      "src": "segment-024.m4s",
+      "start": 48.0,
+      "duration": 2.0,
+      "bytes": 113528
+    },
+    {
+      "src": "segment-025.m4s",
+      "start": 50.0,
+      "duration": 1.983333,
+      "bytes": 114000
+    }
+  ],
+  "encoding": {
+    "source": "20261103-正式剪辑.mp4",
+    "crf": 19,
+    "preset": "slow",
+    "maxrate": "12M",
+    "audio": "original AAC copied",
+    "noFramesRemoved": true
+  }
+}
