@@ -57,7 +57,7 @@ export async function createDotStage({scene,camera,rig:sharedRig=null,stageRende
       const sampled=actions.sample(time),frame=sampled.frame;
       if(depart.frame&&p<.7){const mix=ease(p/.7);for(const k of Object.keys(frame.p))if(typeof frame.p[k]==='number'&&typeof depart.frame.p[k]==='number')frame.p[k]=T.MathUtils.lerp(depart.frame.p[k],frame.p[k],mix);frame.bodyRoll=T.MathUtils.lerp(Math.atan2(Math.sin(depart.frame.bodyRoll||0),Math.cos(depart.frame.bodyRoll||0)),frame.bodyRoll,mix);}
       pose(frame,position,T.MathUtils.lerp(oldScale,nativeScale*.55,e));
-      source.advanceBackground?.(p*1.35);source.render(1-ease(p/.96));
+      source.renderDeparture(1-ease(p/.96));
       if(p>=1){source.hide();position.copy(actorWorldPos);actions.trigger('ambient','greet');}
     }else{
       if(mode!=='scroll'){toHost();source?.hide();position.copy(mode==='departure'?actorWorldPos:companionTarget);sideStart=sideEnd=position.x;sideAt=time;previousTargetZ=null;if(mode!=='departure')actions.reset(time);}

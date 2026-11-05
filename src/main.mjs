@@ -64,7 +64,7 @@ sound.connectMediaElement(film);sound.connectMediaElement(audio);
 function updateCompletion(){if(games)bgm.setComplete(COUNTS.every((n,i)=>games.getState().done[i].length===n));}
 window.addEventListener('pointermove',e=>{if(ui.phase==='scroll'&&e.pointerType!=='touch'){scrollPointer.x=e.clientX/innerWidth*2-1;scrollPointer.y=1-e.clientY/innerHeight*2;space?.pointerMove(e);}},true);
 document.addEventListener('pointerleave',()=>{scrollPointer.x=scrollPointer.y=0;space?.clearHover();});
-const transport=new PresentationTransport(film,audio,{managedMedia:true,getVideoVolume:()=>audioMix.snapshot().video,getMediaOffset:()=>media.timeOffset,canPlayAt:at=>media.canPlayAt(at),requestMedia:at=>media.ensure(at,3).catch(error=>toast(error.message)),canEnterStage:()=>runtime.ready,canDepart:()=>runtime.ready,onBuffering:buffering,onFilm(){setPhase('film');prepareWorld().catch(()=>{});},onStage(){ui.stageEntryAt=time;setPhase('stage');},onTransition(){ui.stageEntryAt=time;setPhase('transition');},onDeparture(){if(ui.phase==='film'){dot?.update({time,dt:0,mode:'stage',stageTime:CONFIG.stage.end,pixelRatio:renderer.getPixelRatio()});camera.copy(dot.stageCamera,false);camera.layers.set(0);look.copy(camera.position).add(camera.getWorldDirection(vec()).multiplyScalar(10));}setPhase('departure');},onError:toast});
+const transport=new PresentationTransport(film,audio,{managedMedia:true,getVideoVolume:()=>media.preflighting?0:audioMix.snapshot().video,getMediaOffset:()=>media.timeOffset,canPlayAt:at=>media.canPlayAt(at),requestMedia:at=>media.ensure(at,3).catch(error=>toast(error.message)),canEnterStage:()=>runtime.ready,canDepart:()=>runtime.ready,onBuffering:buffering,onFilm(){setPhase('film');prepareWorld().catch(()=>{});},onStage(){ui.stageEntryAt=time;setPhase('stage');},onTransition(){ui.stageEntryAt=time;setPhase('transition');},onDeparture(){if(ui.phase==='film'){dot?.update({time,dt:0,mode:'stage',stageTime:CONFIG.stage.end,pixelRatio:renderer.getPixelRatio()});camera.copy(dot.stageCamera,false);camera.layers.set(0);look.copy(camera.position).add(camera.getWorldDirection(vec()).multiplyScalar(10));}setPhase('departure');},onError:toast});
 const mixControls=bindAudioMix(audioMix,{onToast:toast,onPreview:()=>{sound.unlock();sound.play('click');setTimeout(()=>sound.play('win'),230);}});
 function applyAudioMix(values){sound.setVolume(values.sfx);bgm.setVolume(values.bgm);transport.restoreVolumes();}
 audioMix.subscribe(applyAudioMix);applyAudioMix(audioMix.snapshot());
@@ -169,12 +169,38 @@ async function prepareScroll(){
     dot.update({mode:'hidden'});runtime.prepTrace.push({label:'scroll-draw-end',at:performance.now()});runtime.scrollReady=true;runtime.scrollReadyAt=performance.now();advanceScrollProgress(1,'准备就绪');bgm.prepare().catch(()=>{});
   })().catch(error=>{runtime.scrollError=error.message;throw error;});return scrollJob;
 }
+async function warmHandoff(){
+  runtime.prepTrace.push({label:'handoff-warm-start',at:performance.now()});
+  const savedCamera=camera.clone(),savedClear=renderer.getClearColor(new T.Color()),savedAlpha=renderer.getClearAlpha(),savedCss={visibility:css.domElement.style.visibility,opacity:css.domElement.style.opacity};
+  const keyPos=key.position.clone(),targetPos=keyTarget.position.clone();
+  dot.update({time:0,dt:0,mode:'stage',stageTime:CONFIG.stage.end,pixelRatio:renderer.getPixelRatio()});
+  await dot.source.prepareDepartureBackdrop();
+  const from=dot.stageCamera.clone(),fromLook=from.position.clone().add(from.getWorldDirection(vec()).multiplyScalar(10)),narrow=innerWidth<700,to=vec(narrow?2.04:1.2,narrow?28.9:17,narrow?40.8:24),toLook=vec(0,0,-3);
+  const worldStyle=canvas.style.visibility;canvas.style.visibility='hidden';dotForeground.canvas.style.visibility='hidden';
+  css.domElement.style.visibility='visible';css.domElement.style.opacity='0';dotForeground.setActive(true);
+  try{
+    renderer.setClearColor('#080a0d',1);key.position.set(-6,18,12);keyTarget.position.set(0,0,-3);
+    for(const p of [0,.35,.7,1]){
+      const e=smooth(p);camera.copy(from,false);camera.fov=T.MathUtils.lerp(from.fov,narrow?48:42,e);camera.updateProjectionMatrix();camera.position.lerpVectors(from.position,to,e);camera.position.x+=Math.sin(p*Math.PI)*.7;camera.lookAt(fromLook.clone().lerp(toLook,e));camera.updateMatrixWorld();
+      companion.set(8.5,2.7,5);fitCompanionTarget();space.update({scroll:0,time:0,dt:0,unfold:smooth((p-.08)/.9)});for(const r of games.roots)r.visible=p>.65;
+      dot.update({time:0,mode:'departure',stageTime:CONFIG.stage.end,departureProgress:p,companionTarget:companion,dt:0});games.update(0,0);dotForeground.renderWorld(()=>renderer.render(scene,camera));dotForeground.render();css.render(scene,camera);await nextPaint();
+    }
+    // Let CSS3D create and lay out its visible card surfaces behind the opaque
+    // listening screen, instead of doing their first paint during the handoff.
+    css.domElement.style.opacity='1';await nextPaint();await nextPaint();
+    runtime.handoffReady=true;runtime.handoffReadyAt=performance.now();
+  }finally{
+    camera.copy(savedCamera,false);key.position.copy(keyPos);keyTarget.position.copy(targetPos);renderer.setClearColor(savedClear,savedAlpha);dot.update({mode:'hidden'});dotForeground.setActive(false);dotForeground.canvas.style.visibility='';canvas.style.visibility=worldStyle;Object.assign(css.domElement.style,savedCss);
+  }
+  runtime.prepTrace.push({label:'handoff-warm-end',at:performance.now()});
+}
 function prepareWorld(){
   if(worldJob)return worldJob;worldJob=(async()=>{
     // A return visit may already be assembling the scroll. Complete that work
     // before the cinema re-parents the shared character.
     if(scrollJob)await scrollJob;
     await prepareStage();await prepareScroll();await screenReady;
+    await warmHandoff();
     runtime.ready=true;runtime.worldReadyAt=performance.now();resolveWorld();
   })().catch(error=>{rejectWorld(error);throw error;});worldJob.catch(()=>{});return worldJob;
 }
@@ -224,7 +250,7 @@ for(const type of ['pointerdown','keydown'])$('hold').addEventListener(type,()=>
 
 function beginListening(){
   const generation=++listenGeneration;listeningGate.reset();setPhase('listen');ui.listenStartedAt=performance.now();ui.listenFinishedAt=null;$('listening-status').textContent='正在准备影片';sound.play('headphones');
-  media.prime().catch(()=>{});Promise.all([media.preparePlayback(0),quality.snapshot().constrained?prepareWorld():Promise.resolve()]).then(()=>{if(generation!==listenGeneration)return;listeningGate.ready=true;$('listening-status').textContent='准备就绪，即将开始';}).catch(error=>{if(generation===listenGeneration&&ui.phase==='listen'){toast(error.message);setPhase('chat');}});
+  media.prime().catch(()=>{});Promise.all([media.preparePlayback(0),prepareWorld()]).then(async()=>{if(generation!==listenGeneration)return;await media.preflightDecode();transport.restoreVolumes();}).then(()=>{if(generation!==listenGeneration)return;listeningGate.ready=true;$('listening-status').textContent='准备就绪，即将开始';}).catch(error=>{if(generation===listenGeneration&&ui.phase==='listen'){toast(error.message);setPhase('chat');}});
 }
 const listeningRange=$('listening-volume');
 listeningRange.addEventListener('pointerdown',()=>listeningGate.adjusting=true);
@@ -234,7 +260,7 @@ listeningRange.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Arro
 listeningRange.addEventListener('keyup',()=>{listeningGate.adjusting=false;listeningGate.adjusted();});
 async function startFilm(at=0){
   if(filmStarting)return;filmStarting=true;let shown=false;const timer=setTimeout(()=>{shown=true;buffering(true);},300);
-  try{media.prime().catch(()=>{});await media.preparePlayback(at);if(at>0)await prepareWorld();transport.started=true;await transport.start(at);}
+  try{media.prime().catch(()=>{});await media.preparePlayback(at);await prepareWorld();transport.started=true;await transport.start(at);}
   catch(error){toast(error.message);setPhase('chat');}
   finally{clearTimeout(timer);if(shown)buffering(false);filmStarting=false;}
 }
@@ -258,7 +284,11 @@ function fitCompanionTarget(){
   companion.copy(companionView.unproject(camera));
 }
 let lastPhase='loading',lastChapter=-1,renderedFrames=0,departureFov=42;
+function paintTransport(now){if(now-(ui.transportPaint||0)<66)return;ui.transportPaint=now;seekControl.update();$('timecode').textContent=`${timeText(transport.currentTime)} / ${timeText(transport.duration)}`;$('play-pause').textContent=transport.playing?'Ⅱ':'▶';$('play-pause').setAttribute('aria-label',transport.playing?'暂停影片':'继续播放');$('transport-label').textContent=ui.phase==='transition'?'进入创作':ui.phase==='stage'?'Dot 舞台':'影片';}
 function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.05,Math.max(.001,rawDt));previous=current;time=current-startedAt;ui.frameTimes.push(rawDt*1000);if(ui.frameTimes.length>600)ui.frameTimes.shift();const age=time-ui.phaseAt;
+  // Pure film playback does no scene, sound-solver or CSS3D work. Keep the
+  // browser's video compositor free; the same transport owns the cut to stage.
+  if(ui.phase==='film'){if(lastPhase!=='film'){portalLayout(age);css.domElement.style.visibility='hidden';dotForeground?.setActive(false);}transport.update(dt);cinemaControls.update();if(ui.phase==='film'){paintTransport(now);lastPhase='film';requestAnimationFrame(frame);return;}}
   // Native scrolling owns the settled article. Leave its background frame alone:
   // no CSS3D transforms, typography writes, shadow/foreground passes or games.
   if(ui.phase==='scroll'&&space?.readingStable&&!$('settings').open){requestAnimationFrame(frame);return;}
@@ -268,7 +298,7 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
   if(ui.phase==='intro'){ui.hold=ui.held?clamp(current-ui.holdStart):clamp(ui.hold-dt*1.65);$('hold').style.setProperty('--hold',ui.hold);if(ui.hold>=1&&opening.prepared){sound.unlock();ui.held=false;setPhase('morph');}}
   else if(ui.phase==='morph'&&age>=OPENING_TIMING.morph&&opening.ready)setPhase('chat');
   else if(ui.phase==='launch'&&age>=4.35)beginListening();
-  else if(ui.phase==='listen'){const state=listeningGate.update(dt,{paused:document.hidden||$('settings').open});if(!state.ready){const m=media.snapshot();$('listening-status').textContent=m.complete?'正在准备舞台与卷轴':'影片正在载入 '+Math.floor(m.progress*100)+'%';}
+  else if(ui.phase==='listen'){const state=listeningGate.update(dt,{paused:document.hidden||$('settings').open});if(!state.ready){const m=media.snapshot();$('listening-status').textContent=m.preflighting?'正在预热影片解码':m.complete?'正在准备舞台与卷轴':'影片正在载入 '+Math.floor(m.progress*100)+'%';}
     $('listening-fill').style.transform='scaleX('+state.progress+')';$('listening-fill').parentElement.setAttribute('aria-valuenow',String(Math.round(state.progress*100)));if(state.done){ui.listenFinishedAt=performance.now();setPhase('black');requestAnimationFrame(()=>setTimeout(()=>prepareWorld().catch(()=>{}),0));}}
   else if(ui.phase==='black'&&performance.now()-ui.blackAt>=750){setPhase('film-wait');startFilm();}
   if(['film','stage','transition'].includes(ui.phase))transport.update(dt);
@@ -276,7 +306,7 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
   const introRender=['intro','morph','chat','launch','black','film-wait'].includes(ui.phase);
   dotForeground?.setActive(ui.phase==='scroll'||ui.phase==='departure');
   if(introRender){portalLayout(time-ui.phaseAt);const state=opening.update({time,dt,phase:ui.phase==='film-wait'?'black':ui.phase,phaseTime:time-ui.phaseAt,holdProgress:ui.hold});if(ui.phase==='morph')sound.particleMotion(state);if(ui.phase==='launch')sound.codeTick(age);renderer.render(opening.scene,opening.camera);css.domElement.style.visibility='hidden';if(ui.phase==='launch')drawCode(age);portalLayout(time-ui.phaseAt);}
-  else if(ui.phase==='film'){portalLayout(age);css.domElement.style.visibility='hidden';}
+  else if(ui.phase==='film'){if(lastPhase!=='film')portalLayout(age);css.domElement.style.visibility='hidden';}
   else if(['stage','transition','departure','scroll'].includes(ui.phase)){
     css.domElement.style.visibility='visible';
     if(ui.phase==='scroll'&&!ui.gameLock&&!ui.focusLock){const maxSpeed=innerWidth<700?28:44;const desired=clamp((ui.target-ui.scroll)*4.8,-maxSpeed,maxSpeed);ui.scrollVelocity=damp(ui.scrollVelocity,desired,20,dt);ui.scroll=clamp(ui.scroll+ui.scrollVelocity*dt,0,CONFIG.scroll.max);if(Math.abs(ui.target-ui.scroll)<.0001&&Math.abs(ui.scrollVelocity)<.001){ui.scroll=ui.target;ui.scrollVelocity=0;}}
@@ -309,7 +339,7 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
     if(ui.phase==='stage'||ui.phase==='transition'){renderer.setClearColor('#000000',1);renderer.clear();dot.renderStage();}else{camera.lookAt(look);camera.updateMatrixWorld();key.position.set(-6,18,12-ui.scroll);keyTarget.position.set(0,0,-ui.scroll-3);quality.stabilizeShadow({phase:ui.phase});games.update(dt,time);dot.beforeRender(renderer);dotForeground.renderWorld(()=>renderer.render(scene,camera));css.render(scene,camera);space.syncReading();dotForeground.render();}
   }
   bubbleEmphasis.update($('dot-bubble').style.display!=='none');
-  if(['film','transition','stage'].includes(ui.phase)){seekControl.update();$('timecode').textContent=`${timeText(transport.currentTime)} / ${timeText(transport.duration)}`;$('play-pause').textContent=transport.playing?'Ⅱ':'▶';$('play-pause').setAttribute('aria-label',transport.playing?'暂停影片':'继续播放');$('transport-label').textContent=ui.phase==='transition'?'进入创作':ui.phase==='stage'?'Dot 舞台':'影片';}
+  if(['film','transition','stage'].includes(ui.phase))paintTransport(now);
   quality.sampleFrame({dt:rawDt,time:current,phase:ui.phase});lastPhase=ui.phase;renderedFrames++;requestAnimationFrame(frame);
 }
 const hold=$('hold');hold.addEventListener('pointermove',e=>{const r=hold.getBoundingClientRect();hold.style.setProperty('--mx',(e.clientX-r.x)/r.width);hold.style.setProperty('--my',(e.clientY-r.y)/r.height);});hold.addEventListener('pointerleave',()=>{hold.style.setProperty('--mx','.5');hold.style.setProperty('--my','.5');});hold.addEventListener('pointerdown',e=>{if(ui.phase!=='intro')return;e.preventDefault();hold.setPointerCapture(e.pointerId);if(!ui.held)ui.holdStart=performance.now()/1000;ui.held=true;sound.unlock();media.prime().catch(error=>toast(error.message));});hold.addEventListener('pointerup',()=>ui.held=false);hold.addEventListener('pointercancel',()=>ui.held=false);hold.addEventListener('keydown',e=>{if([' ','Enter'].includes(e.key)&&ui.phase==='intro'){e.preventDefault();if(!ui.held)ui.holdStart=performance.now()/1000;ui.held=true;sound.unlock();media.prime().catch(error=>toast(error.message));}});hold.addEventListener('keyup',e=>{if([' ','Enter'].includes(e.key)){e.preventDefault();ui.held=false;}});window.addEventListener('blur',()=>ui.held=false);

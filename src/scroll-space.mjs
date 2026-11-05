@@ -57,7 +57,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
   const readingLayer=document.createElement('div');readingLayer.id='reading-layer';Object.assign(readingLayer.style,{position:'fixed',inset:'0',zIndex:'6',pointerEvents:'none'});document.body.append(readingLayer);let readingCard=null;
   function surface(el){const wrapper=document.createElement('div');wrapper.className='spatial-surface';wrapper.append(el);return new CSS3DObject(wrapper);}
   function restoreReading(){
-    if(!readingCard)return;const card=readingCard;card.css.element.append(card.el);card.el.classList.remove('native-reading');
+    if(!readingCard)return;const card=readingCard;card.morph?.leaveReading();card.css.element.append(card.el);card.el.classList.remove('native-reading');
     for(const key of ['position','left','top','transform','transformOrigin'])card.el.style[key]='';
     card.el.style.width=card.readerDesign.width;card.el.style.height=card.readerDesign.height;card.el.style.removeProperty('--reader-scale');readingCard=null;document.body.classList.remove('native-reader-open');
   }
@@ -74,7 +74,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     const topEdge=Math.max(80,document.querySelector('#masthead').getBoundingClientRect().bottom+12,document.querySelector('#close-focus').getBoundingClientRect().bottom+12),bottomEdge=Math.min(innerHeight-12,document.querySelector('#scroll-footer').getBoundingClientRect().top-12),height=Math.min(rect.height,Math.max(100,bottomEdge-topEdge)),top=Math.max(topEdge,Math.min(rect.y,bottomEdge-height));
     Object.assign(card.el.style,{position:'absolute',left:snap(rect.x)+'px',top:snap(top)+'px',width:snap(rect.width)+'px',height:snap(height)+'px',transform:'none',pointerEvents:'auto'});
     card.el.style.setProperty('--reader-scale',scale);
-    const detail=card.el.querySelector('.card-detail');card.el.classList.toggle('needs-scroll-hint',!cardHints.scrolled&&detail.scrollHeight>detail.clientHeight+15);
+    const detail=card.el.querySelector('.card-detail');card.el.classList.toggle('needs-scroll-hint',!cardHints.scrolled&&detail.scrollHeight>detail.clientHeight+15);card.morph?.commitReading();
   }
   const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function open(card){
@@ -311,7 +311,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
       for(const card of cards){
         if(card===readingCard)continue;
         if(card.isResource&&card!==focus)continue;
-        const layoutMix=card===focus&&innerWidth<700?fm:0,domW=T.MathUtils.lerp(640,340,layoutMix),domH=T.MathUtils.lerp(420,640,layoutMix);
+        const narrowFocus=card===focus&&innerWidth<700,domW=narrowFocus?340:640,domH=narrowFocus?T.MathUtils.lerp(420*340/640,640,fm):420;
         card.el.style.width=domW+'px';card.el.style.height=domH+'px';card.css.element.style.width=domW+'px';card.css.element.style.height=domH+'px';card.css.element.style.pointerEvents=focus&&card!==focus?'none':'auto';card.css.scale.setScalar(card.width/domW);
         const backing=card.group.children.find(c=>c.isMesh);if(backing)backing.scale.y=(domH/domW)/(420/640);if(card.frame)card.frame.scale.y=(domH/domW)/(420/640);
         if(card===focus){

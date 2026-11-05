@@ -42,6 +42,7 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
   renderer.domElement.id='r03-stage';renderer.domElement.setAttribute('aria-hidden','true');
   Object.assign(renderer.domElement.style,{position:'fixed',inset:'0',width:'100%',height:'100%',zIndex:'2',pointerEvents:'none',display:'none'});
   document.body.append(renderer.domElement);
+  const departureCanvas=document.createElement('canvas');departureCanvas.id='stage-departure-backdrop';Object.assign(departureCanvas.style,{position:'fixed',inset:'0',width:'100%',height:'100%',zIndex:'2',pointerEvents:'none',display:'none'});document.body.append(departureCanvas);let backdropReady=false,liveDraws=0;
   let lastState=null,active=false,width=0,height=0,dpr=0,shadowReady=false;
   function warmShadows(){
     if(shadowReady||!renderer.shadowMap.enabled)return;
@@ -89,12 +90,19 @@ export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null
     return lastState;
   }
   return {stage,rig,dot,director,renderer,media,document:doc,normalBase:base,activate,update,resize,
-    render(opacity=1){renderer.domElement.style.display=opacity>0?'block':'none';renderer.domElement.style.opacity=String(opacity);if(opacity>0){warmShadows();stage.render(renderer);}},
-    hide(){renderer.domElement.style.display='none';media.pause();active=false;},
+    render(opacity=1){departureCanvas.style.display='none';renderer.domElement.style.display=opacity>0?'block':'none';renderer.domElement.style.opacity=String(opacity);if(opacity>0){warmShadows();stage.render(renderer);liveDraws++;}},
+    hide(){renderer.domElement.style.display='none';departureCanvas.style.display='none';media.pause();active=false;},
+    async prepareDepartureBackdrop(){
+      const visible=dot.root.visible;dot.root.visible=false;
+      try{warmShadows();stage.render(renderer);departureCanvas.width=renderer.domElement.width;departureCanvas.height=renderer.domElement.height;departureCanvas.getContext('2d',{alpha:false}).drawImage(renderer.domElement,0,0);backdropReady=true;}finally{dot.root.visible=visible;}
+    },
+    renderDeparture(opacity){
+      renderer.domElement.style.display='none';departureCanvas.style.display=backdropReady&&opacity>0?'block':'none';departureCanvas.style.opacity=String(opacity);
+    },
     freeze(){media.pause();return dot.captureHandoffFrame();},
     advanceBackground(elapsed){if(lastState){concert.update(lastState.time+elapsed,{stageSettings:doc.stage,project:doc.project,actorWorld:new T.Vector3(...lastState.actorWorld)});concert.game.visible=false;}},
     async seek(time){await media.seekExact(time);},
     setQuality(mode){doc.camera.dofEnabled=mode!=='low'&&!constrainedDevice();renderer.shadowMap.enabled=mode!=='low';},
-    snapshot:()=>({source:'D02_R03_统一单文件_r01',active,characterCount:1,islandLoaded:false,...lastState})
+    snapshot:()=>({source:'D02_R03_统一单文件_r01',active,characterCount:1,islandLoaded:false,departureBackdrop:{ready:backdropReady,width:departureCanvas.width,height:departureCanvas.height,liveDraws},...lastState})
   };
 }

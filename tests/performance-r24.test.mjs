@@ -10,7 +10,7 @@ class Media extends EventTarget{
 }
 test('low-memory, limited cores and slow/data-saver links choose compatible film',()=>{
   for(const x of [{memory:2,cores:8},{memory:8,cores:4},{connection:{saveData:true}},{connection:{effectiveType:'3g'}}])assert.equal(preferCompatible(x),true);
-  assert.equal(preferCompatible({memory:8,cores:8,connection:{effectiveType:'4g'}}),false);
+  assert.equal(preferCompatible({memory:8,cores:8,connection:{effectiveType:'4g'}}),false);assert.equal(preferCompatible({mobile:true,memory:8,cores:8}),true);
   assert.equal(constrainedDevice({memory:4,cores:8}),true);assert.equal(constrainedDevice({memory:8,cores:8}),false);
 });
 test('sustained slow frames lower raster cost promptly, while isolated stalls do not',()=>{

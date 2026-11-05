@@ -27,3 +27,14 @@ body[data-phase="stage"] #dot-bubble{max-width:230px;background:#111d2beb;color:
 @media(max-width:700px){#reading-layer .native-reading .card-detail img{max-height:calc(230px * var(--reader-scale,1))}}
 
 body.native-reader-open #dot-foreground,body.native-reader-open #chapters{visibility:hidden!important}
+
+/* r25: the moving card contains one stable title/image layer. Body copy is
+   revealed once, after the native reader is mounted and painted. */
+.process-card.focused{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:#101c2b!important}
+.process-card.focused .card-detail{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:#101c2b!important}
+.process-card.reader-revealing .card-detail{transition:opacity .18s ease}
+
+.process-card.focused .card-detail{padding:22px}
+.process-card.focused .card-detail h2{font-size:24px}
+
+body.cinema #portal{transform-style:flat;contain:layout paint}
