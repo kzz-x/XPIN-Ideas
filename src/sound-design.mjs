@@ -74,7 +74,7 @@ export function createSound({volume=1}={}){
   if(ctx.state!=='running'){if(now-unlockAt<350&&queued.length<4)queued.push({type,options,at:now});return false;}
   const interval=options.cooldown??({hover:70,typing:45,code:55,particle:105,settle:100,scrub:90,contact:70,dot:180}[type]??35),key=options.key||type;
   if(now-(last.get(key)??-Infinity)<interval||(active>=12&&type!=='win'))return false;last.set(key,now);active++;playedAt=now;record(type,{intensity:options.intensity??1});if(options.duck!==false){const cue=CUES[type]||CUES.click;duckMusic(.38,true,cue.d+((cue.notes?.length||1)-1)*.035+.03);}
-  scheduleCue(ctx,openingCues.has(type)?openingBus:fxBus,type,{...options,onEnded:()=>active=Math.max(0,active-1)});return true;
+  scheduleCue(ctx,(options.opening??openingCues.has(type))?openingBus:fxBus,type,{...options,onEnded:()=>active=Math.max(0,active-1)});return true;
  }
  function continuous(kind){
   const ctx=ensureContext(),source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();source.buffer=noiseBuffer(ctx);source.loop=true;filter.type='bandpass';filter.Q.value=.7;gain.gain.value=.00001;source.connect(filter).connect(gain).connect(openingBus);source.start();
@@ -98,7 +98,8 @@ export function createSound({volume=1}={}){
  function codeTick(age){const key=Math.floor(age*11);if(key!==lastCode){lastCode=key;play('code',{pitch:.9+(key%5)*.06});}}
  function typing(count){if(count!==lastTyping){if(count>lastTyping&&count>0)play('typing',{pitch:.92+(count%4)*.06});lastTyping=count;}}
  function dotAction(action){if(!action||action.id==='idle')return;const id=action.id||'';if(action.edge==='end'){if(/response|dash|dodge|celebrate|happy/.test(id))play('land',{intensity:action.reason==='ambient'?.35:.55});return;}const type=/hat|shy|bow/.test(id)?'hat':/orbit|dash|dodge|turn|sway/.test(id)?'turn':'dot';play(type,{intensity:action.reason==='ambient'?.45:.85,pitch:.9+(id.length%5)*.06});}
- function stageMotion(time,playing){if(!playing){lastStage=time;return;}if(lastStage===null||Math.abs(time-lastStage)>.3){lastStage=time;return;}for(const[t,type]of[[.8,'turn'],[2.1,'hat'],[14.85,'hat'],[15.3,'particle'],[18.2,'turn']])if(lastStage<t&&time>=t)play(type,{intensity:.45});lastStage=time;}
+ // Keep the approved stage particle accent at its r15 level, independent of the softer opening.
+ function stageMotion(time,playing){if(!playing){lastStage=time;return;}if(lastStage===null||Math.abs(time-lastStage)>.3){lastStage=time;return;}for(const[t,type]of[[.8,'turn'],[2.1,'hat'],[14.85,'hat'],[15.3,'particle'],[18.2,'turn']])if(lastStage<t&&time>=t)play(type,{intensity:.45*(type==='particle'?dbToGain(-3):1),opening:false});lastStage=time;}
  return{ensureContext,unlock,play,updateHold,particleMotion,stopParticles,codeTick,typing,dotAction,stageMotion,levelWin,setVolume,
   get context(){return context;},get musicBus(){ensureContext();return musicBus;},get playedAt(){return playedAt;},
   connectMediaElement(element){ensureContext();return master.connectMediaElement(element);},
@@ -110,9 +111,9 @@ export function createSound({volume=1}={}){
 export function bindUiSound(sound,{root=document}={}){
  const abort=new AbortController(),options={signal:abort.signal},selector='button,a[href],summary,select,input[type="range"],input[type="number"],.file-input,.process-card,.shelf-tag';let selection='';
  function element(target){return target?.closest?.(selector);}
- root.addEventListener('pointerover',e=>{const el=element(e.target);if(!el||el.disabled||el.contains(e.relatedTarget)||e.pointerType==='touch')return;sound.play('hover',{key:'ui-hover',intensity:.8});},options);
- root.addEventListener('focusin',e=>{if(element(e.target))sound.play('hover',{key:'ui-hover',intensity:.7});},options);
- root.addEventListener('click',e=>{const el=element(e.target);if(!el||el.disabled||performance.now()-sound.playedAt<25)return;const id=el.id||'',type=/close|back-start/.test(id)?'close':/reset/.test(id)?'reset':/sound|bgm|quality/.test(id)?'toggle':/help|bubble/.test(id)?'help':/file/.test(id)?'attach':'click';sound.play(type);},options);
+ root.addEventListener('pointerover',e=>{const el=element(e.target);if(!el||el.disabled||el.contains(e.relatedTarget)||e.pointerType==='touch')return;sound.play('hover',{key:'ui-hover',intensity:.8,opening:el.id==='hold'});},options);
+ root.addEventListener('focusin',e=>{const el=element(e.target);if(el)sound.play('hover',{key:'ui-hover',intensity:.7,opening:el.id==='hold'});},options);
+ root.addEventListener('click',e=>{const el=element(e.target);if(!el||el.disabled||performance.now()-sound.playedAt<25)return;const id=el.id||'',type=/close|back-start/.test(id)?'close':/reset/.test(id)?'reset':/sound|bgm|quality/.test(id)?'toggle':/help|bubble/.test(id)?'help':/file/.test(id)?'attach':'click';sound.play(type,{opening:id==='hold'});},options);
  root.addEventListener('input',e=>{if(e.target.matches?.('input[type="range"]'))sound.play('scrub',{duck:e.target.dataset.audioChannel!=='bgm',intensity:e.target.dataset.audioChannel==='bgm'?.3:1});},options);
  root.addEventListener('change',e=>{if(e.target.matches?.('select,input[type="number"],input[type="file"]'))sound.play(e.target.type==='file'?'attach':'select');},options);
  root.addEventListener('selectionchange',()=>{const s=root.getSelection?.()||globalThis.getSelection?.(),value=s?.isCollapsed?'':s?.toString();if(value&&value!==selection)sound.play('select',{cooldown:85});selection=value||'';},options);

@@ -1,6 +1,6 @@
 // Calibrated after the user's three channel faders, including native film audio.
 export const MASTER_BOOST_DB=8;
-export const OPENING_TRIM_DB=-3;
+export const OPENING_TRIM_DB=-5;
 export const MASTER_CEILING_DB=-2;
 export const dbToGain=db=>Math.pow(10,db/20);
 
