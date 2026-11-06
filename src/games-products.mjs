@@ -1,6 +1,8 @@
 import * as T from 'three';
 import {yieldTask} from './preparation.mjs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {MeshoptDecoder} from '../assets/vendor/meshopt_decoder.mjs';
+import {assetBytes} from './asset-prefetch.mjs';
 import {PRODUCT_IDS} from './games-rules.mjs';
 import {productFinish,makeProductMaterial} from './product-finishes.mjs';
 
@@ -48,7 +50,7 @@ export function createProductCarousel({root,camera,box,label,line,materials,onRe
   async function loadProduct(k,mount) {
     const id=PRODUCT_IDS[k];
     try {
-      const gltf=await new GLTFLoader().loadAsync(new URL('../assets/products/'+id+'.glb',import.meta.url).href);
+      const url=new URL('../assets/products/'+id+'.glb',import.meta.url);const data=await assetBytes(url);const gltf=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(data,new URL('.',url).href);
       if(disposed)return;
       const source=gltf.scene;source.updateWorldMatrix(true,true);
       const bounds=new T.Box3().setFromObject(source),center=bounds.getCenter(V()),size=bounds.getSize(V());

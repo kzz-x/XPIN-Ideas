@@ -1,4 +1,0 @@
-import {T,POSES as CORE_POSES,ACTIONS,loadSharedDot,ACCEPTED_ID} from '../index.mjs';
-export {T};export const FUSION_ID=ACCEPTED_ID+' / viewer+actions+particle r01';
-export const POSES=[...CORE_POSES,...ACTIONS.filter(a=>!CORE_POSES.some(p=>p.id===a.id)).map(a=>({id:a.id,label:'动作库 · '+a.name,duration:a.duration}))];
-export async function loadFusion(data,contract){const rig=await loadSharedDot({data,contract});let fx=null;return{root:rig.root,rig,sample(id,time,{camera,scene,eyeOverride='auto'}={}){rig.setCamera(camera);if(!fx){fx=rig.createRetirement(scene,{matrixAt(t){rig.setState('trumpet');rig.setInstrumentVisible(true);rig.applyFrame(rig.captureSequence(t),{camera,scene,bindEyes:false});return rig.native.horn.matrixWorld.clone();}});}return rig.samplePose(id,time,{camera,scene,eyeOverride});},snapshot:()=>rig.snapshot(),dispose:()=>rig.dispose()};}

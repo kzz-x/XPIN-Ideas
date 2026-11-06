@@ -1,6 +1,6 @@
 import {BGM_STORAGE,nextMusicalExit} from './bgm.mjs';
 
-// Lossless 2-second buffers, scheduled ahead on the audio clock. Chunk loading,
+// Decoded music buffers scheduled ahead on the audio clock. Asset loading,
 // page animation and source.onended never decide the time of a musical seam.
 export function createStreamingBgm({getContext,getOutput,onChange=()=>{},onError=()=>{},fetcher=globalThis.fetch,manifestURL='./assets/media/bgm/stream/manifest.json'}={}){
  let settings={enabled:true,volume:.15};try{const prior=JSON.parse(localStorage.getItem('linggan-bgm-r09')||'{}');settings.volume=prior.volume??.15;settings={...settings,...JSON.parse(localStorage.getItem(BGM_STORAGE)||'{}')};}catch{}
@@ -15,10 +15,11 @@ export function createStreamingBgm({getContext,getOutput,onChange=()=>{},onError
  }
  function elapsedFrame(){if(stalledFrame!==null)return stalledFrame;return epoch===null?offsetFrame:offsetFrame+Math.max(0,Math.round((context.currentTime-epoch)*rate));}
  function elapsed(){return elapsedFrame()/rate;}
+ function firstReady(){return !!meta&&meta.tracks.intro.chunks.slice(0,2).every((_,i)=>cache.has('intro:'+i));}
  function loadManifest(){return manifestJob??=(async()=>{const r=await fetcher(manifestURL);if(!r.ok)throw Error('BGM manifest: '+r.status);meta=await r.json();return meta;})();}
  async function chunk(track,index){
   const key=track+':'+index;if(cache.has(key))return cache.get(key);if(pending.has(key))return pending.get(key);
-  const item=meta.tracks[track].chunks[index],job=(async()=>{let failure;for(let attempt=0;attempt<3;attempt++)try{const r=await fetcher(new URL(item.src,new URL(manifestURL,location.href)),{priority:'low'});if(!r.ok)throw Error('BGM chunk: '+r.status);const buffer=await ensure().decodeAudioData(await r.arrayBuffer());if(Math.abs(buffer.duration-item.frames/rate)>1/rate*2)throw Error('BGM sample range mismatch');cache.set(key,buffer);record('chunk-ready',{track,index});return buffer;}catch(e){failure=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)));}throw failure;})();
+  const item=meta.tracks[track].chunks[index],job=(async()=>{let failure;for(let attempt=0;attempt<3;attempt++)try{const r=await fetcher(new URL(item.src,new URL(manifestURL,location.href)),{priority:'low'});if(!r.ok)throw Error('BGM chunk: '+r.status);let buffer=await ensure().decodeAudioData(await r.arrayBuffer());if(buffer.getChannelData&&Number.isFinite(buffer.sampleRate)){const count=Math.round(item.frames/rate*buffer.sampleRate);if(buffer.length!==count){const trimmed=context.createBuffer(buffer.numberOfChannels,count,buffer.sampleRate);for(let c=0;c<buffer.numberOfChannels;c++)trimmed.copyToChannel(buffer.getChannelData(c).subarray(0,count),c);buffer=trimmed;}}if(Math.abs(buffer.duration-item.frames/rate)>1/rate*2)throw Error('BGM sample range mismatch');cache.set(key,buffer);record('chunk-ready',{track,index});return buffer;}catch(e){failure=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)));}throw failure;})();
   pending.set(key,job);job.then(()=>{pending.delete(key);pump();},e=>{pending.delete(key);error=e.message;emit();onError('背景音乐暂未载入，请稍后重试。');});return job;
  }
  function pieceAt(frame){
@@ -32,7 +33,7 @@ export function createStreamingBgm({getContext,getOutput,onChange=()=>{},onError
   return{track,index,localFrame:local-item.startFrame,frames,startFrame:frame,key:track+':'+index};
  }
  async function prepare(){
-  ensure();if(!prepared)prepared=(async()=>{await loadManifest();await Promise.all([chunk('intro',0),chunk('intro',1)]);error=null;start();emit();})().catch(e=>{error=e.message;onError('背景音乐暂未载入，可在设置中重新开启。');emit();});return prepared;
+  ensure();if(!prepared)prepared=(async()=>{await loadManifest();await Promise.all(meta.tracks.intro.chunks.slice(0,2).map((_,i)=>chunk('intro',i)));error=null;start();emit();})().catch(e=>{error=e.message;onError('背景音乐暂未载入，可在设置中重新开启。');emit();});return prepared;
  }
  function stopSources(fade=.04){
   if(!context)return;const at=context.currentTime;
@@ -40,7 +41,7 @@ export function createStreamingBgm({getContext,getOutput,onChange=()=>{},onError
   sources.clear();
  }
  function start(){
-  if(!active||epoch!==null||finished||!meta||!cache.has('intro:0')||!cache.has('intro:1')||context.state!=='running')return;
+  if(!active||epoch!==null||finished||!meta||!firstReady()||context.state!=='running')return;
   epoch=context.currentTime+.045;cursor=offsetFrame;starts++;record('loop-start',{offset:offsetFrame/rate,section});if(complete&&section==='scroll')queueEnding();pump();emit();
  }
  function pump(){
@@ -80,7 +81,7 @@ export function createStreamingBgm({getContext,getOutput,onChange=()=>{},onError
   active=true;unlock();start();emit();
  }
  function volume(){if(master){const at=context.currentTime;master.gain.cancelAndHoldAtTime(at);master.gain.linearRampToValueAtTime(settings.enabled&&!masterMuted?settings.volume:0,at+.06);}try{localStorage.setItem(BGM_STORAGE,JSON.stringify(settings));}catch{}emit();}
- function snapshot(){const f=elapsedFrame(),outro=exitFrame!==null&&f>=exitFrame;return{ready:cache.has('intro:0')&&cache.has('intro:1'),contextState:context?.state||'locked',needsGesture:active&&context?.state!=='running',sampleRate:context?.sampleRate||rate,active,section,enabled:settings.enabled,volume:settings.volume,masterMuted,outputGain:active?(master?.gain.value||0):0,complete,finished,mode:finished?'done':outro?'outro':'intro-loop',elapsed:f/rate,exitAt:exitFrame===null||epoch===null?null:epoch+(exitFrame-offsetFrame)/rate,starts,error,loopStart:meta?.tracks.intro.duration||0,loopEnd:meta?(meta.tracks.intro.frames+meta.tracks.loop.frames)/rate:0,loopFrames:meta?.tracks.loop.frames||0,streaming:true,lossless:meta?.lossless||false,bufferedChunks:cache.size,scheduledSources:sources.size,schedule:[...schedule],events:events.slice(-45)};}
+ function snapshot(){const f=elapsedFrame(),outro=exitFrame!==null&&f>=exitFrame;return{ready:firstReady(),contextState:context?.state||'locked',needsGesture:active&&context?.state!=='running',sampleRate:context?.sampleRate||rate,active,section,enabled:settings.enabled,volume:settings.volume,masterMuted,outputGain:active?(master?.gain.value||0):0,complete,finished,mode:finished?'done':outro?'outro':'intro-loop',elapsed:f/rate,exitAt:exitFrame===null||epoch===null?null:epoch+(exitFrame-offsetFrame)/rate,starts,error,loopStart:meta?.tracks.intro.duration||0,loopEnd:meta?(meta.tracks.intro.frames+meta.tracks.loop.frames)/rate:0,loopFrames:meta?.tracks.loop.frames||0,streaming:true,lossless:meta?.lossless||false,bufferedChunks:cache.size,scheduledSources:sources.size,schedule:[...schedule],events:events.slice(-45)};}
  const timer=setInterval(pump,120);
  return{prepare,unlock,enter,leave,snapshot,setComplete(value){complete=!!value;if(complete)queueEnding();else if(exitFrame!==null){leave();offsetFrame=meta?.tracks.intro.frames||0;cursor=offsetFrame;exitFrame=null;finished=false;active=true;start();}emit();},
   setEnabled(value){settings.enabled=!!value;volume();if(value)unlock();},setVolume(value){settings.volume=Math.max(0,Math.min(1,Number(value)||0));volume();},setMasterMuted(value){masterMuted=!!value;volume();},

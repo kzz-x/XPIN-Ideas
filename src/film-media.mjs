@@ -54,6 +54,12 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
       mode='preparing';error=null;record('prepare');manifest=JSON.parse(new TextDecoder().decode(await fetchBytes(manifestURL)));onManifest(manifest);
       let capability=null;try{if(globalThis.navigator?.mediaCapabilities?.decodingInfo)capability=await Promise.race([navigator.mediaCapabilities.decodingInfo({type:'media-source',video:{contentType:'video/mp4; codecs="avc1.64002a"',width:manifest.width,height:manifest.height,bitrate:12000000,framerate:manifest.fps}}),new Promise(resolve=>setTimeout(()=>resolve(null),1200))]);}catch{}
       if(capability)record('decode-capability',{supported:capability.supported,smooth:capability.smooth,powerEfficient:capability.powerEfficient});
+      if(manifest.file){
+        video.preload='auto';video.playsInline=true;
+        if(preferCompatible()||capability?.supported===false||capability?.smooth===false){await compatible();return;}
+        mode='1080p-file';bytes=0;totalBytes=manifest.fileBytes;const data=await fetchBytes(manifest.file);objectURL=URL.createObjectURL(new Blob([data],{type:'video/mp4'}));video.src=objectURL;video.load();
+        await waitFor(()=>{if(video.error)throw Error('浏览器无法解码影片');return video.readyState>=2;},{label:'影片首帧',signal:abort.signal});complete=true;record('complete');return;
+      }
       bytes=0;totalBytes=manifest.segments.reduce((n,s)=>n+(s.bytes||0),0);video.preload='auto';video.playsInline=true;
       if(preferCompatible()||capability?.supported===false||capability?.smooth===false||!globalThis.MediaSource?.isTypeSupported(manifest.mime)){await compatible();return;}
       mode='1080p-segments';source=new MediaSource();objectURL=URL.createObjectURL(source);video.src=objectURL;video.load();

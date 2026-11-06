@@ -1,8 +1,8 @@
 {
-  "version": 1,
+  "version": 2,
   "sampleRate": 48000,
   "channels": 2,
-  "lossless": true,
+  "lossless": false,
   "chunkFrames": 96000,
   "gates": [
     {
@@ -69,60 +69,13 @@
       "pcmSHA256": "aa7104b760411e6d59a73dc4f5992c83bbda14f56c54bde7126180a258fff78f",
       "chunks": [
         {
-          "src": "intro-00.flac",
+          "src": "intro.m4a",
           "startFrame": 0,
-          "frames": 96000,
-          "bytes": 402123
-        },
-        {
-          "src": "intro-01.flac",
-          "startFrame": 96000,
-          "frames": 96000,
-          "bytes": 370912
-        },
-        {
-          "src": "intro-02.flac",
-          "startFrame": 192000,
-          "frames": 96000,
-          "bytes": 340989
-        },
-        {
-          "src": "intro-03.flac",
-          "startFrame": 288000,
-          "frames": 96000,
-          "bytes": 379295
-        },
-        {
-          "src": "intro-04.flac",
-          "startFrame": 384000,
-          "frames": 96000,
-          "bytes": 378461
-        },
-        {
-          "src": "intro-05.flac",
-          "startFrame": 480000,
-          "frames": 96000,
-          "bytes": 394034
-        },
-        {
-          "src": "intro-06.flac",
-          "startFrame": 576000,
-          "frames": 96000,
-          "bytes": 385420
-        },
-        {
-          "src": "intro-07.flac",
-          "startFrame": 672000,
-          "frames": 96000,
-          "bytes": 377791
-        },
-        {
-          "src": "intro-08.flac",
-          "startFrame": 768000,
-          "frames": 10108,
-          "bytes": 47951
+          "frames": 778108,
+          "bytes": 333667
         }
-      ]
+      ],
+      "src": "intro.m4a"
     },
     "loop": {
       "frames": 2618947,
@@ -130,174 +83,13 @@
       "pcmSHA256": "c4ab44138710fecc20df58c2d5a89930943723bd79dba9ce6b0ae7636b96ddc9",
       "chunks": [
         {
-          "src": "loop-00.flac",
+          "src": "loop.m4a",
           "startFrame": 0,
-          "frames": 96000,
-          "bytes": 374603
-        },
-        {
-          "src": "loop-01.flac",
-          "startFrame": 96000,
-          "frames": 96000,
-          "bytes": 386002
-        },
-        {
-          "src": "loop-02.flac",
-          "startFrame": 192000,
-          "frames": 96000,
-          "bytes": 379228
-        },
-        {
-          "src": "loop-03.flac",
-          "startFrame": 288000,
-          "frames": 96000,
-          "bytes": 394858
-        },
-        {
-          "src": "loop-04.flac",
-          "startFrame": 384000,
-          "frames": 96000,
-          "bytes": 396490
-        },
-        {
-          "src": "loop-05.flac",
-          "startFrame": 480000,
-          "frames": 96000,
-          "bytes": 405944
-        },
-        {
-          "src": "loop-06.flac",
-          "startFrame": 576000,
-          "frames": 96000,
-          "bytes": 405013
-        },
-        {
-          "src": "loop-07.flac",
-          "startFrame": 672000,
-          "frames": 96000,
-          "bytes": 405153
-        },
-        {
-          "src": "loop-08.flac",
-          "startFrame": 768000,
-          "frames": 96000,
-          "bytes": 391941
-        },
-        {
-          "src": "loop-09.flac",
-          "startFrame": 864000,
-          "frames": 96000,
-          "bytes": 408407
-        },
-        {
-          "src": "loop-10.flac",
-          "startFrame": 960000,
-          "frames": 96000,
-          "bytes": 403547
-        },
-        {
-          "src": "loop-11.flac",
-          "startFrame": 1056000,
-          "frames": 96000,
-          "bytes": 403134
-        },
-        {
-          "src": "loop-12.flac",
-          "startFrame": 1152000,
-          "frames": 96000,
-          "bytes": 410190
-        },
-        {
-          "src": "loop-13.flac",
-          "startFrame": 1248000,
-          "frames": 96000,
-          "bytes": 401454
-        },
-        {
-          "src": "loop-14.flac",
-          "startFrame": 1344000,
-          "frames": 96000,
-          "bytes": 399575
-        },
-        {
-          "src": "loop-15.flac",
-          "startFrame": 1440000,
-          "frames": 96000,
-          "bytes": 406644
-        },
-        {
-          "src": "loop-16.flac",
-          "startFrame": 1536000,
-          "frames": 96000,
-          "bytes": 404652
-        },
-        {
-          "src": "loop-17.flac",
-          "startFrame": 1632000,
-          "frames": 96000,
-          "bytes": 403561
-        },
-        {
-          "src": "loop-18.flac",
-          "startFrame": 1728000,
-          "frames": 96000,
-          "bytes": 411796
-        },
-        {
-          "src": "loop-19.flac",
-          "startFrame": 1824000,
-          "frames": 96000,
-          "bytes": 412803
-        },
-        {
-          "src": "loop-20.flac",
-          "startFrame": 1920000,
-          "frames": 96000,
-          "bytes": 404440
-        },
-        {
-          "src": "loop-21.flac",
-          "startFrame": 2016000,
-          "frames": 96000,
-          "bytes": 410458
-        },
-        {
-          "src": "loop-22.flac",
-          "startFrame": 2112000,
-          "frames": 96000,
-          "bytes": 393923
-        },
-        {
-          "src": "loop-23.flac",
-          "startFrame": 2208000,
-          "frames": 96000,
-          "bytes": 385255
-        },
-        {
-          "src": "loop-24.flac",
-          "startFrame": 2304000,
-          "frames": 96000,
-          "bytes": 380399
-        },
-        {
-          "src": "loop-25.flac",
-          "startFrame": 2400000,
-          "frames": 96000,
-          "bytes": 362132
-        },
-        {
-          "src": "loop-26.flac",
-          "startFrame": 2496000,
-          "frames": 96000,
-          "bytes": 404207
-        },
-        {
-          "src": "loop-27.flac",
-          "startFrame": 2592000,
-          "frames": 26947,
-          "bytes": 122451
+          "frames": 2618947,
+          "bytes": 1110873
         }
-      ]
+      ],
+      "src": "loop.m4a"
     },
     "outro": {
       "frames": 898954,
@@ -305,66 +97,15 @@
       "pcmSHA256": "92fff1f89635ba88c1440f30aa83031ad56f9edecdd469fb8995055ff1754251",
       "chunks": [
         {
-          "src": "outro-00.flac",
+          "src": "outro.m4a",
           "startFrame": 0,
-          "frames": 96000,
-          "bytes": 400662
-        },
-        {
-          "src": "outro-01.flac",
-          "startFrame": 96000,
-          "frames": 96000,
-          "bytes": 407895
-        },
-        {
-          "src": "outro-02.flac",
-          "startFrame": 192000,
-          "frames": 96000,
-          "bytes": 410968
-        },
-        {
-          "src": "outro-03.flac",
-          "startFrame": 288000,
-          "frames": 96000,
-          "bytes": 413508
-        },
-        {
-          "src": "outro-04.flac",
-          "startFrame": 384000,
-          "frames": 96000,
-          "bytes": 285409
-        },
-        {
-          "src": "outro-05.flac",
-          "startFrame": 480000,
-          "frames": 96000,
-          "bytes": 315402
-        },
-        {
-          "src": "outro-06.flac",
-          "startFrame": 576000,
-          "frames": 96000,
-          "bytes": 373430
-        },
-        {
-          "src": "outro-07.flac",
-          "startFrame": 672000,
-          "frames": 96000,
-          "bytes": 366558
-        },
-        {
-          "src": "outro-08.flac",
-          "startFrame": 768000,
-          "frames": 96000,
-          "bytes": 367885
-        },
-        {
-          "src": "outro-09.flac",
-          "startFrame": 864000,
-          "frames": 34954,
-          "bytes": 115919
+          "frames": 898954,
+          "bytes": 381649
         }
-      ]
+      ],
+      "src": "outro.m4a"
     }
-  }
+  },
+  "codec": "AAC 160 kbps",
+  "delivery": "whole-track sample-accurate scheduling"
 }

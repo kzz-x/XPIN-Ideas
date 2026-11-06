@@ -1,4 +1,5 @@
 import {yieldTask,nextPaint,delay,waitFor} from './preparation.mjs';
+import {prefetchProducts,assetJSON} from './asset-prefetch.mjs';
 import {warmScene,warmEnvironment} from './scene-warm.mjs';
 import {createFilmMedia} from './film-media.mjs';
 import {createStreamingBgm} from './bgm-stream.mjs';
@@ -28,7 +29,7 @@ const ui={phase:'loading',phaseAt:0,scroll:0,target:0,scrollVelocity:0,held:fals
 let opening,dot,dotForeground,games,space,renderer,scene,camera,css,key,keyTarget,quality,previous=performance.now()/1000,time=0,startedAt=previous,toastTimer;
 const runtime={ready:false,actorReady:false,stageReady:false,scrollReady:false,scrollProgress:0,scrollLabel:'正在准备空间',openingReadyAt:null,stageReadyAt:null,worldReadyAt:null,requested:false,longTasks:[]};
 let actorJob,stageJob,screenReady,scrollJob,worldJob,fontsReady,rigModule,rigAssets,rigJob,stageRenderer,filmStarting=false;
-let cueEdited=false;const media=createFilmMedia(film,{manifestURL:new URL(CONFIG.film.manifest,location.href).href,onManifest:m=>{if(!cueEdited&&Number.isFinite(m.stageAt))applyCue(m.stageAt);$('film-status').textContent=m.label+' · 同源大屏 / 分段预载';}});
+let cueEdited=false;const media=createFilmMedia(film,{manifestURL:new URL(CONFIG.film.manifest,location.href).href,onManifest:m=>{if(!cueEdited&&Number.isFinite(m.stageAt))applyCue(m.stageAt);$('film-status').textContent=m.label+' · 同源大屏 / 整片预载';}});
 const waitLabel=document.createElement('div');waitLabel.id='media-wait';waitLabel.setAttribute('role','status');waitLabel.textContent='[ · · · ] 正在准备下一幕';document.body.append(waitLabel);
 function buffering(on){waitLabel.classList.toggle('visible',!!on);}
 if(globalThis.PerformanceObserver)try{new PerformanceObserver(list=>runtime.longTasks.push(...list.getEntries().map(e=>({at:e.startTime,ms:e.duration,phase:ui.phase})))).observe({type:'longtask',buffered:true});}catch{}
@@ -50,7 +51,7 @@ const bgm=createStreamingBgm({getContext:()=>sound.ensureContext(),getOutput:()=
   for(const id of ['bgm-toggle','bgm-enabled']){$(id).setAttribute('aria-pressed',String(s.enabled));$(id).setAttribute('aria-label',s.enabled?'关闭背景音乐':'开启背景音乐');}
   $('bgm-toggle').textContent=s.enabled?'BGM / 开':'BGM / 关';$('bgm-enabled').textContent=s.enabled?'BGM / 开':'BGM / 关';
   $('bgm-volume').value=Math.round(s.volume*100);$('bgm-value').value=Math.round(s.volume*100)+'%';
-  $('bgm-status').textContent=s.error?'音乐暂未载入':!s.enabled?'背景音乐已关闭 · 影片与互动音效不受影响':s.finished?'本次创作已通关 · 音乐已收尾':s.complete?'已通关 · 音乐将在乐句出口自然收尾':s.active&&!s.ready?'背景音乐正在载入':s.needsGesture?'点击任意位置启用音乐':s.active?(s.section==='opening'?'开场音乐 · 无损连续播放':'卷轴音乐 · 从头播放，通关前循环'):'影片与舞台期间停止背景音乐';
+  $('bgm-status').textContent=s.error?'音乐暂未载入':!s.enabled?'背景音乐已关闭 · 影片与互动音效不受影响':s.finished?'本次创作已通关 · 音乐已收尾':s.complete?'已通关 · 音乐将在乐句出口自然收尾':s.active&&!s.ready?'背景音乐正在载入':s.needsGesture?'点击任意位置启用音乐':s.active?(s.section==='opening'?'开场音乐 · 高品质连续播放':'卷轴音乐 · 从头播放，通关前循环'):'影片与舞台期间停止背景音乐';
 }});
 const bubbleEmphasis=createBubbleEmphasis($('dot-bubble'),{onCue:()=>sound.play('select',{intensity:.32,cooldown:350})});
 const scrollPointer={x:0,y:0,dx:0,dy:0};
@@ -115,6 +116,15 @@ async function init(){
   previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');runtime.openingReadyAt=performance.now();requestAnimationFrame(frame);
   await nextPaint();document.body.classList.add('scene-visible');$('loading').classList.add('leave');setTimeout(()=>$('loading').style.display='none',700);
   prepareRigAssets().catch(()=>{});
+  runtime.backgroundStartedAt=performance.now();
+  // Start at the first real homepage paint. No gesture or headphone screen is
+  // needed for downloads or the muted decoder preflight.
+  media.prime().then(()=>media.preflightDecode()).then(()=>{runtime.backgroundFilmReadyAt=performance.now();transport.restoreVolumes();}).catch(error=>{runtime.backgroundError=error.message;transport.restoreVolumes();});
+  prefetchProducts().then(()=>runtime.backgroundProductsReadyAt=performance.now()).catch(()=>{});
+  assetJSON(new URL('../assets/r03-stage/document-source.json',import.meta.url)).catch(()=>{});
+  Promise.all([import('./games.mjs'),import('./scroll-space.mjs')]).catch(()=>{});
+  const pictures=[...new Set(CHAPTERS.flatMap(c=>c.cards.flatMap(c=>[c.image,...(c.images||[])])))];
+  runtime.backgroundPictures=pictures.map(src=>{const image=new Image();image.src=src;image.decode().catch(()=>{});return image;});
   if(returnVisit.eligible)setTimeout(()=>{if(ui.phase==='intro'&&!ui.held)prepareScroll().catch(()=>{});},900);
   worldReady.catch(error=>{ui.errors.push(String(error));console.error(error);toast('下一幕准备失败，请刷新后重试。');});
 }
@@ -343,7 +353,7 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
   quality.sampleFrame({dt:rawDt,time:current,phase:ui.phase});lastPhase=ui.phase;renderedFrames++;requestAnimationFrame(frame);
 }
 const hold=$('hold');hold.addEventListener('pointermove',e=>{const r=hold.getBoundingClientRect();hold.style.setProperty('--mx',(e.clientX-r.x)/r.width);hold.style.setProperty('--my',(e.clientY-r.y)/r.height);});hold.addEventListener('pointerleave',()=>{hold.style.setProperty('--mx','.5');hold.style.setProperty('--my','.5');});hold.addEventListener('pointerdown',e=>{if(ui.phase!=='intro')return;e.preventDefault();hold.setPointerCapture(e.pointerId);if(!ui.held)ui.holdStart=performance.now()/1000;ui.held=true;sound.unlock();media.prime().catch(error=>toast(error.message));});hold.addEventListener('pointerup',()=>ui.held=false);hold.addEventListener('pointercancel',()=>ui.held=false);hold.addEventListener('keydown',e=>{if([' ','Enter'].includes(e.key)&&ui.phase==='intro'){e.preventDefault();if(!ui.held)ui.holdStart=performance.now()/1000;ui.held=true;sound.unlock();media.prime().catch(error=>toast(error.message));}});hold.addEventListener('keyup',e=>{if([' ','Enter'].includes(e.key)){e.preventDefault();ui.held=false;}});window.addEventListener('blur',()=>ui.held=false);
-$('send').addEventListener('click',()=>{if(ui.phase!=='chat')return;sound.unlock();media.prime().catch(()=>{});media.ensure(0,2).then(()=>transport.unlock()).catch(()=>{});setPhase('launch');});
+$('send').addEventListener('click',()=>{if(ui.phase!=='chat')return;sound.unlock();media.prime().catch(()=>{});media.ensure(0,2).then(()=>{if(!media.preflighting)return transport.unlock();}).catch(()=>{});setPhase('launch');});
 $('sound').addEventListener('click',()=>{sound.unlock();ui.muted=activateSoundOnly?false:!ui.muted;activateSoundOnly=false;transport.setMuted(ui.muted);sound.setMuted(ui.muted);bgm.setMasterMuted(ui.muted);updateSoundButton();});
 $('play-pause').addEventListener('click',()=>{sound.unlock();transport.toggle();});$('skip-film').addEventListener('click',()=>{sound.unlock();readyAction(()=>transport.skipFilm(),$('skip-film'));});
 function scrollInput(delta){if(ui.phase!=='scroll'||returnBusy||ui.gameLock||ui.focusLock||$('settings').open)return;ui.target=clamp(ui.target+delta,0,CONFIG.scroll.max);}

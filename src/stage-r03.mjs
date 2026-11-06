@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {CONFIG} from './config.mjs';
+import {assetJSON} from './asset-prefetch.mjs';
 import {constrainedDevice} from './performance-budget.mjs';
 import {yieldTask} from './preparation.mjs';
 import {loadDot} from '../assets/r03-stage/v020-white-encore-cpu/stage-character-d02-r01.mjs';
@@ -14,7 +15,7 @@ import {makeDefaults,SHOT,configureAudioDuration} from '../assets/r03-stage/v020
 import {createHornDissolve} from '../assets/dot/effects/horn-dissolve-r05.mjs';
 
 export async function createR03Stage({rig,film,isPlaying=()=>false,renderer=null}){
-  const data=await fetch(new URL('../assets/r03-stage/document-source.json',import.meta.url)).then(r=>r.json());
+  const data=await assetJSON(new URL('../assets/r03-stage/document-source.json',import.meta.url));
   configureAudioDuration(51.9833333333);
   const doc=makeDefaults(data.project);
   // Finish the same source pullback before the new, short scroll handoff.

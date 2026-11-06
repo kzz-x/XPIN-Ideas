@@ -1,6 +1,0 @@
-{
-  "modulesParsed": 30,
-  "browser": false,
-  "gpu": false,
-  "externalFetchPolicy": "data/blob only; CSP; actual file cold open untested"
-}

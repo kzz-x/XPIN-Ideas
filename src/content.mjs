@@ -55,8 +55,8 @@ export const CHAPTERS = [
         id: 'steps-timeline',
         title: '先给想法一个时长',
         subtitle: '真实 PR 时间线 / 两张过程图',
-        image: picture('P001.png'),
-        images: [picture('P001.png'), picture('P002.png')],
+        image: picture('P001.webp'),
+        images: [picture('P001.webp'), picture('P002.webp')],
         body: [
           '最早的时间线里，画面还只是文字占位，音乐已经提供了节奏。紫色片段先把时长切出来，再逐段写入想要看到的内容。',
           '第二张截图出现“所有产品剪影”的意图。先把观看顺序和段落职责排清楚，后面的建模、动画与合成才有明确的位置。'
@@ -97,7 +97,7 @@ export const CHAPTERS = [
         id: 'tools-browser',
         title: '想让观众亲手试一试',
         subtitle: '概念方向 / 浏览器候选',
-        image: picture('P034.png'),
+        image: picture('P034.webp'),
         body: [
           '这张档案把概念参考和 Sunset02 的真实浏览器画面放在一起。一个表达希望达到的空间气质，一个显示当时已经运行起来的场景。',
           '当目标是“让观众拖动、观察、得到反馈”，就要把交互本身做进页面。静态画面的方向仍然有用，但它无法代替真实操作中的判断。'
@@ -149,7 +149,7 @@ export const CHAPTERS = [
         id: 'review-detail',
         title: '把同一处细节放在一起',
         subtitle: '胸部与腿部 / 候选对照',
-        image: picture('P039.png'),
+        image: picture('P039.webp'),
         body: [
           '这张原图按相同坐标展示胸部与腿部细节。左侧是被否定的 v05，右侧是当时待审的 v06 B，适合观察具体结构怎样发生变化。',
           '“新一版”并不自动等于“更好的一版”。保留版本状态，让反馈落在轮廓、连接与细节上，也给下一次修改留下清楚的起点。'
@@ -160,7 +160,7 @@ export const CHAPTERS = [
         id: 'review-dot',
         title: '角色的轮廓也需要核对',
         subtitle: 'Dot / 六瓣形体纠偏',
-        image: picture('P062.png'),
+        image: picture('P062.webp'),
         body: [
           '红色标注把注意力引向 Dot 的身体轮廓。这次反馈指向的是圆润六瓣的形体，而不是给角色增加更多装饰。',
           '保持角色身份，需要持续检查轮廓、帽子、眼睛和材质的关系。一个小的局部变化，也可能改变整体的表情与气质。'
@@ -179,8 +179,8 @@ export const CHAPTERS = [
         id: 'delivery-feedback',
         title: '让反馈跟着成果留下来',
         subtitle: '互动与舞台 / 历史标注',
-        image: picture('P049.png'),
-        images: [picture('P049.png'), picture('P057.png')],
+        image: picture('P049.webp'),
+        images: [picture('P049.webp'), picture('P057.webp')],
         body: [
           '小岛和舞台的历史截图都保留了原来的批注。不同场景里的问题被指向具体位置，后续接手的人可以知道修改从哪里开始。',
           '交付不只是留下一个结果，还包括说明当前状态、哪些部分已经确定，以及下一步需要继续检查什么。两张图来自不同场景，作为过程记录浏览。'

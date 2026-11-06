@@ -1,23 +1,15 @@
-"""Split the supplied lossless music at exact sample boundaries for early playback."""
-import hashlib,json,pathlib,subprocess
-ROOT=pathlib.Path(__file__).resolve().parents[1]
-BASE=ROOT/'assets/media/bgm'
+"""Encode external lossless BGM masters as compact, whole-track AAC assets."""
+import argparse,json,pathlib,subprocess
+ROOT=pathlib.Path(__file__).resolve().parents[1];BASE=ROOT/'assets/media/bgm'
 def main():
-    meta=json.loads((BASE/'tank-b-loop.json').read_text(encoding='utf-8'))
-    out=BASE/'stream';out.mkdir(exist_ok=True)
-    manifest={'version':1,'sampleRate':48000,'channels':2,'lossless':True,'chunkFrames':96000,'gates':meta['estimated_phrase_exit_gates'],'tracks':{}}
+    ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('masters',type=pathlib.Path,help='Folder containing tank-b-intro.flac, tank-b-loop.flac and tank-b-outro.flac');args=ap.parse_args()
+    meta=json.loads((BASE/'tank-b-loop.json').read_text(encoding='utf-8'));out=BASE/'stream';out.mkdir(exist_ok=True)
+    manifest={'version':2,'sampleRate':48000,'channels':2,'lossless':False,'codec':'AAC 160 kbps','delivery':'whole tracks; exact original sample ranges after decode','gates':meta['estimated_phrase_exit_gates'],'tracks':{}}
     for name in ['intro','loop','outro']:
-        raw=subprocess.check_output(['ffmpeg','-v','error','-i',str(BASE/f'tank-b-{name}.flac'),'-f','s24le','-acodec','pcm_s24le','-'])
-        frames=len(raw)//6
-        assert frames==meta[name]['frames'],(name,frames)
-        chunks=[]
-        for i,start in enumerate(range(0,frames,96000)):
-            end=min(frames,start+96000);piece=raw[start*6:end*6];file=out/f'{name}-{i:02d}.flac'
-            subprocess.run(['ffmpeg','-v','error','-y','-f','s24le','-ar','48000','-ac','2','-i','pipe:0','-c:a','flac','-compression_level','8',str(file)],input=piece,check=True)
-            decoded=subprocess.check_output(['ffmpeg','-v','error','-i',str(file),'-f','s24le','-acodec','pcm_s24le','-'])
-            assert decoded==piece,file
-            chunks.append({'src':file.name,'startFrame':start,'frames':end-start,'bytes':file.stat().st_size})
-        manifest['tracks'][name]={'frames':frames,'duration':frames/48000,'pcmSHA256':hashlib.sha256(raw).hexdigest(),'chunks':chunks}
-    (out/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
-    print(json.dumps({'chunks':sum(len(t['chunks']) for t in manifest['tracks'].values()),'pcmEqualToOriginal':True,'bytes':sum(c['bytes'] for t in manifest['tracks'].values() for c in t['chunks'])}))
+        source=args.masters/f'tank-b-{name}.flac';dest=out/f'{name}.m4a'
+        raw=subprocess.check_output(['ffmpeg','-v','error','-i',str(source),'-ar','48000','-ac','2','-f','s24le','-acodec','pcm_s24le','-']);frames=len(raw)//6
+        if frames!=meta[name]['frames']:raise SystemExit(f'{name}: master sample count differs from authored music boundaries')
+        subprocess.run(['ffmpeg','-v','error','-y','-i',str(source),'-c:a','aac','-b:a','160k','-ar','48000','-ac','2','-movflags','+faststart',str(dest)],check=True)
+        manifest['tracks'][name]={'frames':frames,'duration':frames/48000,'chunks':[{'src':dest.name,'startFrame':0,'frames':frames,'bytes':dest.stat().st_size}]}
+    (out/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8');print(json.dumps({'tracks':3,'bytes':sum(t['chunks'][0]['bytes'] for t in manifest['tracks'].values())}))
 if __name__=='__main__':main()

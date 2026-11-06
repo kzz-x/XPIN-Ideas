@@ -1,136 +1,39 @@
-# r21 · Dot 舞台简化
+# 灵感先行 r26
 
-本次只调整舞台：烟花音效不再加载或播放，烟花视觉与其他互动音效保留；舞台大屏共用原影片当前帧，在原片 36 秒进入舞台后用 1.25 秒平滑渐变至纯白，并保持纯白。制作过程视频不再加载或作为舞台就绪条件。原片音轨、网页背景音乐、舞台动作、灯光、舞台空间和卷轴内容保持原样。
+这是可独立运行和继续编辑的完整网站。运行所需素材全部随包提供，无 CDN 依赖。
 
-`src/stage-screen.mjs` 负责影片到纯白的大屏过渡，不拥有或暂停共享影片。此前文档中关于 S26 过程视频和 R03 礼花音效的说明仅供历史参考，以本节为准。版本历史保留，v20 可重新部署回退。
+## 本地预览与发布
 
-# 灵感先行 · 卷轴网站 r13
+安装 Node.js 后双击「启动预览.cmd」，或在目录运行 `node server.mjs` 并打开终端给出的地址。需要 HTTP 服务和支持 WebGL2 的浏览器，不能直接双击 index.html。
 
-r13 添加统一的轻量 Web Audio 音效：按钮悬停/点击、文字选择、标题与模型悬停、卡片拾取与落位、模型接触、Dot 动作起落，以及开场蓄力、粒子变化、输入打字和代码。声音按实际交互与动作节点触发；持续蓄力/粒子各自只有一个可取消的声部，短音有节流、并发限制和总线峰值控制。音色与音量在 `src/sound-design.mjs` 的 `CUES` 中可编辑。
+源码包：运行 `node build.mjs` 生成 dist，将 dist 内全部文件上传静态网站服务。构建会检查解压后的实际发布文件总计严格小于 40,000,000 字节；超过限制会报错。`node --test tests/*.test.mjs` 运行回归检查，无需 npm install。
 
-BGM 改为：首页进入时尝试播放，开场与代码阶段持续；影片及原生舞台期间停止；进入卷轴时从原片音乐的零点重播。静音按钮控制全部声音，BGM 开关和音量仍独立。首次访问若浏览器拦截有声自动播放，首次点击或按键启用同一音频时钟；声音按钮首次点击会启用而不会误静音。
+发布包：直接上传包内文件，index.html 位于根目录；server.mjs 和预览启动文件仅用于本地预览。
 
-音乐仍使用原有 Tank B 的无损 PCM。2 秒 FLAC 分段按精确采样数切分，提前排程到 AudioContext 时钟，保留 intro / loop / outro 的全部样本；生成脚本 `scripts/prepare_bgm_stream.py` 会逐段回解并检查 PCM 与原件相等。源工程保留整段 FLAC，部署仅使用分段，避免重复打包。完成交付后的乐句出口与尾奏继续保留。
+## 本版优化
 
-r12 将发送提醒改为三道连续方形线条向按钮收拢；聊天页使用从正式 Dot 模型提取的轮廓图标与“你的AI助理”，左上角标题与输入框对齐。开场及聊天页文案改为“先有想法，再让工具实现它。”
+- 高清影片保持 1920×1080、60 fps 和完整剪辑时间，H.264 双遍 VBR 2.3 Mbps / veryslow，AAC 160 kbps。高清文件约 15.86 MB。
+- 手机、低内存、较低解码能力、慢网/省流量设备使用同一剪辑的 1280×720、30 fps 版本，约 5.58 MB。
+- 真实首页出现后立即后台下载整片并静音预解码，不等到耳机提示才开始。正片仍等待完整下载、实际解码和舞台/卷轴准备就绪；慢网期间显示真实进度。
+- 正片与舞台大屏共用同一个 video 元素和音频时钟，避免第二份影片清晰度与时间错位。舞台镜头、Dot 原生模型、动作与互动保持原有版本。
+- 产品 GLB 使用 Meshopt 无损缓冲压缩，顶点属性和三角面均已比对；Dot 几何不改。过程图保持尺寸转 WebP，第三方 JS 精简，移除未引用历史文件。
+- BGM 使用三段整轨 AAC 160 kbps，解码后按原始采样边界排程。此版属于有损压缩，不是无损母版。
+- 默认音效 100%、影片 15%、网页 BGM 6%；用户后续手动调整仍保留。浏览器禁止有声自动播放时，首次点击/按键启用声音。
 
-步骤卡文字使用白色；工具卡起始位置向前移，桌面为 z=4.85，窄屏为 z=4.3 / 6.8 两排，避免遮挡接收台，并让拖动范围覆盖新起点。舞台体积光使用更平滑的锥体、有限锥体裁切后的 24 次密度积分和柔和地面边界，减少横向分层及三角硬边。原有混凝土地面材质与实时反射保留。
+## 替换新的剪辑
 
-r11 移除首屏 SVG 代替字。先显示 ASCII 就绪条；真实 3D 标题、背景字符、字体、粒子和第一帧准备完成后，整个首屏用 750ms 一起渐显。加载条最短约 2 秒，慢网或较慢设备会等待实际就绪，不强行跳过。
+临时预览：制作设置 → 选择本机影片 → 设置舞台接入点 → 检查 Dot 舞台。文件只用于当前会话，不上传。
 
-- 按住开场时即开始缓冲影片；进入播放前检查至少 8 秒连续缓冲。
-- 影片播放期间准备完整舞台与卷轴。分批创建模型、预编译实际渲染变体、上传纹理和预绘制；所有四个产品模型及卡片图解码完成后才标记卷轴就绪。
-- 进入舞台或离开舞台之前有真实就绪门控；极慢网络下保留当前画面并给出小型 ASCII 提示，不暴露空场景。
-- 默认影片保留 1920×1080、60 fps，共 3119 帧；H.264 CRF 19 / slow / 12 Mbps 码率约束，AAC 原音轨复制。约 54.2 MB，拆成 2 秒 fMP4 分段。支持 MSE 或原生 HLS；浏览器开启省流量或不支持高清分段时，使用同一剪辑的 720p 版本。
-- 正片与舞台开头的大屏直接使用同一个 video 元素、同一解码帧、同一主时钟。MSE 的封装时间偏移被校正，舞台大屏保留原比例，拉出镜头开头关闭屏幕景深模糊。
+正式替换：安装 Python、ffmpeg 和 ffprobe，运行 `python scripts/prepare_film.py "D:/edits/new-cut.mp4" --stage-at 36`，将 36 改为新剪辑拉出舞台大屏的秒数。脚本生成高清/手机 MP4 和 manifest，不修改原件。然后 `node build.mjs` 重建并发布。双遍 veryslow 编码需要较长时间；新剪辑更长时可能超过 40 MB，构建会拦截，可调整 `--bitrate-k 2300`。压缩参数越小，画质越低。
 
-## 替换新剪辑
+也可手动替换 `assets/media/film-hd.mp4` 与 `film-mobile.mp4`，同时更新 `assets/media/film-hd/manifest.json` 的时长、帧率、尺寸、两个文件字节数和 stageAt。舞台动作长度独立于接点，若剪辑改变表演节奏需同步调整 `src/config.mjs`。
 
-会话预览：制作设置 → 选择本机影片。大屏自动绑定这份影片；使用“舞台接入点（秒）”或“使用当前播放时刻”指定新剪辑的接点，再点“预览接点前后”。选择文件会先验证可解码，然后替换；不会上传本机文件。
+## 主要编辑入口
 
-正式替换：在本源码目录运行 `python scripts/prepare_film.py "D:/edits/new-cut.mp4" --stage-at 36`，将 36 改为新剪辑开始拉出舞台的原片秒数。脚本生成同源高清分段、兼容影片和 manifest，保留原件，不裁切、不重排；重建并发布本站后生效。接点来自 manifest，保持统一时钟。原生 R03 舞台过程片及表演结构继续保留；变更舞台的内容/演出时长属于单独调整。
+- `src/main.mjs`：流程与提前加载；`src/film-media.mjs`：下载、静音预热及就绪门控。
+- `src/content.mjs`：章节、文案和卡片图片；`src/scroll-space.mjs`：空间卡片阅读。
+- `src/config.mjs`：接点与舞台时长；`src/audio-mix.mjs`：三个默认音量。
+- `src/sound-design.mjs`、`src/opening-sound.mjs`、`src/sand-sound.mjs`：互动与开场音效。
+- `assets/media/bgm/stream/`：当前压缩音乐及循环/尾奏元数据。
 
-`src/film-media.mjs` 管理分段和连续缓冲；`src/preparation.mjs` 管理就绪等待；`src/scene-warm.mjs` 分批预热渲染。`tests/readiness-r11.test.mjs` 覆盖缓冲空洞、跨段定位、舞台/卷轴未就绪门控与媒体时间偏移。
-
-以下为此前 r10 内容与接口记录，首屏和影片编码以本节为准。
-
-r10 按 2026-11-05 的 15 张标注优化开场、舞台接续、全卷排版与结尾。开场先显示实际字形轮廓并启动交互，舞台与卷轴异步准备；192 个背景 ASCII 独立随机变化，所有剥离粒子均为真实挤出字符。字符经既有物理模拟汇聚并完全落稳后，用 720ms 同位置细节接续消除界面闪烁。发送提示是三圈沿方形边界向外扩散的 ASCII 波纹，代码演出扩展到整个视口。
-
-正常播放从原片 36.000 秒进入 R03 原生 0.000 秒，与设置预览保持同一完整开场，保留大屏拉镜和 Dot 左侧入场；原音轨、46.350 秒礼花音效及 55.350 秒离台保持同步。
-
-方块在首次显示时确定初始方向，进入互动范围不再重设。章节小字、说明和关卡文字保留独立间距，取消重复的继续展开提示；交付模型与影片缩略图采用冷灰中性配色。结尾字从视口上方逐字落下，真实灯光投影逐渐显现；落定后在本次会话中持续留在世界里，回滚不重置。
-
-r09 增加 Tank B 无损循环音乐、独立音乐控制、连续展开的卡片、分阶段取出/打开的资源模型、鼠标标题动效及结尾逐字落下。保留 r08 开场物理粒子、真实厚毛玻璃、标题细黑描边和文字排版。保留已接入的用户指定的《灵感先行_Dot全程_D02_R03_统一单文件_r01》舞台与 D02 正式动作库，保留工业线框开场、五关互动、过程卡片和资源架。
-
-## 本机运行
-
-双击 `启动预览.cmd`，或运行 `npm start` 后打开命令输出的地址。需要 Node.js 和支持 WebGL2 的浏览器；不需要 npm 安装。全部运行素材、字体和模块随包提供，无 CDN 依赖。不能直接双击 index.html，浏览器会限制 ES 模块与模型读取。
-
-## 当前流程
-
-1. 鼠标拨动厚毛玻璃字时旋转一周并惯性回弹，细网格受鼠标扰动。长按约一秒，背景真实 ASCII 字符被吸入按钮。字形表面随后分批剥离，粒子经过湍流飘散再被弹簧吸引到真实 UI 边框、输入区、文字和发送按钮；固定 1/120 秒步长积分速度与位置，经过约 5 秒全部落稳，约 6.1 秒交接点击。没有使用透明度淡入替代重组；最后 720ms 仅在物理粒子全部落稳后接续同位置的完整表面与可访问文字。进入创作面板后，逐字出现“帮我做一个炫酷的视频”，文字末尾保留闪烁光标。发送按钮带一圈真实 ASCII 字符动效。
-2. 发送后进入影片，画面填满浏览器视口。控件只有播放、进度和跳过，播放中静止约 1.9 秒隐藏，移动鼠标或触摸后显示；双击影片可请求浏览器全屏。
-3. 影片原始时间 36.000 秒切入 R03 三维舞台原生第 0.000 秒，约 0.18 秒在同一影片画面中接续完整拉镜。原视频音轨持续播放，不重播另一份音乐。R03 内嵌音乐经采样对齐验证，与当前视频的时间位置一致。
-4. R03 礼花音效在原视频 46.350 秒、舞台 10.350 秒开始。暂停、静音和拖动同时管理原视频主时钟与音效；跨 36 秒向前或向后拖动可切换画面，松手保留原来的播放状态。
-5. 视频文件结束后，舞台继续完成小号表面粒子消散与回应。舞台原生 19.350 秒离台，对应整体进度 55.350 秒。随后在 1.35 秒内换成卷轴背景，同一个 Dot 沿弧线飞入卷轴。未接入 R03 后半段小岛。
-6. Dot 在卷轴中自动漂浮、观察、摇摆和招手；悬停触发注意、好奇等动作，点击轮换转身、庆祝、发现、招手等动作。动作使用提供的正式库。Dot 使用同一模型、同一姿态状态，并保持在三维模型和内容卡片上方。
-7. 过程卡片可展开阅读，五关交互、章节跳转及三件资源模型保持可用。资源领取文件仍待提供，未伪造下载内容。
-
-## r09 音乐与空间交互
-
-进入卷轴时开始 Tank B，默认 15% 音量。页头 BGM 按钮仅开关背景音乐；设置中可调音量。总声音开关仍管理影片、舞台、互动和背景音乐。音乐偏好单独保存，静音不重置播放时钟。
-
-使用用户提供的 48 kHz / 24-bit 三段素材，无损压缩为 FLAC。开头 16.210583 秒只播一次，54.561396 秒的变化中段按完整 2,618,947 个采样循环。开头和循环拼接到同一 AudioBuffer，loopStart/loopEnd 由原生音频时钟执行，不依靠页面定时器重新播放。五关全部完成后，使用素材给出的乐句出口和 120 ms 等功率交叉过渡，播放一次 18.728208 秒通关结尾。重试关卡恢复循环；回到影片或开场时停止卷轴音乐。
-
-所有过程卡片默认平放，悬停抬起约 7°。展开时同一张图片和标题连续移到阅读排版。资源架首次访问有细线提示圈；点击后先取出、再打开、再升出内容卡片，收起时原路返回。六个章节标题有字符弹簧响应；侧边工程模型有轻微转动和抬升。网格与卷轴共享相机滚动、鼠标视差。去掉 Dot 的额外软投影，保留实际灯光投影；去掉产品转盘上四块黑色矩形垫板。
-
-## 可编辑入口
-
-- `src/bgm.mjs`、`assets/media/bgm/`：音乐缓冲、循环边界、通关出口、音量和独立开关。
-- `src/card-morph.mjs`：缩略图与详情之间的连续标题/图片布局。
-- `src/scroll-motion.mjs`：资源动作阶段、标题弹簧、结尾挤出文字逐字落下。
-- `design-r09.css`：连续展开的卡片与 BGM 控制。
-- `tests/bgm.test.mjs`：未来乐句出口、循环边界和原始采样范围测试。
-- `src/config.mjs`：36 秒切点与舞台时间原点、音效增益、舞台结束时间与 1.35 秒离台长度。
-- `src/transport-r07.mjs`：以原视频为音乐主时钟的统一播放、暂停、拖动、音效与跳过状态机。`src/transport.mjs`仅复用现有进度条输入和交互声音工具。
-- `src/stage-r03.mjs`：原版舞台模块适配、灯光、反射、景深、实际过程视频、运镜与真实小号粒子。
-- `assets/r03-stage/`：从指定统一 HTML 解包的 R03 模块与文档；复用现有 Three.js 和正式 D02，不创建第二套角色。
-- `src/dot-stage-r07.mjs`：同一角色在舞台与卷轴间移动、离台轨迹、视线、命中检测与跟随。
-- `src/companion-actions.mjs`：悬停、点击与待机动作的选择和节奏。
-- `src/chat-r07.mjs`、`design-r07.css`：创作面板、打字光标、ASCII 圈与无框自动隐藏播放器。
-- `src/dot-foreground.mjs`：Dot 的透明前景渲染，仍保留世界中的投影；不阻挡页面输入。
-- `src/main.mjs`：场景与界面状态、相机、滚动输入。启动时预编译舞台和卷轴，减少首次切换时的卡顿。
-- `src/opening-r08.mjs`：当前厚毛玻璃字、旋转惯性/回弹、逐步剥离与加载期预热。`src/opening.mjs`为历史版本。
-- `src/particle-physics.mjs`：固定步长半隐式 Euler 积分，散度为零的旋涡力场、初速度、阻尼和目标弹簧。属于逐粒子力场模拟，不是流体体积求解器或粒子间碰撞模拟。
-- `src/opening-assembly.mjs`：从实际挤出字形三角面取样；测量实时 DOM 结构作为三维目标。几何落稳后合并为连续玻璃板，HTML 接管同位置的可访问文字和点击。
-- `src/opening-grid.mjs`：精密线网、指针涟漪、背景 ASCII 与长按聚集。
-- `src/frosted-glass.mjs`：统一粗糙透射、微表面凹凸、厚度、折射率与边缘结构。
-- `design-r08.css`：毛玻璃上层排版、手机卡片摘要、可读文字和进度条触控区域。
-- `tests/particle-physics.test.mjs`：`node --test tests/particle-physics.test.mjs`。
-- `src/scroll-space.mjs`、`src/resource-models.mjs`、`src/games*.mjs`：卷轴、可展开资源架与五关。
-- `src/product-finishes.mjs`：保留 r06 冷灰工业模型配色，未降低产品几何精度。
-
-## 媒体
-
-- `assets/media/film-preview.mp4`：提供旧片的完整网页压缩副本，51.983333 秒。当前影片 36 秒后的画面由实时舞台接管，但原音轨继续播放。
-- `assets/media/stage-process-r03.mp4`：R03 提供的舞台大屏过程视频。
-- `assets/media/stage-impact-r03.m4a`：R03 礼花音效，只按对应时间播放。
-- `assets/media/stage-source-r03.m4a`：解出的原内嵌音轨，用作对齐参考，不与视频音轨叠播。
-
-设置中的本机影片替换仅用于当前会话。换成其他时长或音乐的影片时，需要重新核对 36/46.35 秒接点；当前同步只针对本次提供的影片与 R03。
-
-## 验证与边界
-
-既有播放器包含 6 项状态测试，覆盖元数据未就绪、36 秒连续切换、寻址中暂停/续播、跨段拖动、取消拖动及片尾单次完成。桌面与手机尺寸使用实际 Chromium/WebGL 检查创作面板、自动隐藏、跨段拖动、音效时间、离台轨迹和 Dot 动作。r08 另增加粒子力场散度、不同帧率一致性、释放前附着及手机长纵向目标全部落稳的四项测试。过程卡片使用真正三维玻璃板；手机副卡只显示可读的标题与图像，完整说明进入阅读层。统一文字纹理长宽比例；取消重复且过小的流程英文副标。验收截图、轨迹与浏览器错误记录另见交付的验收证据。
-
-手机检查是桌面 Chromium 的触摸/窄屏模拟，不代表实机性能。保留既有文字纹理比例、清晰阅读层、资源架和模型几何；资源下载文件仍未提供。站点只使用提供的素材和本机组件；历史参考页面未复制品牌资产。
-
-r09 额外验证：原生 OfflineAudioContext 渲染开头接循环和连续两次循环边界，逐采样对比通过；FLAC 解码 PCM 与输入 WAV 数据逐字节一致。桌面、手机模拟检查三件资源开合、独立静音与音量、平放/悬停/阅读状态；实际最后一步通关触发结尾，重试恢复循环，回到开场停止音乐。音频技术连续性已验证，最终音乐听感仍以实际设备试听为准。
-
-音频 API 依据：[MDN AudioBufferSourceNode loopStart](https://developer.mozilla.org/en-US/docs/Web/API/AudioBufferSourceNode/loopStart)。
-
-## 构建与部署
-
-`node build.mjs` 生成 `dist/`。源包保留可编辑代码；部署排除原始大影片和未使用的历史角色预览目录。Sites 项目身份和既有访问范围保持不变，实际版本以交付的部署记录为准。
-
-Three.js 使用 MIT 许可，IdeaSans / Noto 字体许可和角色来源随资产保留。
-
-## r10 验证入口
-
-`node --test tests/*.test.mjs`。新增影片自然入台、设置预览同起点、跨段寻址与音效主时钟回归。浏览器验证包含桌面与手机模拟、界面细节接续逐帧记录、方块四元数连续性、投影渐显和结尾回滚保留。加载时长是本机预览测量，不代表公网与实体手机速度。最新部署与画面证据见本轮交付记录。
-
-
-## r22 interaction cues and stage pacing
-
-Built on the other window's published r21 source (27c322f), preserving its shared film-to-white screen, disabled impact soundtrack, and existing public audience. The white fade starts as Dot enters the left edge at native stage 1.0 s and lasts 2.0 s. After the actual music end, horn retirement is complete within 0.8 s, attention/speech start sooner, and the scroll handoff begins at stage 18.15 s. The greeting reads “你好呀~我叫Dot”.
-
-First cube and ordering-board interactions have visual guides that retire on real input. Archive cards explain opening and internal scrolling, and persist learned actions. Every newly shown or changed Dot message gets a gentle emphasis. The headphone page stops webpage BGM and omits the extra eyebrow. Background and settling ASCII are masked from the send button. Approved B hold, layered sand, three audio defaults, original music clock and retained r21 settings remain in use.
-
-
-## r23 touch, audio default and shorter resource/stage timing
-
-Phone swipes now advance the main scroll when moving down and return when moving up. Native internal card scrolling keeps its reading behavior. The headphone heading uses two centred lines without punctuation. Video migrates once to 15 percent while independently adjusted effects/music are preserved; later user changes survive refresh.
-
-The cube guide is tilted 45 degrees into an oblique plane. Resource extraction/read/return phases run at double speed and can reverse from their current progress when a genuine outside click/tap occurs, including before the reading backdrop appears. Internal clicks and drags do not falsely dismiss the resource.
-
-The full original soundtrack remains intact. Horn retirement ends 0.45 s after the audible music end, greeting starts after 0.55 s, native stage ends at 16.45 s and departure takes 0.85 s. Ready playback reaches the scroll about 2.5 s after music ends. The opening B sound, layered sand, stage shared-video fade, 100 percent SFX and 6 percent webpage BGM are retained.
+旧视频、重复音乐与无引用素材不在交付包内。源码中的 rXX 模块名可能是被当前版本继续引用的正式实现，不能只凭名称删除。原始高码率视频与无损音频母版应另外保存；它们不属于 40 MB 网站交付包。

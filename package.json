@@ -1,1 +1,12 @@
-{"name":"linggan-scroll","version":"0.1.0","private":true,"type":"module","scripts":{"start":"node server.mjs","check":"node --check src/main.mjs"}}
+{
+  "name": "linggan-scroll",
+  "version": "0.26.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check src/main.mjs",
+    "build": "node build.mjs",
+    "test": "node --test tests/*.test.mjs"
+  }
+}
