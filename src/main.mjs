@@ -128,7 +128,7 @@ async function init(){
   dotForeground=createDotForeground({scene,camera,worldRenderer:renderer});
   await warmEnvironment(stageRenderer,globalThis.DOT_PREWARM_ENVIRONMENT,camera);await warmEnvironment(renderer,scene.environment,camera);await warmEnvironment(dotForeground.renderer,scene.environment,camera);
   opening.update({time:0,dt:0,phase:'intro'});renderer.render(opening.scene,opening.camera);bootProgress(1,'画面已就绪');await delay(Math.max(0,2000-(performance.now()-(window.__bootStart||0))));
-  previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');runtime.openingReadyAt=performance.now();animationReady=true;frameLoop.setHidden(document.hidden);frameLoop.wake();
+  previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');window.bootGuard?.complete();runtime.openingReadyAt=performance.now();animationReady=true;frameLoop.setHidden(document.hidden);frameLoop.wake();
   await nextPaint();document.body.classList.add('scene-visible');$('loading').classList.add('leave');setTimeout(()=>$('loading').style.display='none',700);
   prepareRigAssets().catch(()=>{});
   runtime.backgroundStartedAt=performance.now();
@@ -397,5 +397,5 @@ window.addEventListener('pointerdown',e=>{if(ui.phase!=='scroll'||ui.focusLock||
 window.addEventListener('pointerup',e=>{if(!dotPress||e.pointerId!==dotPress.id)return;const click=Math.hypot(e.clientX-dotPress.x,e.clientY-dotPress.y)<9;dotPress=null;e.preventDefault();e.stopImmediatePropagation();if(click)dot.react('click');},true);
 window.addEventListener('pointercancel',()=>dotPress=null,true);
 
-init().catch(error=>{rejectWorld(error);ui.errors.push(String(error));$('loading-status').textContent='空间暂未就绪：'+error.message;console.error(error);});
+init().catch(error=>{rejectWorld(error);ui.errors.push(String(error));if(window.bootGuard)window.bootGuard.fail(error);else $('loading-status').textContent='空间暂未就绪：'+error.message;console.error(error);});
 

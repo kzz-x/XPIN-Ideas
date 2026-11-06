@@ -11,5 +11,8 @@
   },
   "fileLimitBytes": 5242880,
   "filmTransport": "4 MiB binary parts; original MP4 restored in browser",
-  "externalRuntimeServices": []
+  "externalRuntimeServices": [],
+  "browserModuleExtension": ".js",
+  "deployedPaths": "ASCII, original hierarchy; editable source paths retained",
+  "moduleCacheVersion": "source content SHA256 prefix"
 }
