@@ -1,6 +1,6 @@
 {
   "limitBytes": 56000000,
-  "bytes": 44465419,
+  "bytes": 44466780,
   "fileCount": 224,
   "sourceFiles": [
     "assets/dot/dot-outline-r12.svg",
@@ -997,7 +997,7 @@
     },
     {
       "path": "src/film-media.mjs",
-      "bytes": 17831
+      "bytes": 19192
     },
     {
       "path": "src/first-game-hints.mjs",

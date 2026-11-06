@@ -53,15 +53,43 @@ test('first playback and short decode warm-up finish from ten seconds while the 
  assert.ok(!f.requests.some(name=>name.includes('unused-')),'a progressive manifest must not select its legacy HD file fields');
 });
 
+test('parallel downloads append chronologically even when later fragments finish first',async t=>{
+ const finished=[];const f=fixture(t,{fetchSegment:async index=>{
+  await new Promise(resolve=>setTimeout(resolve,index>0&&index%2===0?20:1));finished.push(index);
+  return new Response(new Uint8Array(20).fill(index+1));
+ }});
+ await f.media.prime();
+ assert.ok(finished.indexOf(3)<finished.indexOf(2),'the fixture must actually finish the later fragment first');
+ assert.deepEqual(f.appended,[255,...Array.from({length:26},(_,i)=>i+1)]);
+ assert.equal(f.media.snapshot().bufferComplete,true);assert.ok(f.maxActive<=2);
+});
+
 test('an explicit seek schedules its keyframe ahead of untouched background ranges and respects buffered gaps',async t=>{
  const blocked=deferred(),rest=deferred();const f=fixture(t,{fetchSegment:async(index,signal)=>{const gate=index===5||index===6?blocked:index>=7&&index<20?rest:null;if(gate)await Promise.race([gate.promise,new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}))]);return new Response(new Uint8Array(20).fill(index+1));}});
  const background=f.media.prime();await f.media.preparePlayback();await wait(()=>f.requests.includes('segment-5.bin'));
- const before=f.requests.length,seeking=f.media.ensure(40.1,3);await tick();blocked.resolve();await seeking;
+ let seekReady=false;const before=f.requests.length,seeking=f.media.ensure(40.1,3).then(()=>seekReady=true);await tick();blocked.resolve();
+ await wait(()=>f.requests.includes('segment-21.bin'));await tick();
+ assert.equal(seekReady,false,'a future fragment must wait for its missing chronological prefix');
+ assert.ok(!f.appended.includes(21),'never insert the future GOP before older frames');
  const next=f.requests.slice(before);assert.ok(next.indexOf('segment-20.bin')>=0);assert.ok(next.indexOf('segment-21.bin')>=0);
  const nextLow=next.findIndex(name=>/^segment-(?:[7-9]|1\d)\.bin$/.test(name));
  assert.ok(nextLow<0||next.indexOf('segment-20.bin')<nextLow,'seek work must overtake untouched prefetch');
- assert.equal(f.media.canPlayAt(40),true);assert.equal(f.media.canPlayAt(25),false,'later downloads cannot cover a gap');
- rest.resolve();await background;assert.ok(f.maxActive<=2);
+ assert.equal(f.media.canPlayAt(40),false,'downloaded bytes cannot cover an unappended prefix');
+ assert.equal(f.media.snapshot().bufferComplete,false);
+ rest.resolve();await seeking;assert.equal(f.media.canPlayAt(40),true);await background;assert.ok(f.maxActive<=2);
+ assert.deepEqual(f.appended,[255,...Array.from({length:26},(_,i)=>i+1)]);
+});
+
+test('an exhausted earlier download never permits later insertion and retry resumes the original timeline',async t=>{
+ let failures=3;const f=fixture(t,{fetchSegment:async index=>index===2&&failures-->0?new Response('temporary',{status:503}):new Response(new Uint8Array(20).fill(index+1))});
+ await assert.rejects(f.media.preparePlayback(),/HTTP 503/);await tick();
+ assert.deepEqual(f.appended,[255,1,2],'later downloaded fragments must remain cached behind the failed index');
+ assert.equal(f.media.snapshot().bufferComplete,false);assert.equal(f.media.snapshot().complete,false);
+ await f.media.preparePlayback();await f.media.prime();
+ assert.deepEqual(f.appended,[255,...Array.from({length:26},(_,i)=>i+1)]);
+ assert.equal(f.requests.filter(name=>name==='segment-2.bin').length,4);
+ assert.equal(f.requests.filter(name=>name==='segment-3.bin').length,1,'completed future downloads are reused');
+ assert.equal(f.media.snapshot().bufferComplete,true);
 });
 
 test('startup progress counts incoming partial bytes without pretending the whole film is downloaded',async t=>{

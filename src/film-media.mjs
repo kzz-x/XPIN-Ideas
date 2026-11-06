@@ -12,8 +12,8 @@ const STARTUP_SECONDS=8;
  * start from a real buffered window while the same source fills in background. */
 export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()=>{}}){
   let manifest,source,buffer,objectURL,opening,pump,local=false,aborted=false,complete=false,serial=Promise.resolve(),loaded=new Set(),pending=new Map(),bytes=0,mode='idle',error=null,revision=0,totalBytes=0,notifiedAt=0;
-  const abort=new AbortController(),events=[],partial=new Map(),filePartCache=new Map(),received=new Map(),queue=[];
-  let activeChunks=0;
+  const abort=new AbortController(),events=[],partial=new Map(),filePartCache=new Map(),received=new Map(),queue=[],downloads=new Set();
+  let activeChunks=0,nextAppendIndex=0,appending=false;
   let preflighting=false,decodeJob,decodeProbe=null,decodeKey='';
   const url=path=>new URL(path,manifestURL).href;
   const record=(event,detail={})=>{events.push({event,at:performance.now(),...detail});if(events.length>80)events.shift();onChange(snapshot());};
@@ -25,7 +25,7 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
     const ready=video.readyState>=2&&bufferedAhead(video,0)>=Math.max(.05,seconds-.001);
     return{startupProgress:total?Math.min(1,downloaded/total):0,startupReady:ready,playbackReady:ready,startupBytes:downloaded,startupTotalBytes:total,startupBufferSeconds:seconds};
   }
-  function snapshot(){const downloading=bytes+[...partial.values()].reduce((a,b)=>a+b,0),downloadProgress=complete?1:Math.max(0,Math.min(1,totalBytes?downloading/totalBytes:0));return{mode,local,revision,complete,preflighting,decodeProbe,downloadProgress,progress:complete?1:Math.min(.99,downloadProgress),...startupState(downloadProgress),ready:video.readyState>=2,width:video.videoWidth,height:video.videoHeight,duration:video.duration||0,bytes:downloading,totalBytes,segmentsReady:loaded.size,segmentsTotal:manifest?.segments?.length||0,bufferedAhead:bufferedAhead(video),error,events:[...events]};}
+  function snapshot(){const downloading=bytes+[...partial.values()].reduce((a,b)=>a+b,0),downloadProgress=complete?1:Math.max(0,Math.min(1,totalBytes?downloading/totalBytes:0));return{mode,local,revision,complete,bufferComplete:buffer?bufferedAhead(video,0)>=Math.max(.05,(manifest?.duration||Infinity)-.04):complete,preflighting,decodeProbe,downloadProgress,progress:complete?1:Math.min(.99,downloadProgress),...startupState(downloadProgress),ready:video.readyState>=2,width:video.videoWidth,height:video.videoHeight,duration:video.duration||0,bytes:downloading,totalBytes,segmentsReady:loaded.size,segmentsTotal:manifest?.segments?.length||0,bufferedAhead:bufferedAhead(video),error,events:[...events]};}
   // Timeout means no incoming bytes, not a total time limit on a slow link.
   async function fetchBytes(path){
     let failure;
@@ -85,11 +85,30 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
     if(Number.isFinite(expectedBytes)&&result.size!==expectedBytes)throw Error('影片文件长度不符');
     return result;
   }
-  function append(data){const task=serial.then(()=>new Promise((resolve,reject)=>{if(aborted)return reject(new DOMException('Cancelled','AbortError'));const done=()=>{clear();resolve();},fail=()=>{clear();reject(Error('影片分段解码失败'));},clear=()=>{buffer.removeEventListener('updateend',done);buffer.removeEventListener('error',fail);};buffer.addEventListener('updateend',done,{once:true});buffer.addEventListener('error',fail,{once:true});try{buffer.appendBuffer(data);}catch(e){clear();reject(e);}}));serial=task.catch(()=>{});return task;}
+  function append(data){
+    // MSE writes remain serialized; drainAppends also enforces the global
+    // timeline, since late insertion can discard already-buffered B-frames.
+    const incoming=Promise.resolve(data);incoming.catch(()=>{});
+    const task=serial.then(async()=>{const bytes=await incoming;return new Promise((resolve,reject)=>{if(aborted)return reject(new DOMException('Cancelled','AbortError'));const done=()=>{clear();resolve();},fail=()=>{clear();reject(Error('影片分段解码失败'));},clear=()=>{buffer.removeEventListener('updateend',done);buffer.removeEventListener('error',fail);};buffer.addEventListener('updateend',done,{once:true});buffer.addEventListener('error',fail,{once:true});try{buffer.appendBuffer(bytes);}catch(e){clear();reject(e);}});});serial=task.catch(()=>{});return task;
+  }
+  function rejectChunks(reason){for(const task of pending.values())task.reject(reason);pending.clear();queue.length=0;}
+  function drainAppends(){
+    if(aborted||appending)return;
+    const task=pending.get(nextAppendIndex);if(!task?.data)return;
+    appending=true;
+    append(task.data).then(()=>{loaded.add(task.index);nextAppendIndex++;pending.delete(task.index);task.data=null;record('segment-ready',{index:task.index});task.resolve();},reason=>{
+      pending.delete(task.index);task.reject(reason);
+      if(reason.name==='QuotaExceededError')rejectChunks(reason);
+    }).finally(()=>{appending=false;drainAppends();});
+  }
   function drainChunks(){
     while(!aborted&&activeChunks<2&&queue.length){
       queue.sort((a,b)=>b.priority-a.priority);const task=queue.shift();activeChunks++;
-      (async()=>{const data=await fetchBytes(manifest.segments[task.index].src);if(aborted)throw abort.signal.reason;await append(data);loaded.add(task.index);record('segment-ready',{index:task.index});})().then(task.resolve,task.reject).finally(()=>{activeChunks--;if(pending.get(task.index)===task)pending.delete(task.index);drainChunks();});
+      const incoming=fetchBytes(manifest.segments[task.index].src).then(data=>{
+        if(pending.get(task.index)!==task||aborted)return;
+        task.data=data;drainAppends();
+      },reason=>{if(pending.get(task.index)===task){pending.delete(task.index);task.reject(reason);}}).finally(()=>{downloads.delete(incoming);activeChunks--;drainChunks();});
+      downloads.add(incoming);
     }
   }
   function chunk(index,priority=0){
@@ -134,7 +153,13 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
   async function ensure(at=0,seconds=8){
     if(local){await waitFor(()=>video.readyState>=2,{label:'替换影片'});return;}
     await open();const target=Math.min(at,Math.max(0,manifest.duration-.1)),required=Math.min(seconds,manifest.duration-target);
-    if(buffer)await Promise.all(segmentRange(manifest.segments,target,required+.04).map(i=>chunk(i,20)));
+    if(buffer){
+      const wanted=segmentRange(manifest.segments,target,required+.04),jobs=wanted.map(i=>chunk(i,20)),last=wanted.at(-1)??-1;
+      // Fetch a seek target first, but never insert it before an older missing
+      // fragment. Filling its prefix preserves open-GOP/B-frame dependencies.
+      for(let i=0;i<last;i++)if(!wanted.includes(i))jobs.push(chunk(i));
+      await Promise.all(jobs);
+    }
     // A local Blob can be sought even before TimeRanges reports the full file.
     if(!buffer&&complete)return;
     await waitFor(()=>bufferedAhead(video,target)>=Math.max(.05,required-.10),{label:'影片缓冲',signal:abort.signal});record('buffer-ready',{at:target,seconds:required});
@@ -147,7 +172,7 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
       for(let i=0;i<manifest.segments.length;i+=2){await Promise.all([i,i+1].filter(i=>i<manifest.segments.length).map(index=>chunk(index)));await yieldTask();}
       if(buffer&&source.readyState==='open'){await serial;source.endOfStream();}complete=true;error=null;record('complete');
     })().catch(async e=>{
-      if(e.name==='QuotaExceededError'&&!aborted){await Promise.allSettled([...pending.values()].map(task=>task.promise));await compatible();return;}
+      if(e.name==='QuotaExceededError'&&!aborted){rejectChunks(e);await Promise.allSettled([...downloads]);await compatible();return;}
       if(!aborted){error=e.message;record('error');}pump=null;throw e;
     });pump.catch(()=>{});return pump;
   }
@@ -178,9 +203,9 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
   async function useLocal(file){
     const nextURL=URL.createObjectURL(file),probe=document.createElement('video');probe.muted=true;probe.preload='auto';probe.src=nextURL;probe.load();
     try{await waitFor(()=>{if(probe.error)throw Error('浏览器无法读取这份影片，请使用 H.264 / AAC MP4');return probe.readyState>=2;},{label:'替换影片'});}catch(e){URL.revokeObjectURL(nextURL);throw e;}finally{probe.removeAttribute('src');probe.load();}
-    aborted=true;abort.abort();filePartCache.clear();await serial.catch(()=>{});video.pause();if(objectURL)URL.revokeObjectURL(objectURL);local=true;complete=true;mode='local-original';error=null;revision++;
+    aborted=true;abort.abort();rejectChunks(abort.signal.reason);filePartCache.clear();await serial.catch(()=>{});video.pause();if(objectURL)URL.revokeObjectURL(objectURL);local=true;complete=true;mode='local-original';error=null;revision++;
     objectURL=nextURL;video.src=objectURL;video.load();await waitFor(()=>video.readyState>=2,{label:'本机影片'});record('local-ready',{name:file.name});return snapshot();
   }
   for(const name of ['waiting','stalled','playing'])video.addEventListener(name,()=>record(name,{time:video.currentTime}));
-  return{open,prime,ensure,preparePlayback,preflightDecode,get preflighting(){return preflighting;},canPlayAt,useLocal,snapshot,get manifest(){return manifest;},get timeOffset(){return 0;},dispose(){aborted=true;abort.abort();for(const task of queue.splice(0)){pending.delete(task.index);task.reject(abort.signal.reason);}filePartCache.clear();video.pause();if(objectURL)URL.revokeObjectURL(objectURL);}};
+  return{open,prime,ensure,preparePlayback,preflightDecode,get preflighting(){return preflighting;},canPlayAt,useLocal,snapshot,get manifest(){return manifest;},get timeOffset(){return 0;},dispose(){aborted=true;abort.abort();rejectChunks(abort.signal.reason);filePartCache.clear();video.pause();if(objectURL)URL.revokeObjectURL(objectURL);}};
 }
