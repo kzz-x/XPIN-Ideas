@@ -1,9 +1,9 @@
 {
-  "bytes": 105277743,
+  "bytes": 105276408,
   "filmBytes": 82071301,
-  "nonFilmBytes": 23206442,
+  "nonFilmBytes": 23205107,
   "nonFilmLimitBytes": 32000000,
-  "fileCount": 254,
+  "fileCount": 255,
   "sourceFiles": [
     "assets/dot/dot-outline-r12.svg",
     "assets/dot/effects/horn-dissolve-math-r05.mjs",
@@ -257,6 +257,7 @@
     "src/preparation.mjs",
     "src/product-finishes.mjs",
     "src/render-quality.mjs",
+    "src/resource-detail.mjs",
     "src/resource-models.mjs",
     "src/resource-shelf.mjs",
     "src/return-entry.mjs",
@@ -1073,7 +1074,7 @@
     },
     {
       "path": "index.html",
-      "bytes": 13059
+      "bytes": 11666
     },
     {
       "path": "src/asset-prefetch.mjs",
@@ -1085,7 +1086,7 @@
     },
     {
       "path": "src/audio-mix.mjs",
-      "bytes": 3637
+      "bytes": 2964
     },
     {
       "path": "src/bgm-stream.mjs",
@@ -1117,11 +1118,11 @@
     },
     {
       "path": "src/config.mjs",
-      "bytes": 1017
+      "bytes": 1014
     },
     {
       "path": "src/content.mjs",
-      "bytes": 35833
+      "bytes": 36891
     },
     {
       "path": "src/dot-foreground.mjs",
@@ -1185,7 +1186,7 @@
     },
     {
       "path": "src/main.mjs",
-      "bytes": 62835
+      "bytes": 60913
     },
     {
       "path": "src/opening-assembly.mjs",
@@ -1228,6 +1229,10 @@
       "bytes": 5001
     },
     {
+      "path": "src/resource-detail.mjs",
+      "bytes": 960
+    },
+    {
       "path": "src/resource-models.mjs",
       "bytes": 12844
     },
@@ -1257,7 +1262,7 @@
     },
     {
       "path": "src/scroll-space.mjs",
-      "bytes": 43678
+      "bytes": 43367
     },
     {
       "path": "src/sound-design.mjs",
@@ -1289,7 +1294,7 @@
     },
     {
       "path": "styles-combined.css",
-      "bytes": 66992
+      "bytes": 67941
     }
   ]
 }

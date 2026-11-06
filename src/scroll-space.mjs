@@ -5,6 +5,7 @@ import {resourcePhases,RESOURCE_DURATION,createTitleMotion,createEnding} from '.
 import * as T from 'three';
 import {frostedGlass,glassEdges} from './frosted-glass.mjs';
 import {screenLines} from './screen-lines.mjs';
+import {resourceDetailHTML} from './resource-detail.mjs';
 import {CSS3DObject} from 'three/addons/renderers/CSS3DRenderer.js';
 import {CHAPTERS,RESOURCES} from './content.mjs';
 import {createResourceShelf,createResourceModel} from './resource-models.mjs';
@@ -229,7 +230,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     const model=createResourceModel(r.kind,{label}),{group:g,lid,parts=[]}=model;
     g.name=`Resource ${r.kind}`;g.position.set(-4.2+i*4.2,i===1?2.78:.3,0);shelf.add(g);
     const tagEl=document.createElement('button');tagEl.className='shelf-tag';tagEl.textContent=r.title+' ↗';const tag=new CSS3DObject(tagEl);tag.scale.setScalar(.014);tag.position.set(g.position.x,g.position.y+.30,2.3);tag.rotation.x=labelTilt;tag.name='Resource tag / '+r.kind;tag.userData.readableLabel={text:r.title,chapter:5,kind:'resource tag'};shelf.add(tag);
-    const detailEl=document.createElement('article');detailEl.className='process-card resource-detail';detailEl.innerHTML=`<div class="card-detail" style="display:block"><div class="detail-label">RESOURCE / 资源档案</div><h2>${escape(r.title)}</h2><span class="pending">${escape(r.status||'待补充')}</span><div class="resource-symbol">${['[ / ]','{ + }','[ ≡ ]'][i]}</div><p>${escape(r.description)}</p>${(r.body||[]).map(t=>`<p>${escape(t)}</p>`).join('')}<p class="source-note">领取内容确定后再接入；私密源工程不自动对外提供。</p></div>`;const dg=new T.Group();const css=surface(detailEl);css.scale.setScalar(.0125);dg.add(css);dg.position.copy(shelf.position).add(vec(g.position.x,4,4));dg.visible=false;root.add(dg);const card={group:dg,el:detailEl,css,c:r,chapter:5,width:8,base:dg.position.clone(),baseQ:dg.quaternion.clone(),isResource:true};cards.push(card);const guidePositions=[];for(let k=0;k<72;k++)if(k%9<6){for(const a of [k/72*Math.PI*2,(k+1)/72*Math.PI*2])guidePositions.push(Math.cos(a),Math.sin(a),0);}
+    const detailEl=document.createElement('article');detailEl.className='process-card resource-detail';detailEl.setAttribute('aria-label',r.title+'资源说明');detailEl.innerHTML=resourceDetailHTML(r);const dg=new T.Group();const css=surface(detailEl);css.scale.setScalar(.0125);dg.add(css);dg.position.copy(shelf.position).add(vec(g.position.x,4,4));dg.visible=false;root.add(dg);const card={group:dg,el:detailEl,css,c:r,chapter:5,width:8,base:dg.position.clone(),baseQ:dg.quaternion.clone(),isResource:true};cards.push(card);const guidePositions=[];for(let k=0;k<72;k++)if(k%9<6){for(const a of [k/72*Math.PI*2,(k+1)/72*Math.PI*2])guidePositions.push(Math.cos(a),Math.sin(a),0);}
     const guideGeo=new T.BufferGeometry();guideGeo.setAttribute('position',new T.Float32BufferAttribute(guidePositions,3));
     const guide=new T.LineSegments(guideGeo,new T.LineBasicMaterial({color:0xd3e8f0,transparent:true,opacity:.6,depthWrite:false}));guide.name='First click reminder / '+r.kind;root.add(guide);
     const plate=new T.Mesh(new T.BoxGeometry(7.98,5.23,.10),frostedGlass({color:0xbacbd8,thickness:.18,roughness:.36,transmission:.9,envMapIntensity:.16}));plate.position.z=-.065;dg.add(plate);
