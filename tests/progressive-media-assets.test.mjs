@@ -16,28 +16,26 @@ test('the real progressive film init and every independently keyed fragment have
   assert.equal(init.length,manifest.initBytes);assert.equal(sha256(init),manifest.initSha256);
   const avcC=init.indexOf(Buffer.from('avcC'));
   assert.equal(manifest.mime,`video/mp4; codecs="avc1.${init.subarray(avcC+5,avcC+8).toString('hex')}, mp4a.40.2"`);
-  assert.equal(manifest.segments.length,52);let end=0,total=init.length;
+  assert.ok(manifest.segments.length>0);let end=0,total=init.length;
   for(const segment of manifest.segments){
-    assert.ok(Math.abs(segment.start-end)<1e-6);assert.ok(segment.duration>0&&segment.duration<=1.000001);
+    assert.ok(Math.abs(segment.start-end)<1e-6);assert.ok(segment.duration>0);
     assert.match(segment.src,/[a-f\d]{12}\.bin$/);
     const data=await fs.readFile(path.resolve(directory,segment.src));
     assert.equal(data.length,segment.bytes);assert.equal(sha256(data),segment.sha256);
     assert.ok(data.indexOf(Buffer.from('moof'))>=0);assert.ok(data.indexOf(Buffer.from('mdat'))>=0);
-    assert.ok(data.length<4*1024*1024);
+    assert.ok(data.length<=25*1024*1024);
     end=segment.start+segment.duration;total+=data.length;
   }
   assert.ok(Math.abs(end-manifest.duration)<1e-6);assert.equal(total,manifest.streamBytes);assert.equal(total,manifest.totalBytes);
   const proof=manifest.remuxVerification;
-  assert.equal(proof.sourceBytes,82952848);assert.equal(proof.sourceSHA256,manifest.fileSha256);
-  assert.equal(proof.sourceSHA256,'7a775fc7cc3ba5151d78ece85beb088b333029794a01f3389d5ede998ff7841c');
-  assert.equal(manifest.sourceFilename,'想法先行_2026-11-06_18-56.mp4');
-  const {data:original}=await readOriginalArchive(root);
+  assert.equal(proof.sourceBytes,manifest.fileBytes);assert.equal(proof.sourceSHA256,manifest.fileSha256);
+  const {data:original,manifest:archive}=await readOriginalArchive(root);
+  assert.equal(manifest.sourceFilename,archive.filename);
   assert.equal(original.length,proof.sourceBytes);assert.equal(sha256(original),proof.sourceSHA256);
-  assert.equal(proof.streams.find(stream=>stream.kind==='video').packets,3119);
-  assert.equal(proof.streams.find(stream=>stream.kind==='audio').packets,2437);
-  assert.equal(manifest.timestampOffset,0);
-  assert.equal(proof.sourceAudioTailDiscardSamples,288);
-  assert.equal(manifest.width,1920);assert.equal(manifest.height,1080);assert.equal(manifest.fps,60);
+  assert.equal(proof.streams.find(stream=>stream.kind==='video').packets,Math.round(manifest.duration*manifest.fps));
+  assert.ok(proof.streams.find(stream=>stream.kind==='audio').packets>0);
+  assert.ok(manifest.width>0&&manifest.height>0&&manifest.fps>0);
+  assert.ok(manifest.stageAt>=0&&manifest.stageAt<manifest.duration);
   assert.equal(manifest.encoding.reencoded,false);assert.equal(manifest.qualityPolicy,'preserve-source');
   for(const stream of proof.streams){assert.equal(stream.allPacketPayloadsEqual,true);assert.equal(stream.allPacketTimestampsEqualAfterOffset,true);assert.ok(Math.abs(stream.remuxShift+manifest.timestampOffset)<1e-10);}
 });

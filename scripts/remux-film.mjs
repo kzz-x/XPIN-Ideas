@@ -39,7 +39,7 @@ function comparePackets(original,fragmented){
 /** Repackage the approved H.264/AAC streams; never encode, trim or drop frames.
  * fMP4 has no edit list here. A measured common PTS/DTS displacement is undone
  * by the MSE timestampOffset, preserving negative DTS and AAC priming timing. */
-export async function remuxFilm(selectedRoot=defaultRoot,{ffmpeg='ffmpeg',ffprobe='ffprobe',sourceFile,segmentSeconds=1}={}){
+export async function remuxFilm(selectedRoot=defaultRoot,{ffmpeg='ffmpeg',ffprobe='ffprobe',sourceFile,segmentSeconds=1,stageAt}={}){
   if(!Number.isFinite(segmentSeconds)||segmentSeconds<=0||segmentSeconds>2)throw Error('segmentSeconds must be greater than zero and no more than two seconds');
   const root=path.resolve(selectedRoot),directory=path.join(root,'assets/media/film-hd'),preservedSource=path.join(root,'assets/media/film-hd.mp4'),source=sourceFile?path.resolve(sourceFile):await ensureOriginalFilm(root);
   const originalBytes=await fs.readFile(source),sourceHash=sha256(originalBytes),prefix='film-'+sourceHash.slice(0,12);
@@ -72,6 +72,9 @@ export async function remuxFilm(selectedRoot=defaultRoot,{ffmpeg='ffmpeg',ffprob
     }
     const manifestPath=path.join(directory,'manifest.json'),manifest=JSON.parse(await fs.readFile(manifestPath,'utf8'));
     const frameRate=Number(video.avg_frame_rate.split('/')[0])/Number(video.avg_frame_rate.split('/')[1]);
+    const stageCue=stageAt??manifest.stageAt;
+    if(!Number.isFinite(stageCue)||stageCue<0||stageCue>=Number(video.duration))throw Error('Confirm a --stage-at inside the replacement film duration');
+    manifest.stageAt=stageCue;
     manifest.version=3;manifest.label=`${video.height}p / ${frameRate} fps · 原始画质`;
     manifest.width=video.width;manifest.height=video.height;manifest.fps=frameRate;manifest.duration=Number(video.duration);
     manifest.sourceFilename=sourceFile?path.basename(source):(manifest.sourceFilename||path.basename(source));
@@ -106,7 +109,8 @@ if(process.argv[1]&&path.resolve(process.argv[1])===script){
     if(args[i]==='--root')root=value;
     else if(args[i]==='--source')options.sourceFile=value;
     else if(args[i]==='--segment-seconds')options.segmentSeconds=Number(value);
-    else throw Error('Usage: node scripts/remux-film.mjs [--root <site-root>] [--source <original.mp4>] [--segment-seconds <seconds>]');
+    else if(args[i]==='--stage-at')options.stageAt=Number(value);
+    else throw Error('Usage: node scripts/remux-film.mjs [--root <site-root>] [--source <original.mp4>] [--segment-seconds <seconds>] [--stage-at <seconds>]');
   }
   console.log(JSON.stringify(await remuxFilm(root,options),null,2));
 }

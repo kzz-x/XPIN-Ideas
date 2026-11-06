@@ -47,5 +47,5 @@ export function createCardMorph(el){
       revealTimer=setTimeout(()=>{if(token!==revealToken)return;finishTravel();el.classList.remove('reader-revealing');detail.style.transition='none';},200);
     }));
   }
-  return {prepare,update,commitReading,leaveReading,beginClose(){leaveReading();if(destination.tagName==='IMG'){travelingImage.src=destination.src;image.src=destination.src;}detail.scrollTop=0;},get progress(){return progress;},reset(){leaveReading();prepared=false;lastProgress=-1;update(0);}};
+  return {prepare,update,commitReading,leaveReading,beginClose(){leaveReading();travelingImage.src=image.currentSrc||image.src;detail.scrollTop=0;},get progress(){return progress;},reset(){leaveReading();prepared=false;lastProgress=-1;update(0);}};
 }

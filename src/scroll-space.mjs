@@ -4,6 +4,7 @@ import {createCardMorph} from './card-morph.mjs';
 import {resourcePhases,RESOURCE_DURATION,createTitleMotion,createEnding} from './scroll-motion.mjs';
 import * as T from 'three';
 import {frostedGlass,glassEdges} from './frosted-glass.mjs';
+import {screenLines} from './screen-lines.mjs';
 import {CSS3DObject} from 'three/addons/renderers/CSS3DRenderer.js';
 import {CHAPTERS,RESOURCES} from './content.mjs';
 import {createResourceShelf,createResourceModel} from './resource-models.mjs';
@@ -99,7 +100,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     if(!card.isResource){learnCardHint('opened');for(const c of cards)c.el.classList.remove('needs-open-hint');}
     onFocus(true);onSound('open');
   }
-  function close(){if(!focus)return;stopCardMedia(focus.el);focus.morph?.beginClose();restoreReading();focusGoal=0;backdrop.classList.remove('open');onSound('close');}
+  function close(){if(!focus)return;focus.morph?.beginClose();stopCardMedia(focus.el);restoreReading();focusGoal=0;backdrop.classList.remove('open');onSound('close');}
   function cancelFocus(){
     stopCardMedia(focus?.el);restoreReading();if(focus){focus.el.classList.remove('focused');focus.morph?.reset();focus.group.position.copy(focus.base);focus.group.quaternion.copy(focus.baseQ);focus.group.scale.setScalar(1);if(focus.isResource)focus.group.visible=false;}
     focus=null;focusAge=focusMix=focusGoal=0;backdrop.classList.remove('open');document.body.classList.remove('has-focus');onFocus(false);
@@ -214,9 +215,8 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
       const bodyGeometry=new T.BufferGeometry();bodyGeometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));bodyGeometry.setAttribute('normal',new T.Float32BufferAttribute(normals,3));bodyGeometry.computeBoundingSphere();
       const bodyMaterial=new T.MeshStandardMaterial({color:0x101113,metalness:.12,roughness:.78});
       const body=new T.Mesh(bodyGeometry,bodyMaterial);body.name='Opaque depth silhouette / one batched draw';body.castShadow=true;body.receiveShadow=true;g.add(body);
-      const edgeGeometry=new T.BufferGeometry();edgeGeometry.setAttribute('position',new T.Float32BufferAttribute(edgePositions,3));edgeGeometry.computeBoundingSphere();
-      const edgeMaterial=new T.LineBasicMaterial({color:0xdfe1e2,transparent:true,opacity:minor?.50:.71});
-      const outline=new T.LineSegments(edgeGeometry,edgeMaterial);outline.name='Structural edges / one batched draw';g.add(outline);root.add(g);
+      const outline=screenLines(T,edgePositions,{color:0xdfe1e2,opacity:minor?.50:.71}),edgeMaterial=outline.material;
+      outline.name='Structural edges / one batched draw';g.add(outline);root.add(g);
       placeLabel(`${minor?'DETAIL':'FIG'} ${String(i+1).padStart(2,'0')} / ${['OPTICS','SEQUENCE','ROUTING','STRUCTURE','ARCHIVE'][i]}`,minor?3.4:5.6,.36,{x:g.position.x,y:.34,z:g.position.z+(minor?1.95:3.05),chapter:i,kind:minor?'detail ID':'engineering ID',size:25,color:'#a6a9ae'});
       const record={group:g,z:g.position.z,bodyMaterial,edgeMaterial,mode:0,mix:0,hover:0,hoverGoal:0,minor,baseYaw:(minor?-.18:.24)*side};industrials.push(record);objects.push({group:g,z:g.position.z});
     }
@@ -364,6 +364,10 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
           if(!card.thumbFonts||Math.abs(Math.log(Math.max(.01,fontScale)/card.thumbFonts))>.08){card.thumbFonts=Math.max(.01,fontScale);
           card.el.style.setProperty('--thumb-title',Math.max(29,Math.min(innerWidth<700?100:60,14/Math.max(.08,fontScale)))+'px');card.el.style.setProperty('--thumb-meta',Math.max(20,Math.min(innerWidth<700?90:48,11.5/Math.max(.08,fontScale)))+'px');card.el.style.setProperty('--thumb-foot',Math.max(22,Math.min(innerWidth<700?95:50,12/Math.max(.08,fontScale)))+'px');}
           card.el.dataset.screenScale=screenScale.toFixed(4);card.readable=readable*nearContent;card.group.visible=card.group.visible&&card.readable>.01;card.el.style.opacity=String((1-fm*.9)*contentReveal*card.readable);
+          // A 1px DOM border shrinks below a pixel when its CSS3D plane tilts.
+          // Hold approximately one screen pixel without raising canvas cost.
+          const rule=Math.round(Math.min(8,Math.max(1,1/Math.max(.125,screenScale*ratio)))*4)/4;
+          if(card.ruleWidth!==rule){card.ruleWidth=rule;card.el.style.setProperty('--spatial-rule',rule+'px');}
           if(backing)backing.visible=card.readable>.5;if(card.frame)card.frame.visible=card.readable>.5;card.el.style.pointerEvents=focus||card.readable<.5?'none':'auto';card.css.element.style.pointerEvents=card.el.style.pointerEvents;card.el.tabIndex=card.readable>=.5?0:-1;
         }
       }

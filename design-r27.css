@@ -1,4 +1,6 @@
 /* Author copy: every card carries its chapter and local number. */
+.process-card:not(.focused) .card-preview .card-image{border-width:var(--spatial-rule,1px);box-sizing:border-box}
+.process-card:not(.focused).needs-open-hint::after{border-width:var(--spatial-rule,2px)}
 .process-card .card-preview .card-meta{font-size:min(var(--thumb-meta,24px),36px)}
 .process-card .card-preview h2{font-size:min(var(--thumb-title,32px),54px);overflow-wrap:anywhere}
 .card-detail .detail-label{line-height:1.6;letter-spacing:.04em}

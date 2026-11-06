@@ -1,9 +1,9 @@
 {
-  "bytes": 106046062,
-  "filmBytes": 82963414,
-  "nonFilmBytes": 23082648,
+  "bytes": 105277743,
+  "filmBytes": 82071301,
+  "nonFilmBytes": 23206442,
   "nonFilmLimitBytes": 32000000,
-  "fileCount": 252,
+  "fileCount": 254,
   "sourceFiles": [
     "assets/dot/dot-outline-r12.svg",
     "assets/dot/effects/horn-dissolve-math-r05.mjs",
@@ -56,6 +56,7 @@
     "assets/editorial/g1-kick.mp4",
     "assets/editorial/g1-material.webp",
     "assets/editorial/mood-catch.webp",
+    "assets/editorial/mood-cowboy-bebop.jpg",
     "assets/editorial/mood-monsters.webp",
     "assets/editorial/mood-rog.webp",
     "assets/editorial/pr-timeline.webp",
@@ -88,59 +89,59 @@
     "assets/media/bgm/stream/manifest.json",
     "assets/media/bgm/stream/outro.m4a",
     "assets/media/bgm/tank-b-loop.json",
-    "assets/media/film-hd/fragments/init-c70f102db926.bin",
-    "assets/media/film-hd/fragments/segment-000-288df0c1402e.bin",
-    "assets/media/film-hd/fragments/segment-001-285496a1a700.bin",
-    "assets/media/film-hd/fragments/segment-002-50e8f9efd0cb.bin",
-    "assets/media/film-hd/fragments/segment-003-43f72d41e127.bin",
-    "assets/media/film-hd/fragments/segment-004-4983b797b1f1.bin",
-    "assets/media/film-hd/fragments/segment-005-6cac3994758c.bin",
-    "assets/media/film-hd/fragments/segment-006-91d45599a533.bin",
-    "assets/media/film-hd/fragments/segment-007-84ac5b8289a9.bin",
-    "assets/media/film-hd/fragments/segment-008-32b248759822.bin",
-    "assets/media/film-hd/fragments/segment-009-6257e6585177.bin",
-    "assets/media/film-hd/fragments/segment-010-a3503fd02b88.bin",
-    "assets/media/film-hd/fragments/segment-011-e7b787f74c9d.bin",
-    "assets/media/film-hd/fragments/segment-012-4ccf533c5951.bin",
-    "assets/media/film-hd/fragments/segment-013-106c3d3a2a42.bin",
-    "assets/media/film-hd/fragments/segment-014-a4af99e66691.bin",
-    "assets/media/film-hd/fragments/segment-015-12297f8d1c3f.bin",
-    "assets/media/film-hd/fragments/segment-016-4aafd882520c.bin",
-    "assets/media/film-hd/fragments/segment-017-572247179223.bin",
-    "assets/media/film-hd/fragments/segment-018-3eef243bb2ea.bin",
-    "assets/media/film-hd/fragments/segment-019-88f98d936432.bin",
-    "assets/media/film-hd/fragments/segment-020-c718efeb9e5f.bin",
-    "assets/media/film-hd/fragments/segment-021-4458e73b3d04.bin",
-    "assets/media/film-hd/fragments/segment-022-78e62bfeb725.bin",
-    "assets/media/film-hd/fragments/segment-023-0f3555299526.bin",
-    "assets/media/film-hd/fragments/segment-024-91e43956e6d4.bin",
-    "assets/media/film-hd/fragments/segment-025-89d82a13ca1d.bin",
-    "assets/media/film-hd/fragments/segment-026-f3be0f4aa7fa.bin",
-    "assets/media/film-hd/fragments/segment-027-0162252df555.bin",
-    "assets/media/film-hd/fragments/segment-028-ccb27516a913.bin",
-    "assets/media/film-hd/fragments/segment-029-0310fdf577bb.bin",
-    "assets/media/film-hd/fragments/segment-030-ad5b5d40eafc.bin",
-    "assets/media/film-hd/fragments/segment-031-3c5ed0913642.bin",
-    "assets/media/film-hd/fragments/segment-032-a20684d54a39.bin",
-    "assets/media/film-hd/fragments/segment-033-074d988c06b9.bin",
-    "assets/media/film-hd/fragments/segment-034-b1ad8d8f9e3f.bin",
-    "assets/media/film-hd/fragments/segment-035-69ce35da45d5.bin",
-    "assets/media/film-hd/fragments/segment-036-c3538fe5cd20.bin",
-    "assets/media/film-hd/fragments/segment-037-2503d0d419b7.bin",
-    "assets/media/film-hd/fragments/segment-038-f730676dc21b.bin",
-    "assets/media/film-hd/fragments/segment-039-c48d12b01e9b.bin",
-    "assets/media/film-hd/fragments/segment-040-5b4370f4246e.bin",
-    "assets/media/film-hd/fragments/segment-041-f0b843835a80.bin",
-    "assets/media/film-hd/fragments/segment-042-0bc2d5393f6c.bin",
-    "assets/media/film-hd/fragments/segment-043-d520edbb9885.bin",
-    "assets/media/film-hd/fragments/segment-044-0658c515916e.bin",
-    "assets/media/film-hd/fragments/segment-045-6564a850f2dd.bin",
-    "assets/media/film-hd/fragments/segment-046-d6f24ad700d5.bin",
-    "assets/media/film-hd/fragments/segment-047-c5f88e90e048.bin",
-    "assets/media/film-hd/fragments/segment-048-da8ffd53fbb9.bin",
-    "assets/media/film-hd/fragments/segment-049-99aa1d1529f6.bin",
-    "assets/media/film-hd/fragments/segment-050-45dffb5a87a6.bin",
-    "assets/media/film-hd/fragments/segment-051-216a0be91354.bin",
+    "assets/media/film-hd/fragments/init-418d56d6e09e.bin",
+    "assets/media/film-hd/fragments/segment-000-4926cdb55ec5.bin",
+    "assets/media/film-hd/fragments/segment-001-dd19c314c4dd.bin",
+    "assets/media/film-hd/fragments/segment-002-a10330b5c441.bin",
+    "assets/media/film-hd/fragments/segment-003-6b09081d4cc3.bin",
+    "assets/media/film-hd/fragments/segment-004-d309a45472d7.bin",
+    "assets/media/film-hd/fragments/segment-005-935847da45eb.bin",
+    "assets/media/film-hd/fragments/segment-006-379899ef8b5d.bin",
+    "assets/media/film-hd/fragments/segment-007-5e0794566504.bin",
+    "assets/media/film-hd/fragments/segment-008-6d76a6570ee3.bin",
+    "assets/media/film-hd/fragments/segment-009-3119faeb1f5e.bin",
+    "assets/media/film-hd/fragments/segment-010-548ed0fed5db.bin",
+    "assets/media/film-hd/fragments/segment-011-486637c6786a.bin",
+    "assets/media/film-hd/fragments/segment-012-ff964a94867a.bin",
+    "assets/media/film-hd/fragments/segment-013-9b653a90e263.bin",
+    "assets/media/film-hd/fragments/segment-014-63fc2b311017.bin",
+    "assets/media/film-hd/fragments/segment-015-6fbbebffa60f.bin",
+    "assets/media/film-hd/fragments/segment-016-f9264ea09128.bin",
+    "assets/media/film-hd/fragments/segment-017-d122f56a077b.bin",
+    "assets/media/film-hd/fragments/segment-018-4100498ced44.bin",
+    "assets/media/film-hd/fragments/segment-019-80463422c90e.bin",
+    "assets/media/film-hd/fragments/segment-020-fafa6f6bcb42.bin",
+    "assets/media/film-hd/fragments/segment-021-9c2fb7f11fb7.bin",
+    "assets/media/film-hd/fragments/segment-022-b0928fed91ef.bin",
+    "assets/media/film-hd/fragments/segment-023-7dba06d059db.bin",
+    "assets/media/film-hd/fragments/segment-024-169479d1c53b.bin",
+    "assets/media/film-hd/fragments/segment-025-dc1d3a1bb660.bin",
+    "assets/media/film-hd/fragments/segment-026-628708b9df15.bin",
+    "assets/media/film-hd/fragments/segment-027-3960ffb3dbdf.bin",
+    "assets/media/film-hd/fragments/segment-028-6cdaa29f2c12.bin",
+    "assets/media/film-hd/fragments/segment-029-fdd23301d74b.bin",
+    "assets/media/film-hd/fragments/segment-030-0293197d65f9.bin",
+    "assets/media/film-hd/fragments/segment-031-97b4e2b09fda.bin",
+    "assets/media/film-hd/fragments/segment-032-16b2d0ccb8d3.bin",
+    "assets/media/film-hd/fragments/segment-033-15dc69a4c293.bin",
+    "assets/media/film-hd/fragments/segment-034-b75c572468f2.bin",
+    "assets/media/film-hd/fragments/segment-035-93e1b35245fc.bin",
+    "assets/media/film-hd/fragments/segment-036-1138deda2030.bin",
+    "assets/media/film-hd/fragments/segment-037-9bc20478187a.bin",
+    "assets/media/film-hd/fragments/segment-038-1bf85698196e.bin",
+    "assets/media/film-hd/fragments/segment-039-87e0324abdad.bin",
+    "assets/media/film-hd/fragments/segment-040-a64bad81d6fd.bin",
+    "assets/media/film-hd/fragments/segment-041-53ce433acc41.bin",
+    "assets/media/film-hd/fragments/segment-042-c519230ec45f.bin",
+    "assets/media/film-hd/fragments/segment-043-b293246f2250.bin",
+    "assets/media/film-hd/fragments/segment-044-7bd6f5495a68.bin",
+    "assets/media/film-hd/fragments/segment-045-0f531eabbf7b.bin",
+    "assets/media/film-hd/fragments/segment-046-77cec4d6a8a6.bin",
+    "assets/media/film-hd/fragments/segment-047-6f8d1a9d8358.bin",
+    "assets/media/film-hd/fragments/segment-048-c43e366c03e8.bin",
+    "assets/media/film-hd/fragments/segment-049-7ac9516c7889.bin",
+    "assets/media/film-hd/fragments/segment-050-c90a08152fbe.bin",
+    "assets/media/film-hd/fragments/segment-051-b1a78ccd7ecc.bin",
     "assets/media/film-hd/manifest.json",
     "assets/media/film-preview.jpg",
     "assets/media/sfx/CREDITS.md",
@@ -261,6 +262,7 @@
     "src/return-entry.mjs",
     "src/sand-sound.mjs",
     "src/scene-warm.mjs",
+    "src/screen-lines.mjs",
     "src/scroll-motion.mjs",
     "src/scroll-space.mjs",
     "src/sound-design.mjs",
@@ -423,7 +425,7 @@
     },
     {
       "path": "assets/editorial/CREDITS.md",
-      "bytes": 674
+      "bytes": 957
     },
     {
       "path": "assets/editorial/dot-design-process.webp",
@@ -472,6 +474,10 @@
     {
       "path": "assets/editorial/mood-catch.webp",
       "bytes": 75594
+    },
+    {
+      "path": "assets/editorial/mood-cowboy-bebop.jpg",
+      "bytes": 118396
     },
     {
       "path": "assets/editorial/mood-monsters.webp",
@@ -606,216 +612,216 @@
       "bytes": 7316
     },
     {
-      "path": "assets/media/film-hd/fragments/init-c70f102db926.bin",
+      "path": "assets/media/film-hd/fragments/init-418d56d6e09e.bin",
       "bytes": 1380
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-000-288df0c1402e.bin",
-      "bytes": 1661494
+      "path": "assets/media/film-hd/fragments/segment-000-4926cdb55ec5.bin",
+      "bytes": 1663652
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-001-285496a1a700.bin",
-      "bytes": 1758632
+      "path": "assets/media/film-hd/fragments/segment-001-dd19c314c4dd.bin",
+      "bytes": 1741737
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-002-50e8f9efd0cb.bin",
-      "bytes": 2016095
+      "path": "assets/media/film-hd/fragments/segment-002-a10330b5c441.bin",
+      "bytes": 2158544
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-003-43f72d41e127.bin",
-      "bytes": 2308670
+      "path": "assets/media/film-hd/fragments/segment-003-6b09081d4cc3.bin",
+      "bytes": 2211411
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-004-4983b797b1f1.bin",
-      "bytes": 1910279
+      "path": "assets/media/film-hd/fragments/segment-004-d309a45472d7.bin",
+      "bytes": 2133910
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-005-6cac3994758c.bin",
-      "bytes": 2196090
+      "path": "assets/media/film-hd/fragments/segment-005-935847da45eb.bin",
+      "bytes": 1880617
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-006-91d45599a533.bin",
-      "bytes": 2002819
+      "path": "assets/media/film-hd/fragments/segment-006-379899ef8b5d.bin",
+      "bytes": 2046299
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-007-84ac5b8289a9.bin",
-      "bytes": 1931792
+      "path": "assets/media/film-hd/fragments/segment-007-5e0794566504.bin",
+      "bytes": 1957053
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-008-32b248759822.bin",
-      "bytes": 2503423
+      "path": "assets/media/film-hd/fragments/segment-008-6d76a6570ee3.bin",
+      "bytes": 2469693
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-009-6257e6585177.bin",
-      "bytes": 2589526
+      "path": "assets/media/film-hd/fragments/segment-009-3119faeb1f5e.bin",
+      "bytes": 2587045
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-010-a3503fd02b88.bin",
-      "bytes": 2089833
+      "path": "assets/media/film-hd/fragments/segment-010-548ed0fed5db.bin",
+      "bytes": 2087051
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-011-e7b787f74c9d.bin",
-      "bytes": 1804229
+      "path": "assets/media/film-hd/fragments/segment-011-486637c6786a.bin",
+      "bytes": 1895157
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-012-4ccf533c5951.bin",
-      "bytes": 1541656
+      "path": "assets/media/film-hd/fragments/segment-012-ff964a94867a.bin",
+      "bytes": 1639477
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-013-106c3d3a2a42.bin",
-      "bytes": 1450151
+      "path": "assets/media/film-hd/fragments/segment-013-9b653a90e263.bin",
+      "bytes": 1762429
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-014-a4af99e66691.bin",
-      "bytes": 2059333
+      "path": "assets/media/film-hd/fragments/segment-014-63fc2b311017.bin",
+      "bytes": 1715644
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-015-12297f8d1c3f.bin",
-      "bytes": 2379141
+      "path": "assets/media/film-hd/fragments/segment-015-6fbbebffa60f.bin",
+      "bytes": 2313652
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-016-4aafd882520c.bin",
-      "bytes": 2094018
+      "path": "assets/media/film-hd/fragments/segment-016-f9264ea09128.bin",
+      "bytes": 2010443
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-017-572247179223.bin",
-      "bytes": 1853157
+      "path": "assets/media/film-hd/fragments/segment-017-d122f56a077b.bin",
+      "bytes": 1782684
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-018-3eef243bb2ea.bin",
-      "bytes": 1723024
+      "path": "assets/media/film-hd/fragments/segment-018-4100498ced44.bin",
+      "bytes": 1757105
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-019-88f98d936432.bin",
-      "bytes": 2287112
+      "path": "assets/media/film-hd/fragments/segment-019-80463422c90e.bin",
+      "bytes": 2334377
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-020-c718efeb9e5f.bin",
-      "bytes": 1831254
+      "path": "assets/media/film-hd/fragments/segment-020-fafa6f6bcb42.bin",
+      "bytes": 1835611
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-021-4458e73b3d04.bin",
-      "bytes": 1715618
+      "path": "assets/media/film-hd/fragments/segment-021-9c2fb7f11fb7.bin",
+      "bytes": 1752413
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-022-78e62bfeb725.bin",
-      "bytes": 1780570
+      "path": "assets/media/film-hd/fragments/segment-022-b0928fed91ef.bin",
+      "bytes": 1775906
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-023-0f3555299526.bin",
-      "bytes": 1988717
+      "path": "assets/media/film-hd/fragments/segment-023-7dba06d059db.bin",
+      "bytes": 2035115
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-024-91e43956e6d4.bin",
-      "bytes": 2665997
+      "path": "assets/media/film-hd/fragments/segment-024-169479d1c53b.bin",
+      "bytes": 2527518
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-025-89d82a13ca1d.bin",
-      "bytes": 1498031
+      "path": "assets/media/film-hd/fragments/segment-025-dc1d3a1bb660.bin",
+      "bytes": 1534728
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-026-f3be0f4aa7fa.bin",
-      "bytes": 2126637
+      "path": "assets/media/film-hd/fragments/segment-026-628708b9df15.bin",
+      "bytes": 2122644
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-027-0162252df555.bin",
-      "bytes": 1842831
+      "path": "assets/media/film-hd/fragments/segment-027-3960ffb3dbdf.bin",
+      "bytes": 1846017
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-028-ccb27516a913.bin",
-      "bytes": 1969585
+      "path": "assets/media/film-hd/fragments/segment-028-6cdaa29f2c12.bin",
+      "bytes": 1988081
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-029-0310fdf577bb.bin",
-      "bytes": 1914260
+      "path": "assets/media/film-hd/fragments/segment-029-fdd23301d74b.bin",
+      "bytes": 1934528
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-030-ad5b5d40eafc.bin",
-      "bytes": 1994018
+      "path": "assets/media/film-hd/fragments/segment-030-0293197d65f9.bin",
+      "bytes": 2036905
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-031-3c5ed0913642.bin",
-      "bytes": 2078517
+      "path": "assets/media/film-hd/fragments/segment-031-97b4e2b09fda.bin",
+      "bytes": 2244250
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-032-a20684d54a39.bin",
-      "bytes": 2026548
+      "path": "assets/media/film-hd/fragments/segment-032-16b2d0ccb8d3.bin",
+      "bytes": 1857304
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-033-074d988c06b9.bin",
-      "bytes": 1863667
+      "path": "assets/media/film-hd/fragments/segment-033-15dc69a4c293.bin",
+      "bytes": 1804050
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-034-b1ad8d8f9e3f.bin",
-      "bytes": 1907290
+      "path": "assets/media/film-hd/fragments/segment-034-b75c572468f2.bin",
+      "bytes": 2088832
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-035-69ce35da45d5.bin",
-      "bytes": 1862442
+      "path": "assets/media/film-hd/fragments/segment-035-93e1b35245fc.bin",
+      "bytes": 1883033
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-036-c3538fe5cd20.bin",
-      "bytes": 2063624
+      "path": "assets/media/film-hd/fragments/segment-036-1138deda2030.bin",
+      "bytes": 1922010
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-037-2503d0d419b7.bin",
-      "bytes": 2079981
+      "path": "assets/media/film-hd/fragments/segment-037-9bc20478187a.bin",
+      "bytes": 2000442
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-038-f730676dc21b.bin",
-      "bytes": 1932237
+      "path": "assets/media/film-hd/fragments/segment-038-1bf85698196e.bin",
+      "bytes": 1927574
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-039-c48d12b01e9b.bin",
-      "bytes": 1358245
+      "path": "assets/media/film-hd/fragments/segment-039-87e0324abdad.bin",
+      "bytes": 1346288
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-040-5b4370f4246e.bin",
-      "bytes": 358734
+      "path": "assets/media/film-hd/fragments/segment-040-a64bad81d6fd.bin",
+      "bytes": 289656
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-041-f0b843835a80.bin",
-      "bytes": 364718
+      "path": "assets/media/film-hd/fragments/segment-041-53ce433acc41.bin",
+      "bytes": 287412
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-042-0bc2d5393f6c.bin",
-      "bytes": 355222
+      "path": "assets/media/film-hd/fragments/segment-042-c519230ec45f.bin",
+      "bytes": 289677
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-043-d520edbb9885.bin",
-      "bytes": 360592
+      "path": "assets/media/film-hd/fragments/segment-043-b293246f2250.bin",
+      "bytes": 287556
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-044-0658c515916e.bin",
-      "bytes": 356898
+      "path": "assets/media/film-hd/fragments/segment-044-7bd6f5495a68.bin",
+      "bytes": 289961
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-045-6564a850f2dd.bin",
-      "bytes": 356558
+      "path": "assets/media/film-hd/fragments/segment-045-0f531eabbf7b.bin",
+      "bytes": 290009
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-046-d6f24ad700d5.bin",
-      "bytes": 356890
+      "path": "assets/media/film-hd/fragments/segment-046-77cec4d6a8a6.bin",
+      "bytes": 289239
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-047-c5f88e90e048.bin",
-      "bytes": 357270
+      "path": "assets/media/film-hd/fragments/segment-047-6f8d1a9d8358.bin",
+      "bytes": 287559
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-048-da8ffd53fbb9.bin",
-      "bytes": 360854
+      "path": "assets/media/film-hd/fragments/segment-048-c43e366c03e8.bin",
+      "bytes": 289848
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-049-99aa1d1529f6.bin",
-      "bytes": 360088
+      "path": "assets/media/film-hd/fragments/segment-049-7ac9516c7889.bin",
+      "bytes": 286168
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-050-45dffb5a87a6.bin",
-      "bytes": 359763
+      "path": "assets/media/film-hd/fragments/segment-050-c90a08152fbe.bin",
+      "bytes": 287994
     },
     {
-      "path": "assets/media/film-hd/fragments/segment-051-216a0be91354.bin",
-      "bytes": 353904
+      "path": "assets/media/film-hd/fragments/segment-051-b1a78ccd7ecc.bin",
+      "bytes": 283613
     },
     {
       "path": "assets/media/film-hd/manifest.json",
@@ -1095,11 +1101,11 @@
     },
     {
       "path": "src/card-media.mjs",
-      "bytes": 3034
+      "bytes": 3529
     },
     {
       "path": "src/card-morph.mjs",
-      "bytes": 5082
+      "bytes": 5035
     },
     {
       "path": "src/chat-r07.mjs",
@@ -1115,7 +1121,7 @@
     },
     {
       "path": "src/content.mjs",
-      "bytes": 35457
+      "bytes": 35833
     },
     {
       "path": "src/dot-foreground.mjs",
@@ -1147,7 +1153,7 @@
     },
     {
       "path": "src/frosted-glass.mjs",
-      "bytes": 1835
+      "bytes": 1873
     },
     {
       "path": "src/games-cube.mjs",
@@ -1242,12 +1248,16 @@
       "bytes": 2175
     },
     {
+      "path": "src/screen-lines.mjs",
+      "bytes": 3849
+    },
+    {
       "path": "src/scroll-motion.mjs",
       "bytes": 4337
     },
     {
       "path": "src/scroll-space.mjs",
-      "bytes": 43477
+      "bytes": 43678
     },
     {
       "path": "src/sound-design.mjs",
@@ -1279,7 +1289,7 @@
     },
     {
       "path": "styles-combined.css",
-      "bytes": 66789
+      "bytes": 66992
     }
   ]
 }

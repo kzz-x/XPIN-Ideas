@@ -10,9 +10,9 @@ export const CHAPTERS = [
         "id": "idea-style",
         "title": "这条视频是从音乐出发的",
         "subtitle": "看清想法",
-        "image": "./assets/editorial/mood-catch.webp",
+        "image": "./assets/editorial/mood-cowboy-bebop.jpg",
         "body": [
-          "我最先做的，是在 PR 里把音乐剪到大概 45 秒。然后反复听，想这段音乐适合配什么画面。",
+          "这条视频的原曲是《星际牛仔》（Cowboy Bebop）的片头曲《Tank!》。我最先做的，是在 PR 里把音乐剪到大概 45 秒。然后反复听，想这段音乐适合配什么画面。",
           "它给我的感觉很适合做产品的英雄亮相。所以我先顺着这个感觉去找参考图和视频，把喜欢的构图、灯光、材质，还有运动方式放在一起，做成情绪板。",
           "找参考的时候，我会分别看它们哪里有用。有的图是光影好，有的视频是节奏好，还有的只是某一个转场值得借鉴。把这些放在一起，慢慢就能看清楚，我到底想做一个什么样的片子。",
           "这些参考也要给 AI 看。只说“要高级一点”“要有科技感”，它和我脑子里想的东西可能差得很远。有了图，至少我们可以指着同一个画面讨论：我想要的是这个轮廓、这个明暗关系，还是这个运动的感觉。",
@@ -24,8 +24,16 @@ export const CHAPTERS = [
         "media": [
           {
             "kind": "image",
-            "src": "./assets/editorial/mood-catch.webp",
+            "src": "./assets/editorial/mood-cowboy-bebop.jpg",
             "after": 0,
+            "caption": "《星际牛仔》片头关键帧 · 原曲来自 OP《Tank!》",
+            "width": 1080,
+            "height": 521
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/mood-catch.webp",
+            "after": 1,
             "caption": "《Catch Me If You Can》片头 · 爵士乐与图形节奏参考",
             "width": 1080,
             "height": 608

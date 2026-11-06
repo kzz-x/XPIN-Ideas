@@ -6,7 +6,7 @@ export function mediaFigure(item, index) {
   const caption = escape(item.caption);
   let content;
   if (item.kind === 'video') {
-    content = `<video controls playsinline preload="none"${dimensions(item)} data-media-poster="${escape(item.poster)}" data-media-src="${escape(item.src)}" aria-label="${caption}"></video>`;
+    content = `<video controls muted playsinline preload="none"${dimensions(item)} data-media-poster="${escape(item.poster)}" data-media-src="${escape(item.src)}" aria-label="${caption}"></video>`;
   } else {
     content = `<img data-media-src="${escape(item.src)}"${dimensions(item)} alt="${caption}" decoding="async">`;
   }
@@ -24,6 +24,7 @@ export function prepareCardMedia(element) {
   observers.get(element)?.disconnect();
   const detail = element.querySelector('.card-detail');
   const activate = node => {
+    if (node.tagName === 'VIDEO') { node.defaultMuted = true; node.muted = true; }
     if (node.dataset.mediaPoster) node.poster = node.dataset.mediaPoster;
     if (node.dataset.mediaSrc && !node.hasAttribute('src')) node.src = node.dataset.mediaSrc;
   };
@@ -55,8 +56,16 @@ export function stopCardMedia(element) {
 }
 
 export function bindCardMedia(element) {
-  element.querySelectorAll('video').forEach(video => video.addEventListener('loadedmetadata', () => {
+  element.querySelectorAll('.card-detail video').forEach(video => {
+    video.defaultMuted = true; video.muted = true;
+    // Article clips are silent references, including after native controls,
+    // fullscreen, or reuse of a previously loaded element.
+    const keepSilent = () => { if (!video.muted) video.muted = true; };
+    for (const event of ['play','playing','volumechange']) video.addEventListener(event, keepSilent);
+    video.addEventListener('loadedmetadata', () => {
+    keepSilent();
     const at = Number(video.dataset.resumeTime || 0);
     if (at > 0 && at < video.duration - .1) video.currentTime = at;
-  }));
+    });
+  });
 }
