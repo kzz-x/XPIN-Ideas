@@ -1,5 +1,4 @@
-// Chapter titles and complete card copy supplied by the author on 2026-11-06.
-// Existing archive artwork and provenance are retained.
+// Author copy with media selected from local process archives, 2026-11-06.
 export const CHAPTERS = [
   {
     "title": "看清想法",
@@ -11,7 +10,7 @@ export const CHAPTERS = [
         "id": "idea-style",
         "title": "这条视频是从音乐出发的",
         "subtitle": "看清想法",
-        "image": "./assets/process/P005.jpg",
+        "image": "./assets/editorial/mood-catch.webp",
         "body": [
           "我最先做的，是在 PR 里把音乐剪到大概 45 秒。然后反复听，想这段音乐适合配什么画面。",
           "它给我的感觉很适合做产品的英雄亮相。所以我先顺着这个感觉去找参考图和视频，把喜欢的构图、灯光、材质，还有运动方式放在一起，做成情绪板。",
@@ -19,16 +18,35 @@ export const CHAPTERS = [
           "这些参考也要给 AI 看。只说“要高级一点”“要有科技感”，它和我脑子里想的东西可能差得很远。有了图，至少我们可以指着同一个画面讨论：我想要的是这个轮廓、这个明暗关系，还是这个运动的感觉。",
           "[图片占位：音乐对应的情绪板]"
         ],
-        "sourceNote": "历史档案 P005 · 视觉锚点参考；不是当前网站的运行截图。",
         "number": 1,
         "chapterTitle": "看清想法",
-        "label": "01.01 / 看清想法"
+        "label": "01.01 / 看清想法",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/mood-catch.webp",
+            "after": 0,
+            "caption": "《Catch Me If You Can》片头 · 爵士乐与图形节奏参考"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/mood-rog.webp",
+            "after": 2,
+            "caption": "ROG 实验室 · 空间、背光与产品亮相参考"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/mood-monsters.webp",
+            "after": 4,
+            "caption": "《Monsters, Inc.》片头 · 形状组装与运动节奏参考"
+          }
+        ]
       },
       {
         "id": "idea-type",
         "title": "想清楚这条视频里要放什么",
         "subtitle": "看清想法",
-        "image": "./assets/process/P004.jpg",
+        "image": "./assets/editorial/style-products.webp",
         "body": [
           "接下来才是考虑，四个产品分别怎么出现。",
           "SU7、G1、Vision Pro 和 Rubin，需要分别考虑适合怎样的展示方式。比如 SU7 可以展示车身、轮廓和运动；G1 可以通过动作表现机器人的状态；Rubin 可以从一颗芯片，逐步看到板卡、机架和集群。Dot 则是另外一个角色，可以有自己的表情和性格，也可以在不同段落之间穿梭。",
@@ -36,16 +54,35 @@ export const CHAPTERS = [
           "不过，这里也是我后来反思比较多的地方。我一开始想塞太多东西，风格想试，工具也想试，觉得应该都能很快做出来。结果任务越铺越开，中间还一直改主意，最后每件事都容易做不到位。",
           "所以我现在会先看，这个画面在片子里有没有必要，它能不能接上前后。如果只是因为某个效果看起来很好玩，就想把它塞进去，我会先记下来，不一定放进这一条。"
         ],
-        "sourceNote": "历史档案 P004 · 排版与画面方向参考。",
         "number": 2,
         "chapterTitle": "看清想法",
-        "label": "01.02 / 看清想法"
+        "label": "01.02 / 看清想法",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/style-products.webp",
+            "after": 0,
+            "caption": "产品与动词 · SEE / MOVE / DRIVE 的画面方向"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/style-drive.webp",
+            "after": 2,
+            "caption": "SU7 · DRIVE 印刷质感视觉锚点"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/style-move.webp",
+            "after": 3,
+            "caption": "G1 · 让动作进入图形化构图"
+          }
+        ]
       },
       {
         "id": "idea-dot",
         "title": "把想法细化成每个镜头",
         "subtitle": "看清想法",
-        "image": "./assets/process/P020.webp",
+        "image": "./assets/editorial/pr-timeline.webp",
         "body": [
           "有了大致方向，我就回到 PR 里做分镜。",
           "我的做法很简单：在视频轨道上放文字图层，一边听音乐，一边按节奏把文字图层切成很多小段。然后再一点点听，在每一段里打字，写这里准备放什么画面。",
@@ -54,10 +91,30 @@ export const CHAPTERS = [
           "然后再补图片分镜，把关键画面的构图、产品位置、明暗关系和大致风格确定下来。动态分镜帮我看节奏，图片分镜帮我看画面。做到这一步再开始制作，后面讨论起来会具体很多。",
           "[图片或视频占位：PR 文字动态分镜与图片分镜]"
         ],
-        "sourceNote": "历史档案 P020 · 用户认可的生成参考图，属于设计目标。",
         "number": 3,
         "chapterTitle": "看清想法",
-        "label": "01.03 / 看清想法"
+        "label": "01.03 / 看清想法",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/pr-timeline.webp",
+            "after": 0,
+            "caption": "PR 真实时间线 · 先切出文字图层与音乐段落"
+          },
+          {
+            "kind": "video",
+            "src": "./assets/editorial/pr-animatic.mp4",
+            "poster": "./assets/editorial/pr-animatic-poster.webp",
+            "after": 4,
+            "caption": "文字动态分镜 · 51.98 秒原始预演"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/storyboard.webp",
+            "after": 6,
+            "caption": "图片分镜 · 前 12 秒早期概念草稿（含 Spark 旧方向）"
+          }
+        ]
       }
     ]
   },
@@ -71,11 +128,7 @@ export const CHAPTERS = [
         "id": "steps-timeline",
         "title": "搞清楚每一步要得到什么",
         "subtitle": "组织步骤",
-        "image": "./assets/process/P001.webp",
-        "images": [
-          "./assets/process/P001.webp",
-          "./assets/process/P002.webp"
-        ],
+        "image": "./assets/editorial/rubin-board.webp",
         "body": [
           "开始做之前，我会先把眼前这一步的目标说清楚。现在是在找参考，还是需要生成一张参考图？有没有能直接用的模型、动作库或工具？这一轮要看的是造型、动作，还是最终的材质效果？",
           "如果这些混在一起，我很容易一边让 AI 做模型，一边又改画风、改镜头。做到最后，看起来什么都在动，但很难判断到底哪一步出了问题。",
@@ -89,16 +142,36 @@ export const CHAPTERS = [
           "这个尝试我觉得还不错，也值得留下来。后面别的角色如果有类似需求，就可以从这里继续改。当然，遇到具体镜头还是要另外调整，像后来舞台上的吹号动作，就没有靠这套动作库直接解决。",
           "[视频占位：Dot 球体动作库预览]"
         ],
-        "sourceNote": "历史档案 P001、P002 · 真实 PR 操作截图；按过程顺序展示，不是成片前后对照。",
         "number": 1,
         "chapterTitle": "组织步骤",
-        "label": "02.01 / 组织步骤"
+        "label": "02.01 / 组织步骤",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/rubin-board.webp",
+            "after": 0,
+            "caption": "Rubin 板卡 · 官方参考与 v2 / v3 建模候选对照"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/rubin-die.webp",
+            "after": 6,
+            "caption": "Rubin 封装 · 官方参考与 V3 / V4 候选对照"
+          },
+          {
+            "kind": "interactive",
+            "src": "./assets/editorial/dot-motion.html",
+            "poster": "./assets/editorial/dot-motion.webp",
+            "after": 11,
+            "caption": "Dot 球体动作原型 · 本轮从保留的 HTML 补拍"
+          }
+        ]
       },
       {
         "id": "steps-depth",
         "title": "先验证能不能做",
         "subtitle": "组织步骤",
-        "image": "./assets/process/P023.jpg",
+        "image": "./assets/editorial/g1-collision.webp",
         "body": [
           "G1 的部分，我先做的是骨骼绑定和动作测试。",
           "模型从官方的 URDF、STL 资料转到 Blender，再去绑定骨骼，尝试接上现成的动作。先拿正踢、拳击、回旋踢这些动作来测，看看它到底能不能动，动起来像不像那么回事。",
@@ -107,16 +180,37 @@ export const CHAPTERS = [
           "这个“可以用”，也是针对当时要用的镜头来说。换一个动作、换一个机位，还得重新看。先做测试的好处，就是把这些问题提前暴露出来，不用做到最后才发现整个动作不成立。",
           "[视频占位：G1 骨骼与武打动作测试]"
         ],
-        "sourceNote": "历史档案 P023 · v12 实际轻量候选帧，输出 126f / 2.100s；不表示整段动画已通过验收。",
         "number": 2,
         "chapterTitle": "组织步骤",
-        "label": "02.02 / 组织步骤"
+        "label": "02.02 / 组织步骤",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/g1-collision.webp",
+            "after": 0,
+            "caption": "G1 · 左手穿头 V2 / V3 同时间点修复对照"
+          },
+          {
+            "kind": "video",
+            "src": "./assets/editorial/g1-boxing.mp4",
+            "poster": "./assets/editorial/g1-boxing-poster.webp",
+            "after": 3,
+            "caption": "G1 · 低清白模拳击动作测试"
+          },
+          {
+            "kind": "video",
+            "src": "./assets/editorial/g1-kick.mp4",
+            "poster": "./assets/editorial/g1-kick-poster.webp",
+            "after": 6,
+            "caption": "G1 · 右侧踢动作筛选预览"
+          }
+        ]
       },
       {
         "id": "steps-repair",
         "title": "测试 SU7 和 G1 的风格化渲染",
         "subtitle": "组织步骤",
-        "image": "./assets/process/P029.jpg",
+        "image": "./assets/editorial/su7-halftone.webp",
         "body": [
           "动作能做以后，还要看模型换一种画风能不能成立。我拿 SU7 和 G1 做了风格化渲染测试。",
           "SU7 有一轮保留了比较多的车身颜色、内部结构线和写实高光，结果细节都挤在一起，主体反而不清楚。后来慢慢收成黑色剪影、比较粗的外轮廓、少量结构线，玻璃也压暗，再用半调和硬一些的扫光去带出形体。到这一步，我才觉得大概的感觉对了。",
@@ -124,10 +218,29 @@ export const CHAPTERS = [
           "所以这一步我想确认的是：这个模型适不适合这套画风，产品还认不认得出来，放进整条片子里搭不搭。测试图好看，不代表放到镜头里就一定合适，还是要带回视频里看。",
           "[图片占位：SU7 与 G1 风格化渲染对比]"
         ],
-        "sourceNote": "历史档案 P029 · 真实局部修正帧；这里不与其他时间点拼成严格前后对照。",
         "number": 3,
         "chapterTitle": "组织步骤",
-        "label": "02.03 / 组织步骤"
+        "label": "02.03 / 组织步骤",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/su7-halftone.webp",
+            "after": 0,
+            "caption": "SU7 · 黑剪影与法线半调光影对照"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/g1-material.webp",
+            "after": 3,
+            "caption": "G1 · 同机位工业金属材质小样"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/style-move.webp",
+            "after": 5,
+            "caption": "G1 · 图形化着色与动作合成"
+          }
+        ]
       }
     ]
   },
@@ -141,7 +254,7 @@ export const CHAPTERS = [
         "id": "tools-browser",
         "title": "按这一段画面需要什么来选",
         "subtitle": "选择工具",
-        "image": "./assets/process/P034.webp",
+        "image": "./assets/editorial/dot-render-compare.webp",
         "body": [
           "这次不同的部分，我没有都用同一个软件完成。",
           "需要更认真地处理光影、材质，或者希望镜头和模型保持稳定可控的地方，我会考虑 Blender，用它做离线渲染。需要快速看效果、调参数，或者希望画面能够交互的地方，就可以用 Three.js、HTML 这些方式。",
@@ -150,16 +263,36 @@ export const CHAPTERS = [
           "有时候想要一个比较写实的光影和材质效果，也没必要一开始就硬上 Blender，把每个材质都调到底。可以先在 Blender 里把模型、机位和运动关系做好，用白模试一轮生成，看看结果值不值得继续。",
           "不过这条路也要看具体要求。Seedance 生成出来的画面，可能会改变机位、动作，甚至产品的结构。如果这个镜头要求这些东西必须准确保留，我就不能只因为某一帧漂亮，就把它当成已经解决了。还是得看完整段落，再决定继续生成，还是回到更可控的做法。"
         ],
-        "sourceNote": "历史档案 P034 · 左为概念参考，右为真实浏览器候选；两者不是同条件实验，也不是当前五关验收结果。",
         "number": 1,
         "chapterTitle": "选择工具",
-        "label": "03.01 / 选择工具"
+        "label": "03.01 / 选择工具",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/dot-render-compare.webp",
+            "after": 0,
+            "caption": "Dot · 参考目标与 Blender 候选画面对照"
+          },
+          {
+            "kind": "video",
+            "src": "./assets/editorial/su7-seedance.mp4",
+            "poster": "./assets/editorial/su7-seedance-poster.webp",
+            "after": 4,
+            "caption": "SU7 · 用户保留的 Seedance 车载视角生成片段"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/style-move.webp",
+            "after": 6,
+            "caption": "G1 · 原模型上的图形化着色结果"
+          }
+        ]
       },
       {
         "id": "tools-material",
         "title": "没有锤子就自己造",
         "subtitle": "选择工具",
-        "image": "./assets/process/P010.jpg",
+        "image": "./assets/editorial/ascii-lab.webp",
         "body": [
           "还有一些时候，现成工具不太顺手，或者只差一个小功能。这种时候，我现在会直接试着让 AI 做一个。",
           "ASCII 加 tracker 就是这样来的。我想要主体变成字符效果，同时有一些跟踪框，像开了几个小窗口，露出同一位置原本的彩色模型。这个需求说起来不复杂，但要找到完全合适的现成效果，也不一定那么容易。",
@@ -168,26 +301,62 @@ export const CHAPTERS = [
           "所以我给这一段起的名字就是“没有锤子就自己造”。当然，工具做出来以后还得试，预览和导出也要分别检查。但哪怕它先只解决眼前这个问题，也已经值得留下来，下次可以接着用。",
           "[视频占位：ASCII 与 tracker 工具效果]"
         ],
-        "sourceNote": "历史档案 P010 · 玻璃材质 v2 的原有组合过程图；保留原图，不另造前后结论。",
         "number": 2,
         "chapterTitle": "选择工具",
-        "label": "03.02 / 选择工具"
+        "label": "03.02 / 选择工具",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/ascii-lab.webp",
+            "after": 0,
+            "caption": "ASCII Track Lab · 字符、彩色跟踪窗与参数界面"
+          },
+          {
+            "kind": "video",
+            "src": "./assets/editorial/ascii-su7.mp4",
+            "poster": "./assets/editorial/ascii-su7-poster.webp",
+            "after": 3,
+            "caption": "ASCII + Tracker · SU7 彩色窗口演示"
+          },
+          {
+            "kind": "video",
+            "src": "./assets/editorial/ascii-lab-demo.mp4",
+            "poster": "./assets/editorial/ascii-lab-demo-poster.webp",
+            "after": 6,
+            "caption": "ASCII Track Lab · 真实工具界面录屏"
+          }
+        ]
       },
       {
         "id": "tools-reference",
         "title": "让 AI 帮我找到没想到的工具",
         "subtitle": "选择工具",
-        "image": "./assets/process/P011.jpg",
+        "image": "./assets/editorial/react-gradient-poster.webp",
         "body": [
           "自己造工具之前，也可以先让 AI 帮忙找一圈。",
           "比如碰到建模问题，可以问问有没有适合的 CAD 工具或者现成库；做网页和视觉效果，可以看看 React Bits 这样的组件库，有没有已经做好、可以借鉴的实现。",
           "这次我就发现，有些东西其实早就有人做过，甚至已经开源了，只是我自己不知道，或者知道了但没想起来用。React Bits 里的一些效果，我已经收藏过，真正做东西的时候却还是可能从头描述一遍，让 AI 再造一次。",
           "所以除了说“帮我实现这个效果”，我也会多问一句：“有没有现成的工具或者库？先找找看。”找到之后，再判断能不能用、要改多少。AI 能帮我写，也可以帮我把那些已经存在、但我没注意到的东西翻出来。"
         ],
-        "sourceNote": "历史档案 P011 · 研究参考图；图中参数未在本次重新核实，也不是模型的精确工程尺寸依据。",
         "number": 3,
         "chapterTitle": "选择工具",
-        "label": "03.03 / 选择工具"
+        "label": "03.03 / 选择工具",
+        "media": [
+          {
+            "kind": "video",
+            "src": "./assets/editorial/react-gradient.mp4",
+            "poster": "./assets/editorial/react-gradient-poster.webp",
+            "after": 0,
+            "caption": "React Bits / Gradient ASCII · 已留存的官方效果参考"
+          },
+          {
+            "kind": "video",
+            "src": "./assets/editorial/react-terminal.mp4",
+            "poster": "./assets/editorial/react-terminal-poster.webp",
+            "after": 3,
+            "caption": "React Bits / Faulty Terminal · 已留存的官方效果参考"
+          }
+        ]
       }
     ]
   },
@@ -201,7 +370,7 @@ export const CHAPTERS = [
         "id": "review-motion",
         "title": "给 AI 发挥余地，也让它先自检",
         "subtitle": "发现问题",
-        "image": "./assets/process/P006.jpg",
+        "image": "./assets/editorial/g1-collision.webp",
         "body": [
           "这次做下来，我发现自己一开始把有些东西定得太死了。技术路线、具体做法，能想到的要求都先写上去，生怕它理解错。结果也把它框住了。",
           "后来我就想换一种试法：先把需求和参考图给清楚，让它自己想怎么做。先看一个结果，再一点点改。",
@@ -211,16 +380,35 @@ export const CHAPTERS = [
           "所以我会把制作和检查拆开，让子 agent 或者另一个 AI 先看实际渲染出来的图片、视频帧和动态结果，对照参考找问题。不要只看它说代码写完了，要看做出来的东西。最好能指出具体在哪个时间点，哪里不对，可以怎么改，再交回去修改。",
           "这样能替我做一部分初步检查。但最后这个画面喜不喜欢，节奏对不对，能不能放进片子，还是需要我自己看。AI 的检查也可能漏掉问题，不能因为它自己说通过了，就直接收下。"
         ],
-        "sourceNote": "历史档案 P006 · 原始组合过程图“同时间点检查：护脸动作穿插修复”；整张呈现，未拆成新的严格对照。",
         "number": 1,
         "chapterTitle": "发现问题",
-        "label": "04.01 / 发现问题"
+        "label": "04.01 / 发现问题",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/g1-collision.webp",
+            "after": 0,
+            "caption": "G1 · 对照同一时间点查找动作穿插"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/frame-failed.webp",
+            "after": 6,
+            "caption": "第 118 帧 · 前景 B 层突然消失的失败状态"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/frame-repaired.webp",
+            "after": 7,
+            "caption": "同文件第 118 帧 · 局部修正候选"
+          }
+        ]
       },
       {
         "id": "review-detail",
         "title": "做一个会思考的甲方",
         "subtitle": "发现问题",
-        "image": "./assets/process/P039.webp",
+        "image": "./assets/editorial/feedback-dot.webp",
         "body": [
           "给 AI 留空间以后，我自己也要把反馈给好。我觉得这里可以叫“做一个会思考的甲方”。",
           "首先是标注清楚。发现一个地方不对，我会尽量圈出具体位置，或者画一张很简单的草图，让它知道我指的是哪一块。特别是模型结构、物体之间的位置关系，用图说明通常更直接。",
@@ -229,16 +417,35 @@ export const CHAPTERS = [
           "还有就是不懂就问。我不熟悉的技术很多，没必要先装成自己都懂，再给它安排一套做法。它提了一个工具，我就问为什么选它；它说实现不了，我就问卡在哪里；有几个方案，我就问各自要付出什么、可能损失什么。",
           "问清楚以后，我再决定。这样给出的意见，也更可能真的帮到这张画面。"
         ],
-        "sourceNote": "历史档案 P039 · 原图标注为左 v05 已否、右 v06 B 待审；右侧不标为已通过。",
         "number": 2,
         "chapterTitle": "发现问题",
-        "label": "04.02 / 发现问题"
+        "label": "04.02 / 发现问题",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/feedback-dot.webp",
+            "after": 0,
+            "caption": "原始反馈 · 用红框与文字指出 Dot 的光影问题"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/feedback-sketch.webp",
+            "after": 2,
+            "caption": "原始草图 · 舞台透视与角色位置关系"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/su7-blue.webp",
+            "after": 4,
+            "caption": "颜色反馈 · 官方蓝、原偏青与修正后对照"
+          }
+        ]
       },
       {
         "id": "review-dot",
         "title": "很难实现的时候 及时换路线",
         "subtitle": "发现问题",
-        "image": "./assets/process/P062.webp",
+        "image": "./assets/editorial/su7-wing.webp",
         "body": [
           "有些问题值得继续改，有些就要停一下，看看是不是已经花了太多时间。",
           "SU7 的尾翼就是一个例子。第一版少了支架，看起来是悬空的；后面补了支架、调整路径，再往后又尝试了拼接和收纳，但接缝还是不对。改了几轮以后，我就决定先不纠结这个尾翼了，回到原来的蓝色 SU7 模型。",
@@ -246,10 +453,23 @@ export const CHAPTERS = [
           "同样的，一个画面如果用某种方法一直做不顺，也可以换工具、换表现方式，或者缩小这一段的目标。先看它在整条片子里到底承担什么作用，再决定值不值得继续往里投时间。",
           "当然，回退能做得这么直接，也有个前提：之前能用的版本得留着。不能一边改，一边把退路全覆盖掉了。"
         ],
-        "sourceNote": "历史档案 P062 · Dot 轮廓纠偏原标注图；当前运行角色使用独立锁定的 D02 完整组件。",
         "number": 3,
         "chapterTitle": "发现问题",
-        "label": "04.03 / 发现问题"
+        "label": "04.03 / 发现问题",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/su7-wing.webp",
+            "after": 0,
+            "caption": "SU7 V3 · 尾翼收纳失败的过程记录"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/su7-blue.webp",
+            "after": 3,
+            "caption": "SU7 · 保留原蓝色与外观作为后续基线"
+          }
+        ]
       }
     ]
   },
@@ -263,11 +483,7 @@ export const CHAPTERS = [
         "id": "delivery-feedback",
         "title": "把这次分享做成一个网站",
         "subtitle": "完成交付",
-        "image": "./assets/process/P049.webp",
-        "images": [
-          "./assets/process/P049.webp",
-          "./assets/process/P057.webp"
-        ],
+        "image": "./assets/editorial/workbench.webp",
         "body": [
           "这次分享，我想用网站来承载。大家可以直接看视频，也能像游戏一样操作一些内容，亲自切换效果、试试参数，再把感兴趣的资源拿走。",
           "有些效果只放在视频里，很难讲清楚它还能怎么用。比如一个可替换角色的动作库，或者一个字符效果工具，如果能直接点开试一下，就更容易想到它还能放进自己的什么项目里。",
@@ -277,26 +493,65 @@ export const CHAPTERS = [
           "分享网站、工作台和经验库，内容还需要继续整理和筛选。适合给大家用的工具和工程，再放到对应的入口里，让大家找得到，也知道怎么打开、怎么继续改。",
           "[图片占位：分享网站与工作台]"
         ],
-        "sourceNote": "历史档案 P049、P057 · 小岛与 Dot 舞台原标注图；不是当前卷轴的验收画面，也不是一组前后对照。",
         "number": 1,
         "chapterTitle": "完成交付",
-        "label": "05.01 / 完成交付"
+        "label": "05.01 / 完成交付",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/workbench.webp",
+            "after": 0,
+            "caption": "创作工作台 · 项目概览与进度入口（本轮补拍历史快照）"
+          },
+          {
+            "kind": "interactive",
+            "src": "./assets/editorial/dot-motion.html",
+            "poster": "./assets/editorial/dot-motion.webp",
+            "after": 3,
+            "caption": "可替换角色的动作工坊 · 54 项动作预览"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/versions.webp",
+            "after": 6,
+            "caption": "资料档案 · 来源与版本记录（本轮补拍历史快照）"
+          }
+        ]
       },
       {
         "id": "delivery-package",
         "title": "把工程和成品整理好",
         "subtitle": "完成交付",
-        "image": "./assets/process/P061.jpg",
+        "image": "./assets/editorial/archive.webp",
         "body": [
           "做到最后，还要让 AI 把工程文件和导出的成品整理好。",
           "制作过程中会产生很多脚本、临时文件和中间版本，我不需要每一个都亲自管理，但最后交到手里的东西，应该能让我看明白。哪个是工程，哪个是预览，哪个是正式导出，用了什么素材，有没有需要一起保留的依赖，最好都整理清楚。",
           "之前有一次把几个模块的工程、预览、参考和说明集中打包，审核起来就舒服很多。我不用再回到聊天记录里翻几十条消息，找那个不知道发在哪里的文件。",
           "能用的版本也要做好备份。改之前留一份，重要节点再留一份，把版本之间改了什么写清楚，方便改回第一版（不是）。"
         ],
-        "sourceNote": "历史档案 P061 · 旧版第五关末轮标注；新版采用三项完成后才可盖章的规则。",
         "number": 2,
         "chapterTitle": "完成交付",
-        "label": "05.02 / 完成交付"
+        "label": "05.02 / 完成交付",
+        "media": [
+          {
+            "kind": "image",
+            "src": "./assets/editorial/archive.webp",
+            "after": 0,
+            "caption": "工程归档 · 按模块记录工程包、预览与校验信息"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/batch-delivery.webp",
+            "after": 3,
+            "caption": "批量交付记录 · 一批成果，一个审核入口"
+          },
+          {
+            "kind": "image",
+            "src": "./assets/editorial/html-reopen.webp",
+            "after": 4,
+            "caption": "交付验证 · 将内嵌模型的 HTML 重新打开"
+          }
+        ]
       }
     ]
   }

@@ -1,3 +1,4 @@
+import {cardDetailHTML,prepareCardMedia,stopCardMedia,bindCardMedia} from './card-media.mjs';
 import {yieldTask} from './preparation.mjs';
 import {createCardMorph} from './card-morph.mjs';
 import {resourcePhases,RESOURCE_DURATION,createTitleMotion,createEnding} from './scroll-motion.mjs';
@@ -78,7 +79,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
   }
   const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function open(card){
-    if(focus)return;card.morph?.prepare();focus=card;focusGoal=1;focusAge=0;focusMix=0;
+    if(focus)return;card.morph?.prepare();prepareCardMedia(card.el);focus=card;focusGoal=1;focusAge=0;focusMix=0;
     card.openBase=card.group.position.clone();card.openQ=card.group.quaternion.clone();
     card.el.classList.add('focused');document.body.classList.add('has-focus');
     if(card.isResource){const r=resources.find(r=>r.card===card);r.visited=true;resourceSeen[r.kind]=true;try{localStorage.setItem('linggan-resource-seen-r09',JSON.stringify(resourceSeen));}catch{}}
@@ -86,9 +87,9 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     if(!card.isResource){learnCardHint('opened');for(const c of cards)c.el.classList.remove('needs-open-hint');}
     onFocus(true);onSound('open');
   }
-  function close(){if(!focus)return;focus.morph?.beginClose();restoreReading();focusGoal=0;backdrop.classList.remove('open');onSound('close');}
+  function close(){if(!focus)return;stopCardMedia(focus.el);focus.morph?.beginClose();restoreReading();focusGoal=0;backdrop.classList.remove('open');onSound('close');}
   function cancelFocus(){
-    restoreReading();if(focus){focus.el.classList.remove('focused');focus.morph?.reset();focus.group.position.copy(focus.base);focus.group.quaternion.copy(focus.baseQ);focus.group.scale.setScalar(1);if(focus.isResource)focus.group.visible=false;}
+    stopCardMedia(focus?.el);restoreReading();if(focus){focus.el.classList.remove('focused');focus.morph?.reset();focus.group.position.copy(focus.base);focus.group.quaternion.copy(focus.baseQ);focus.group.scale.setScalar(1);if(focus.isResource)focus.group.visible=false;}
     focus=null;focusAge=focusMix=focusGoal=0;backdrop.classList.remove('open');document.body.classList.remove('has-focus');onFocus(false);
   }
 
@@ -101,10 +102,10 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
   window.addEventListener('pointerdown',e=>{backdropPressed=e.target===backdrop;},true);
   window.addEventListener('pointercancel',()=>{backdropPressed=false;},true);
   backdrop.addEventListener('click',()=>{if(backdropPressed)close();backdropPressed=false;});document.querySelector('#close-focus').addEventListener('click',close);window.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
-  function detailHTML(c){const paragraphs=(c.body||[]).map(p=>`<p${/^\[.*占位：/.test(p)?' class="media-placeholder"':''}>${escape(p)}</p>`).join('');const comparison=c.id==='review-detail'?`<div class="comparison" style="--split:50%"><div class="compare-half before" style="background-image:url('${c.image}');background-position:left top"></div><div class="compare-half after" style="background-image:url('${c.image}');background-position:right top"></div><div class="compare-line"></div><input aria-label="拖动查看 v05 与 v06 B 候选的同坐标细节" type="range" min="0" max="100" value="50"></div><p class="source-note">拖动分界线：左为 v05，右为 v06 B 候选。取自原图同坐标裁切；右侧尚未标为通过。</p>`:`<figure><img src="${c.image}" alt="${escape(c.title)}"></figure>`;return `<div class="detail-label">${escape(c.label||c.subtitle||'CREATIVE ARCHIVE')}</div><h2>${escape(c.title)}</h2>${comparison}${paragraphs}${c.images?.length?`<div class="detail-gallery">${c.images.map((im,i)=>`<button data-image="${im}">画面 ${i+1}</button>`).join('')}</div>`:''}<p class="source-note">${escape(c.sourceNote||'真实历史过程素材；展示编排为当前候选，非最终观众文案。')}</p>`;}
+  const detailHTML=cardDetailHTML;
   function makeCard(c,chapter,index){const el=document.createElement('article');el.className=`process-card ${index===0?'hero-card':'support-card'}`;el.style.setProperty('--chapter-color',palette[chapter]);el.style.setProperty('--card-surface',cardSurfaces[chapter]);el.setAttribute('aria-label',`打开过程卡片：${c.label}，${c.title}`);el.setAttribute('tabindex','0');el.dataset.cardId=c.id;el.dataset.chapter=String(chapter+1);el.dataset.cardNumber=String(c.number);el.innerHTML=`<div class="card-meta"><span>${escape(c.label)}</span><span>↗</span></div><h2>${escape(c.title)}</h2><img class="card-image" src="${c.image}" alt="${escape(c.title)}" draggable="false"><div class="card-bottom"><span>过程档案 · 点击展开</span><span class="card-arrow">↗</span></div><div class="card-detail">${detailHTML(c)}</div>`;
     if(index===0&&!cardHints.opened){el.classList.add('needs-open-hint');el.querySelector('.card-bottom span').textContent='点击展开 · 可滚动阅读';}
-    const readHint=document.createElement('span');readHint.className='card-read-hint';readHint.textContent='向下滚动阅读 ↓';el.append(readHint);
+    bindCardMedia(el);const readHint=document.createElement('span');readHint.className='card-read-hint';readHint.textContent='向下滚动阅读 ↓';el.append(readHint);
     el.querySelector('.card-detail').addEventListener('scroll',e=>{if(e.target.scrollTop>20){learnCardHint('scrolled');el.classList.remove('needs-scroll-hint');}},{passive:true});
     const group=new T.Group(),size=index===0?9.4:5.35,scale=size/640;
     // CSS owns the one visible perimeter. The inset solid board supplies depth,
@@ -118,7 +119,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     const x=index===0?(mirrored?2.05:-2.15):(mirrored?-6.05:6.05);
     const z=chapterZ+(index===0?-3.8:index===1?-.8:-8.2),height=420*scale;
     group.position.set(x,Math.sin(cardTilt)*height/2+.195,z);group.rotation.set(-Math.PI/2+cardTilt,0,0);root.add(group);
-    const card={group,el,css,frame,c,chapter,width:size,height,base:group.position.clone(),baseQ:group.quaternion.clone(),hover:0,morph:createCardMorph(el)};cards.push(card);objects.push({group,z});el.addEventListener('pointerenter',()=>hover=card);el.addEventListener('pointerleave',()=>{if(hover===card)hover=null;});let down=null;el.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});el.addEventListener('click',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)return;if(!focus){open(card);e.stopPropagation();}});el.addEventListener('keydown',e=>{if(e.key==='Enter'){open(card);e.preventDefault();}});el.querySelector('.card-detail').addEventListener('wheel',e=>e.stopPropagation(),{passive:true});el.querySelector('.card-detail').addEventListener('pointerdown',e=>e.stopPropagation());el.querySelectorAll('[data-image]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();el.querySelector('.card-detail figure img').src=btn.dataset.image;}));el.querySelector('.comparison input')?.addEventListener('input',e=>e.target.parentElement.style.setProperty('--split',e.target.value+'%'));return card;
+    const card={group,el,css,frame,c,chapter,width:size,height,base:group.position.clone(),baseQ:group.quaternion.clone(),hover:0,morph:createCardMorph(el)};cards.push(card);objects.push({group,z});el.addEventListener('pointerenter',()=>hover=card);el.addEventListener('pointerleave',()=>{if(hover===card)hover=null;});let down=null;el.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});el.addEventListener('click',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)return;if(!focus){open(card);e.stopPropagation();}});el.addEventListener('keydown',e=>{if(e.key==='Enter'&&!focus&&e.target===el){open(card);e.preventDefault();}});el.querySelector('.card-detail').addEventListener('wheel',e=>e.stopPropagation(),{passive:true});el.querySelector('.card-detail').addEventListener('pointerdown',e=>e.stopPropagation());el.querySelectorAll('[data-image]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();el.querySelector('.card-detail figure img').src=btn.dataset.image;}));el.querySelector('.comparison input')?.addEventListener('input',e=>e.target.parentElement.style.setProperty('--split',e.target.value+'%'));return card;
   }
   for(const [i,chapter] of CHAPTERS.entries()){await yieldTask();const z=-i*34,mainSide=i===2?1:-1;const title=styleTitle(titleMesh(chapter.title,1.85,.22));title.name=`Chapter ${i+1} / title`;title.position.set(mainSide*3.6,0,z+4.0);root.add(raiseTitle(title));titles.push(createTitleMotion(title));objects.push({group:title,z:z+4.0});
     placeLabel(chapter.kicker,7,.42,{x:mainSide*3.6,y:.22,z:z+5.9,chapter:i,kind:'kicker',size:25,color:'#e1e1dc'});

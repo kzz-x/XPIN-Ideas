@@ -1,7 +1,7 @@
 {
-  "limitBytes": 40000000,
-  "bytes": 39485153,
-  "fileCount": 170,
+  "limitBytes": 56000000,
+  "bytes": 52588147,
+  "fileCount": 201,
   "sourceFiles": [
     "assets/dot/dot-outline-r12.svg",
     "assets/dot/effects/horn-dissolve-math-r05.mjs",
@@ -32,6 +32,52 @@
     "assets/dot/runtime/accepted-driver.mjs",
     "assets/dot/runtime/contract.mjs",
     "assets/dot/runtime/default-document.mjs",
+    "assets/editorial/CREDITS.md",
+    "assets/editorial/REACT-BITS-LICENSE.md",
+    "assets/editorial/archive.webp",
+    "assets/editorial/ascii-lab-demo-poster.webp",
+    "assets/editorial/ascii-lab-demo.mp4",
+    "assets/editorial/ascii-lab.webp",
+    "assets/editorial/ascii-su7-poster.webp",
+    "assets/editorial/ascii-su7.mp4",
+    "assets/editorial/batch-delivery.webp",
+    "assets/editorial/dot-motion.html",
+    "assets/editorial/dot-motion.webp",
+    "assets/editorial/dot-render-compare.webp",
+    "assets/editorial/feedback-dot.webp",
+    "assets/editorial/feedback-sketch.webp",
+    "assets/editorial/frame-failed.webp",
+    "assets/editorial/frame-repaired.webp",
+    "assets/editorial/g1-boxing-poster.webp",
+    "assets/editorial/g1-boxing.mp4",
+    "assets/editorial/g1-collision.webp",
+    "assets/editorial/g1-kick-poster.webp",
+    "assets/editorial/g1-kick.mp4",
+    "assets/editorial/g1-material.webp",
+    "assets/editorial/html-reopen.webp",
+    "assets/editorial/mood-catch.webp",
+    "assets/editorial/mood-monsters.webp",
+    "assets/editorial/mood-rog.webp",
+    "assets/editorial/pr-animatic-poster.webp",
+    "assets/editorial/pr-animatic.mp4",
+    "assets/editorial/pr-timeline.webp",
+    "assets/editorial/react-gradient-poster.webp",
+    "assets/editorial/react-gradient.mp4",
+    "assets/editorial/react-terminal-poster.webp",
+    "assets/editorial/react-terminal.mp4",
+    "assets/editorial/rubin-board.webp",
+    "assets/editorial/rubin-die.webp",
+    "assets/editorial/storyboard.webp",
+    "assets/editorial/style-drive.webp",
+    "assets/editorial/style-move.webp",
+    "assets/editorial/style-products.webp",
+    "assets/editorial/su7-blue.webp",
+    "assets/editorial/su7-halftone.webp",
+    "assets/editorial/su7-seedance-poster.webp",
+    "assets/editorial/su7-seedance.mp4",
+    "assets/editorial/su7-wing.webp",
+    "assets/editorial/versions.webp",
+    "assets/editorial/workbench.webp",
     "assets/fonts/IdeaSans-Bold.woff",
     "assets/fonts/IdeaSans-Regular.woff",
     "assets/game-logos/ae.svg",
@@ -54,22 +100,6 @@
     "assets/media/sfx/glass-b.json",
     "assets/media/sfx/sand-body.wav",
     "assets/media/sfx/sand-fine.wav",
-    "assets/process/P001.webp",
-    "assets/process/P002.webp",
-    "assets/process/P004.jpg",
-    "assets/process/P005.jpg",
-    "assets/process/P006.jpg",
-    "assets/process/P010.jpg",
-    "assets/process/P011.jpg",
-    "assets/process/P020.webp",
-    "assets/process/P023.jpg",
-    "assets/process/P029.jpg",
-    "assets/process/P034.webp",
-    "assets/process/P039.webp",
-    "assets/process/P049.webp",
-    "assets/process/P057.webp",
-    "assets/process/P061.jpg",
-    "assets/process/P062.webp",
     "assets/products/G1.glb",
     "assets/products/Rubin.glb",
     "assets/products/S11-source-licenses.txt",
@@ -137,6 +167,7 @@
     "design-r17.css",
     "design-r22.css",
     "design-r27.css",
+    "design-r28.css",
     "index.html",
     "src/asset-prefetch.mjs",
     "src/audio-master.mjs",
@@ -144,6 +175,7 @@
     "src/bgm-stream.mjs",
     "src/bgm.mjs",
     "src/bubble-emphasis.mjs",
+    "src/card-media.mjs",
     "src/card-morph.mjs",
     "src/chat-r07.mjs",
     "src/companion-actions.mjs",
@@ -305,6 +337,190 @@
       "bytes": 9508
     },
     {
+      "path": "assets/editorial/archive.webp",
+      "bytes": 50804
+    },
+    {
+      "path": "assets/editorial/ascii-lab-demo-poster.webp",
+      "bytes": 29016
+    },
+    {
+      "path": "assets/editorial/ascii-lab-demo.mp4",
+      "bytes": 207209
+    },
+    {
+      "path": "assets/editorial/ascii-lab.webp",
+      "bytes": 58462
+    },
+    {
+      "path": "assets/editorial/ascii-su7-poster.webp",
+      "bytes": 192382
+    },
+    {
+      "path": "assets/editorial/ascii-su7.mp4",
+      "bytes": 5992919
+    },
+    {
+      "path": "assets/editorial/batch-delivery.webp",
+      "bytes": 86418
+    },
+    {
+      "path": "assets/editorial/CREDITS.md",
+      "bytes": 638
+    },
+    {
+      "path": "assets/editorial/dot-motion.html",
+      "bytes": 3372570
+    },
+    {
+      "path": "assets/editorial/dot-motion.webp",
+      "bytes": 43014
+    },
+    {
+      "path": "assets/editorial/dot-render-compare.webp",
+      "bytes": 96774
+    },
+    {
+      "path": "assets/editorial/feedback-dot.webp",
+      "bytes": 56982
+    },
+    {
+      "path": "assets/editorial/feedback-sketch.webp",
+      "bytes": 2194
+    },
+    {
+      "path": "assets/editorial/frame-failed.webp",
+      "bytes": 28630
+    },
+    {
+      "path": "assets/editorial/frame-repaired.webp",
+      "bytes": 33822
+    },
+    {
+      "path": "assets/editorial/g1-boxing-poster.webp",
+      "bytes": 7822
+    },
+    {
+      "path": "assets/editorial/g1-boxing.mp4",
+      "bytes": 75195
+    },
+    {
+      "path": "assets/editorial/g1-collision.webp",
+      "bytes": 74934
+    },
+    {
+      "path": "assets/editorial/g1-kick-poster.webp",
+      "bytes": 35408
+    },
+    {
+      "path": "assets/editorial/g1-kick.mp4",
+      "bytes": 350810
+    },
+    {
+      "path": "assets/editorial/g1-material.webp",
+      "bytes": 35946
+    },
+    {
+      "path": "assets/editorial/html-reopen.webp",
+      "bytes": 61902
+    },
+    {
+      "path": "assets/editorial/mood-catch.webp",
+      "bytes": 75594
+    },
+    {
+      "path": "assets/editorial/mood-monsters.webp",
+      "bytes": 91672
+    },
+    {
+      "path": "assets/editorial/mood-rog.webp",
+      "bytes": 30282
+    },
+    {
+      "path": "assets/editorial/pr-animatic-poster.webp",
+      "bytes": 5322
+    },
+    {
+      "path": "assets/editorial/pr-animatic.mp4",
+      "bytes": 812177
+    },
+    {
+      "path": "assets/editorial/pr-timeline.webp",
+      "bytes": 177478
+    },
+    {
+      "path": "assets/editorial/REACT-BITS-LICENSE.md",
+      "bytes": 2060
+    },
+    {
+      "path": "assets/editorial/react-gradient-poster.webp",
+      "bytes": 55466
+    },
+    {
+      "path": "assets/editorial/react-gradient.mp4",
+      "bytes": 168760
+    },
+    {
+      "path": "assets/editorial/react-terminal-poster.webp",
+      "bytes": 154646
+    },
+    {
+      "path": "assets/editorial/react-terminal.mp4",
+      "bytes": 444203
+    },
+    {
+      "path": "assets/editorial/rubin-board.webp",
+      "bytes": 215728
+    },
+    {
+      "path": "assets/editorial/rubin-die.webp",
+      "bytes": 53624
+    },
+    {
+      "path": "assets/editorial/storyboard.webp",
+      "bytes": 186694
+    },
+    {
+      "path": "assets/editorial/style-drive.webp",
+      "bytes": 196850
+    },
+    {
+      "path": "assets/editorial/style-move.webp",
+      "bytes": 392140
+    },
+    {
+      "path": "assets/editorial/style-products.webp",
+      "bytes": 63648
+    },
+    {
+      "path": "assets/editorial/su7-blue.webp",
+      "bytes": 115374
+    },
+    {
+      "path": "assets/editorial/su7-halftone.webp",
+      "bytes": 160210
+    },
+    {
+      "path": "assets/editorial/su7-seedance-poster.webp",
+      "bytes": 23756
+    },
+    {
+      "path": "assets/editorial/su7-seedance.mp4",
+      "bytes": 402887
+    },
+    {
+      "path": "assets/editorial/su7-wing.webp",
+      "bytes": 87408
+    },
+    {
+      "path": "assets/editorial/versions.webp",
+      "bytes": 52184
+    },
+    {
+      "path": "assets/editorial/workbench.webp",
+      "bytes": 51506
+    },
+    {
       "path": "assets/fonts/IdeaSans-Bold.woff",
       "bytes": 192524
     },
@@ -391,70 +607,6 @@
     {
       "path": "assets/media/sfx/sand-fine.wav",
       "bytes": 115278
-    },
-    {
-      "path": "assets/process/P001.webp",
-      "bytes": 200914
-    },
-    {
-      "path": "assets/process/P002.webp",
-      "bytes": 173718
-    },
-    {
-      "path": "assets/process/P004.jpg",
-      "bytes": 91827
-    },
-    {
-      "path": "assets/process/P005.jpg",
-      "bytes": 300624
-    },
-    {
-      "path": "assets/process/P006.jpg",
-      "bytes": 98494
-    },
-    {
-      "path": "assets/process/P010.jpg",
-      "bytes": 115335
-    },
-    {
-      "path": "assets/process/P011.jpg",
-      "bytes": 93260
-    },
-    {
-      "path": "assets/process/P020.webp",
-      "bytes": 32634
-    },
-    {
-      "path": "assets/process/P023.jpg",
-      "bytes": 42305
-    },
-    {
-      "path": "assets/process/P029.jpg",
-      "bytes": 42960
-    },
-    {
-      "path": "assets/process/P034.webp",
-      "bytes": 81302
-    },
-    {
-      "path": "assets/process/P039.webp",
-      "bytes": 99498
-    },
-    {
-      "path": "assets/process/P049.webp",
-      "bytes": 70884
-    },
-    {
-      "path": "assets/process/P057.webp",
-      "bytes": 54808
-    },
-    {
-      "path": "assets/process/P061.jpg",
-      "bytes": 294300
-    },
-    {
-      "path": "assets/process/P062.webp",
-      "bytes": 28028
     },
     {
       "path": "assets/products/G1.glb",
@@ -701,8 +853,12 @@
       "bytes": 815
     },
     {
+      "path": "src/card-media.mjs",
+      "bytes": 2459
+    },
+    {
       "path": "src/card-morph.mjs",
-      "bytes": 5044
+      "bytes": 5082
     },
     {
       "path": "src/chat-r07.mjs",
@@ -718,7 +874,7 @@
     },
     {
       "path": "src/content.mjs",
-      "bytes": 26829
+      "bytes": 34477
     },
     {
       "path": "src/dot-foreground.mjs",
@@ -770,7 +926,7 @@
     },
     {
       "path": "src/main.mjs",
-      "bytes": 57186
+      "bytes": 57220
     },
     {
       "path": "src/opening-assembly.mjs",
@@ -838,7 +994,7 @@
     },
     {
       "path": "src/scroll-space.mjs",
-      "bytes": 42496
+      "bytes": 41497
     },
     {
       "path": "src/sound-design.mjs",
@@ -866,7 +1022,7 @@
     },
     {
       "path": "styles-combined.css",
-      "bytes": 65907
+      "bytes": 67092
     }
   ]
 }

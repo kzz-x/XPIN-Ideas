@@ -1,0 +1,572 @@
+{
+  "date": "2026-11-06",
+  "items": [
+    {
+      "key": "mood-catch",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/new-originals/ref-019-1.jpg",
+      "kind": "image",
+      "sourceSha256": "fe899d1d66da0249edb88db587da09fbda9099cb7e2fd183d195a473838b3900",
+      "src": "./assets/editorial/mood-catch.webp",
+      "bytes": 75594
+    },
+    {
+      "key": "mood-rog",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/new-originals/ref-005-1.jpg",
+      "kind": "image",
+      "sourceSha256": "69ece151870376ef4cec6f211ec43e159800b40dedd4118642b2e6570dbb9cf3",
+      "src": "./assets/editorial/mood-rog.webp",
+      "bytes": 30282
+    },
+    {
+      "key": "mood-monsters",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/new-originals/ref-020-1.jpg",
+      "kind": "image",
+      "sourceSha256": "71302e3ae52616e6428eb58dc236aa9e3114bfdd8a6dd8b02520f8e0cab98b8f",
+      "src": "./assets/editorial/mood-monsters.webp",
+      "bytes": 91672
+    },
+    {
+      "key": "style-drive",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/new-originals/ref-037-1.jpg",
+      "kind": "image",
+      "sourceSha256": "682009a2e68d015da6c995f9561ff5528be2dd5f16db106e4469462d963ae6f2",
+      "src": "./assets/editorial/style-drive.webp",
+      "bytes": 196850
+    },
+    {
+      "key": "style-move",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/06_SU7与G1风格对照/风格与修改对照/07_MOVE_真实G1右侧踢_完整合成.png",
+      "kind": "image",
+      "sourceSha256": "13fe87cc806b7a65875ca02021e25ad077a36b46e93aa7a7b6c60d2b904c4e70",
+      "src": "./assets/editorial/style-move.webp",
+      "bytes": 392140
+    },
+    {
+      "key": "style-products",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-04/files-mentioned-by-the-user-v3/outputs/linggan-scroll/assets/process/P004.jpg",
+      "kind": "image",
+      "sourceSha256": "c4722dd9f559178f77cbc930c62175c55b8027816c912f1d3d59eb74a652f50f",
+      "src": "./assets/editorial/style-products.webp",
+      "bytes": 63648
+    },
+    {
+      "key": "pr-timeline",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/02_PR动态与图片分镜/PR过程截图/01_PR先切文字占位_网页预览.jpg",
+      "kind": "image",
+      "sourceSha256": "20247242aba283c34aa9a56d80299968b5e328240cbc121b982aae3f52b0a66b",
+      "src": "./assets/editorial/pr-timeline.webp",
+      "bytes": 177478
+    },
+    {
+      "key": "pr-animatic",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/02_PR动态与图片分镜/预演与最新输出/文字预演.mp4",
+      "kind": "video",
+      "posterAt": 18,
+      "sourceSha256": "a9502aa3a88f1e33c49c67976565bba9b4af25f6b21f74da59652c182eca25e9",
+      "src": "./assets/editorial/pr-animatic.mp4",
+      "poster": "./assets/editorial/pr-animatic-poster.webp",
+      "duration": 51.983333,
+      "width": 1920,
+      "height": 1080,
+      "fullDecode": true,
+      "bytes": 812177
+    },
+    {
+      "key": "storyboard",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/02_PR动态与图片分镜/图片分镜/前12秒_十镜头联系表_2行5列.jpg",
+      "kind": "image",
+      "sourceSha256": "db58b6e4c67d119c450fdc6aa988a9638580027b43c0ccb02f03b4056bad075c",
+      "src": "./assets/editorial/storyboard.webp",
+      "bytes": 186694
+    },
+    {
+      "key": "rubin-board",
+      "source": "D:/codex任务打包/Codex迁移_20261029/2026-10-24/task-4/Rubin_Stage1/board_tray_v3/previews/BOARD_OFFICIAL_v2_v3.png",
+      "kind": "image",
+      "sourceSha256": "bf510c8b33515eb6b7a8e13ff795d46696c3d70e2e12c177512947d2dac07483",
+      "src": "./assets/editorial/rubin-board.webp",
+      "bytes": 215728
+    },
+    {
+      "key": "rubin-die",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/03_Rubin参考与建模/参考与过程/02_官方_V3_V4_NOT_FINAL对照_网页预览.jpg",
+      "kind": "image",
+      "sourceSha256": "18132fc2a6ec23ec0dea7b60dad728c232538d5092aa016d5a4af04429162245",
+      "src": "./assets/editorial/rubin-die.webp",
+      "bytes": 53624
+    },
+    {
+      "key": "dot-motion",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/dot-motion-capture.jpg",
+      "kind": "image",
+      "sourceSha256": "d3a65a4550437bf7b4bcfba812c07f8d56b0b096feed49b50c9becda57868ee8",
+      "src": "./assets/editorial/dot-motion.webp",
+      "bytes": 43014
+    },
+    {
+      "key": "g1-collision",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/05_G1骨骼武打与修复/修前修后/02左手穿头_V2与V3同帧对照_网页预览.jpg",
+      "kind": "image",
+      "sourceSha256": "0fe5c9ed7978ac24729080fbf30511f3f7fde619aa56f6df10ba7ee827f57700",
+      "src": "./assets/editorial/g1-collision.webp",
+      "bytes": 74934
+    },
+    {
+      "key": "g1-boxing",
+      "source": "D:/Document/Downloads/01/下载_8.366846994377175 (1).mp4",
+      "kind": "video",
+      "posterAt": 1,
+      "sourceSha256": "3ef21dfc7ccf881cfda6a95fca25665b5e9a8438b0643f69f72b78fb53dab36e",
+      "src": "./assets/editorial/g1-boxing.mp4",
+      "poster": "./assets/editorial/g1-boxing-poster.webp",
+      "duration": 3,
+      "width": 768,
+      "height": 576,
+      "fullDecode": true,
+      "bytes": 75195
+    },
+    {
+      "key": "g1-kick",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/05_G1骨骼武打与修复/动作筛选与过程/01_右侧踢_动作筛选.mp4",
+      "kind": "video",
+      "posterAt": 1,
+      "sourceSha256": "edb12c2b92d920715d7df63a0c2685445ee45f5abaf728f5ea0a3aa06d1452ec",
+      "src": "./assets/editorial/g1-kick.mp4",
+      "poster": "./assets/editorial/g1-kick-poster.webp",
+      "duration": 2.75,
+      "width": 720,
+      "height": 406,
+      "fullDecode": true,
+      "bytes": 350810
+    },
+    {
+      "key": "su7-halftone",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/06_SU7与G1风格对照/风格与修改对照/黑剪影_半调光影前后对照.png",
+      "kind": "image",
+      "sourceSha256": "b25af40afb230330054ee19e37763988f309bbca4db78aea7b93c9ed9a032fe6",
+      "src": "./assets/editorial/su7-halftone.webp",
+      "bytes": 160210
+    },
+    {
+      "key": "g1-material",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/extracted/process-v22-06.jpg",
+      "kind": "image",
+      "sourceSha256": "d8d3264140ecb228163f550dc7b93917d709d28038ffd1beb9da2d2e698b2465",
+      "src": "./assets/editorial/g1-material.webp",
+      "bytes": 35946
+    },
+    {
+      "key": "dot-render-compare",
+      "source": "D:/Document/Downloads/01/16783ded-808c-4e90-8203-127d55645816.png",
+      "kind": "image",
+      "sourceSha256": "71e4955f3c145d951dbfe0cd28f7c7c9c5d06c8221933bed5e85fbeb12e7d885",
+      "src": "./assets/editorial/dot-render-compare.webp",
+      "bytes": 96774
+    },
+    {
+      "key": "su7-seedance",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/06_SU7与G1风格对照/用户Seedance输出与原有ok分组/ok/视频生成节点-17.mp4",
+      "kind": "video",
+      "posterAt": 2,
+      "sourceSha256": "305ad2333c6072eb96478152ba1efb598038dd898f9b335026e2c4f7797db81d",
+      "src": "./assets/editorial/su7-seedance.mp4",
+      "poster": "./assets/editorial/su7-seedance-poster.webp",
+      "duration": 4.064,
+      "width": 1920,
+      "height": 1080,
+      "fullDecode": true,
+      "bytes": 402887
+    },
+    {
+      "key": "ascii-lab",
+      "source": "D:/codex任务打包/Codex迁移_20261031_闲置任务/Documents_Codex/2026-10-28/task-2/review/ascii-lab/demo-default-ui.png",
+      "kind": "image",
+      "sourceSha256": "52c1d6d254a6fc4ac724978765707ce640167014536bee1e9db54897c8e6524e",
+      "src": "./assets/editorial/ascii-lab.webp",
+      "bytes": 58462
+    },
+    {
+      "key": "ascii-su7",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/07_ASCII与Tracker效果/实际输出待选择/TapNow_1793024042298_Video_1_ASCII_capture.mp4",
+      "kind": "video",
+      "posterAt": 4,
+      "sourceSha256": "ede6fa5f74773f29ed19b6802351625c6b752663b2495799def389f5389e4793",
+      "src": "./assets/editorial/ascii-su7.mp4",
+      "poster": "./assets/editorial/ascii-su7-poster.webp",
+      "duration": 10.283833,
+      "width": 1920,
+      "height": 1080,
+      "fullDecode": true,
+      "bytes": 5992919
+    },
+    {
+      "key": "ascii-lab-demo",
+      "source": "D:/codex任务打包/Codex迁移_20261031_闲置任务/Documents_Codex/2026-10-28/task-2/review/ascii-lab/short-sample.mp4",
+      "kind": "video",
+      "posterAt": 1,
+      "sourceSha256": "1e92a67394a4fa7750a3e22a49e2385233911b7ba66a5c138068c1bd7e53581a",
+      "src": "./assets/editorial/ascii-lab-demo.mp4",
+      "poster": "./assets/editorial/ascii-lab-demo-poster.webp",
+      "duration": 3.08,
+      "width": 1180,
+      "height": 760,
+      "fullDecode": true,
+      "bytes": 207209
+    },
+    {
+      "key": "react-gradient",
+      "source": "D:/codex任务打包/Codex迁移_20261031_闲置任务/Documents_Codex/2026-10-29/task-2/s23_vp_v07_prep/reactbits_tests/upstream/gradientascii_reference.mp4",
+      "kind": "video",
+      "posterAt": 4,
+      "sourceSha256": "f94e95b6355fae04d222b21059049829fe999cec845cdf1e759d0ec512353e72",
+      "src": "./assets/editorial/react-gradient.mp4",
+      "poster": "./assets/editorial/react-gradient-poster.webp",
+      "duration": 8,
+      "width": 800,
+      "height": 500,
+      "fullDecode": true,
+      "bytes": 168760
+    },
+    {
+      "key": "react-terminal",
+      "source": "D:/codex任务打包/Codex迁移_20261031_闲置任务/Documents_Codex/2026-10-29/task-2/s23_vp_v07_prep/reactbits_tests/upstream/faultyterminal_reference.mp4",
+      "kind": "video",
+      "posterAt": 4,
+      "sourceSha256": "a536a61dceab1fb51818c613f46201ad9dc279563365ad498380b7c6cb0c9fd3",
+      "src": "./assets/editorial/react-terminal.mp4",
+      "poster": "./assets/editorial/react-terminal-poster.webp",
+      "duration": 8.4,
+      "width": 800,
+      "height": 500,
+      "fullDecode": true,
+      "bytes": 444203
+    },
+    {
+      "key": "frame-failed",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/extracted/process-v22-27.jpg",
+      "kind": "image",
+      "sourceSha256": "19526f4eb2dfa2ba95271187c36bfcc8494ac456d4c0097fe63681f70305dfc1",
+      "src": "./assets/editorial/frame-failed.webp",
+      "bytes": 28630
+    },
+    {
+      "key": "frame-repaired",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/extracted/process-v22-28.jpg",
+      "kind": "image",
+      "sourceSha256": "e360098fa04da21dc7a79559dc865a0b6b97769a9b8d7ddf811aabb112b8cb8e",
+      "src": "./assets/editorial/frame-repaired.webp",
+      "bytes": 33822
+    },
+    {
+      "key": "feedback-dot",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/extracted/annotation-00.png",
+      "kind": "image",
+      "sourceSha256": "0805b6d755974d2aeb703f9cecd16670109fe1df8565df838e881605c4a218b2",
+      "src": "./assets/editorial/feedback-dot.webp",
+      "bytes": 56982
+    },
+    {
+      "key": "feedback-sketch",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/extracted/annotation-01.png",
+      "kind": "image",
+      "sourceSha256": "1a98ec74a642d48bf084ddc78c3ae7fac44d1b1ee853d47fbe540790ed5ac5af",
+      "src": "./assets/editorial/feedback-sketch.webp",
+      "bytes": 2194
+    },
+    {
+      "key": "su7-blue",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/06_SU7与G1风格对照/风格与修改对照/08_SU7_官方蓝参考_原偏青_修正_三栏对照.png",
+      "kind": "image",
+      "sourceSha256": "a451e31a793ba2c0e3afa2d5e40426adf6589a4403c3fe3e36cfb65931e426ed",
+      "src": "./assets/editorial/su7-blue.webp",
+      "bytes": 115374
+    },
+    {
+      "key": "su7-wing",
+      "source": "D:/codex任务打包/AI分享_定稿文稿素材整理_20261106_v001/06_SU7与G1风格对照/失败过程/SU7_V3尾翼收纳失败_网页预览.jpg",
+      "kind": "image",
+      "sourceSha256": "810d62820594a82ce75fbded27c5c8e00c70584096536a22aa4ec744af3e0f5e",
+      "src": "./assets/editorial/su7-wing.webp",
+      "bytes": 87408
+    },
+    {
+      "key": "workbench",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/workbench-overview.jpg",
+      "kind": "image",
+      "sourceSha256": "229a68197e0e8ba0f915caa4b4e3d1aba05d45e88d08e5ad424c0918ec6bb47d",
+      "src": "./assets/editorial/workbench.webp",
+      "bytes": 51506
+    },
+    {
+      "key": "versions",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/workbench-versions.jpg",
+      "kind": "image",
+      "sourceSha256": "14861603212460cdd1ab7c896a9bf0faf27c0a77a5a2af6632f931f9f48ddbea",
+      "src": "./assets/editorial/versions.webp",
+      "bytes": 52184
+    },
+    {
+      "key": "archive",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/archive-packages.jpg",
+      "kind": "image",
+      "sourceSha256": "ea5faa1ba648603b18c29fae2d8e2dd1a2c1604be89df1ee1ccbe1859c711525",
+      "src": "./assets/editorial/archive.webp",
+      "bytes": 50804
+    },
+    {
+      "key": "batch-delivery",
+      "source": "C:/Users/kevin/Documents/Codex/2026-11-06/new-chat/work/batch-delivery.jpg",
+      "kind": "image",
+      "sourceSha256": "ae19d56b87c7aff79fda1155802b9eb9a09496a518df060487c8bc9743d3f9e0",
+      "src": "./assets/editorial/batch-delivery.webp",
+      "bytes": 86418
+    },
+    {
+      "key": "html-reopen",
+      "source": "D:/codex任务打包/Codex迁移_20261031_闲置任务/Documents_Codex/2026-10-28/task-2/review/ascii-lab/reopen-embedded.png",
+      "kind": "image",
+      "sourceSha256": "57187d981ecbce024a127906ee680e8142c92375be3d2c321f819faf08e85146",
+      "src": "./assets/editorial/html-reopen.webp",
+      "bytes": 61902
+    }
+  ],
+  "mapping": {
+    "idea-style": [
+      {
+        "key": "mood-catch",
+        "after": 0,
+        "caption": "《Catch Me If You Can》片头 · 爵士乐与图形节奏参考"
+      },
+      {
+        "key": "mood-rog",
+        "after": 2,
+        "caption": "ROG 实验室 · 空间、背光与产品亮相参考"
+      },
+      {
+        "key": "mood-monsters",
+        "after": 4,
+        "caption": "《Monsters, Inc.》片头 · 形状组装与运动节奏参考"
+      }
+    ],
+    "idea-type": [
+      {
+        "key": "style-products",
+        "after": 0,
+        "caption": "产品与动词 · SEE / MOVE / DRIVE 的画面方向"
+      },
+      {
+        "key": "style-drive",
+        "after": 2,
+        "caption": "SU7 · DRIVE 印刷质感视觉锚点"
+      },
+      {
+        "key": "style-move",
+        "after": 3,
+        "caption": "G1 · 让动作进入图形化构图"
+      }
+    ],
+    "idea-dot": [
+      {
+        "key": "pr-timeline",
+        "after": 0,
+        "caption": "PR 真实时间线 · 先切出文字图层与音乐段落"
+      },
+      {
+        "key": "pr-animatic",
+        "after": 4,
+        "caption": "文字动态分镜 · 51.98 秒原始预演"
+      },
+      {
+        "key": "storyboard",
+        "after": 6,
+        "caption": "图片分镜 · 前 12 秒早期概念草稿（含 Spark 旧方向）"
+      }
+    ],
+    "steps-timeline": [
+      {
+        "key": "rubin-board",
+        "after": 0,
+        "caption": "Rubin 板卡 · 官方参考与 v2 / v3 建模候选对照"
+      },
+      {
+        "key": "rubin-die",
+        "after": 6,
+        "caption": "Rubin 封装 · 官方参考与 V3 / V4 候选对照"
+      },
+      {
+        "key": "dot-motion",
+        "after": 11,
+        "caption": "Dot 球体动作原型 · 本轮从保留的 HTML 补拍",
+        "interactive": true
+      }
+    ],
+    "steps-depth": [
+      {
+        "key": "g1-collision",
+        "after": 0,
+        "caption": "G1 · 左手穿头 V2 / V3 同时间点修复对照"
+      },
+      {
+        "key": "g1-boxing",
+        "after": 3,
+        "caption": "G1 · 低清白模拳击动作测试"
+      },
+      {
+        "key": "g1-kick",
+        "after": 6,
+        "caption": "G1 · 右侧踢动作筛选预览"
+      }
+    ],
+    "steps-repair": [
+      {
+        "key": "su7-halftone",
+        "after": 0,
+        "caption": "SU7 · 黑剪影与法线半调光影对照"
+      },
+      {
+        "key": "g1-material",
+        "after": 3,
+        "caption": "G1 · 同机位工业金属材质小样"
+      },
+      {
+        "key": "style-move",
+        "after": 5,
+        "caption": "G1 · 图形化着色与动作合成"
+      }
+    ],
+    "tools-browser": [
+      {
+        "key": "dot-render-compare",
+        "after": 0,
+        "caption": "Dot · 参考目标与 Blender 候选画面对照"
+      },
+      {
+        "key": "su7-seedance",
+        "after": 4,
+        "caption": "SU7 · 用户保留的 Seedance 车载视角生成片段"
+      },
+      {
+        "key": "style-move",
+        "after": 6,
+        "caption": "G1 · 原模型上的图形化着色结果"
+      }
+    ],
+    "tools-material": [
+      {
+        "key": "ascii-lab",
+        "after": 0,
+        "caption": "ASCII Track Lab · 字符、彩色跟踪窗与参数界面"
+      },
+      {
+        "key": "ascii-su7",
+        "after": 3,
+        "caption": "ASCII + Tracker · SU7 彩色窗口演示"
+      },
+      {
+        "key": "ascii-lab-demo",
+        "after": 6,
+        "caption": "ASCII Track Lab · 真实工具界面录屏"
+      }
+    ],
+    "tools-reference": [
+      {
+        "key": "react-gradient",
+        "after": 0,
+        "caption": "React Bits / Gradient ASCII · 已留存的官方效果参考"
+      },
+      {
+        "key": "react-terminal",
+        "after": 3,
+        "caption": "React Bits / Faulty Terminal · 已留存的官方效果参考"
+      }
+    ],
+    "review-motion": [
+      {
+        "key": "g1-collision",
+        "after": 0,
+        "caption": "G1 · 对照同一时间点查找动作穿插"
+      },
+      {
+        "key": "frame-failed",
+        "after": 6,
+        "caption": "第 118 帧 · 前景 B 层突然消失的失败状态"
+      },
+      {
+        "key": "frame-repaired",
+        "after": 7,
+        "caption": "同文件第 118 帧 · 局部修正候选"
+      }
+    ],
+    "review-detail": [
+      {
+        "key": "feedback-dot",
+        "after": 0,
+        "caption": "原始反馈 · 用红框与文字指出 Dot 的光影问题"
+      },
+      {
+        "key": "feedback-sketch",
+        "after": 2,
+        "caption": "原始草图 · 舞台透视与角色位置关系"
+      },
+      {
+        "key": "su7-blue",
+        "after": 4,
+        "caption": "颜色反馈 · 官方蓝、原偏青与修正后对照"
+      }
+    ],
+    "review-dot": [
+      {
+        "key": "su7-wing",
+        "after": 0,
+        "caption": "SU7 V3 · 尾翼收纳失败的过程记录"
+      },
+      {
+        "key": "su7-blue",
+        "after": 3,
+        "caption": "SU7 · 保留原蓝色与外观作为后续基线"
+      }
+    ],
+    "delivery-feedback": [
+      {
+        "key": "workbench",
+        "after": 0,
+        "caption": "创作工作台 · 项目概览与进度入口（本轮补拍历史快照）"
+      },
+      {
+        "key": "dot-motion",
+        "after": 3,
+        "caption": "可替换角色的动作工坊 · 54 项动作预览",
+        "interactive": true
+      },
+      {
+        "key": "versions",
+        "after": 6,
+        "caption": "资料档案 · 来源与版本记录（本轮补拍历史快照）"
+      }
+    ],
+    "delivery-package": [
+      {
+        "key": "archive",
+        "after": 0,
+        "caption": "工程归档 · 按模块记录工程包、预览与校验信息"
+      },
+      {
+        "key": "batch-delivery",
+        "after": 3,
+        "caption": "批量交付记录 · 一批成果，一个审核入口"
+      },
+      {
+        "key": "html-reopen",
+        "after": 4,
+        "caption": "交付验证 · 将内嵌模型的 HTML 重新打开"
+      }
+    ]
+  },
+  "checks": {
+    "allOriginalTextRetained": true,
+    "perCardMedia": "2-3",
+    "newVideoDecodePassed": true,
+    "workbenchCaptures": "Local V48 static snapshot captured this run",
+    "dotCapture": "Preserved historical sphere HTML captured this run"
+  }
+}

@@ -1,3 +1,4 @@
+import {pathToFileURL} from 'node:url';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 export async function releaseFiles(root){
@@ -11,11 +12,13 @@ export async function releaseFiles(root){
   for(let rel of choices){rel=decodeURIComponent(rel.split(/[?#]/)[0]).replace(/\\/g,'/');if(rel.startsWith('../')||path.isAbsolute(rel))continue;try{if((await fs.stat(path.join(root,rel))).isFile()){if(!found.has(rel))queue.push(rel);return;}}catch{}}
   if(must&&(value.startsWith('.')||value.includes('/')))throw Error('Missing imported file: '+parent+' -> '+value);
  }
- for(const rel of ['assets/media/film-hd/manifest.json','assets/media/bgm/stream/manifest.json','assets/vendor/MESHOPT-LICENSE.md','assets/vendor/THREE-LICENSE.txt','assets/products/S11-source-licenses.txt','assets/dot/licenses/THREE-LICENSE.txt','assets/media/sfx/CREDITS.md'])await add('./'+rel);
+ for(const rel of ['assets/editorial/CREDITS.md','assets/editorial/REACT-BITS-LICENSE.md','assets/media/film-hd/manifest.json','assets/media/bgm/stream/manifest.json','assets/vendor/MESHOPT-LICENSE.md','assets/vendor/THREE-LICENSE.txt','assets/products/S11-source-licenses.txt','assets/dot/licenses/THREE-LICENSE.txt','assets/media/sfx/CREDITS.md'])await add('./'+rel);
  for(const name of await fs.readdir(path.join(root,'assets/products')))if(name.endsWith('.glb'))await add('./assets/products/'+name);
  for(const name of await fs.readdir(path.join(root,'assets/media/sfx')))if(/\.(wav|json)$/.test(name))await add('./assets/media/sfx/'+name);
  for(const name of await fs.readdir(path.join(root,'assets/game-logos')))await add('./assets/game-logos/'+name);
  for(const name of await fs.readdir(path.join(root,'assets/type')))await add('./assets/type/'+name);
+ const {CHAPTERS}=await import(pathToFileURL(path.join(root,'src/content.mjs')));
+ for(const card of CHAPTERS.flatMap(c=>c.cards))for(const m of card.media||[])for(const src of [m.src,m.poster])if(src)await add(src,'index.html',true);
  const content=await fs.readFile(path.join(root,'src/content.mjs'),'utf8');for(const m of content.matchAll(/picture\('([^']+)'\)/g))await add('./assets/process/'+m[1]);
  while(queue.length){
   const rel=queue.shift();if(found.has(rel))continue;found.add(rel);if(!/\.(?:html|css|mjs|js|json|svg)$/.test(rel))continue;

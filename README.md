@@ -24,7 +24,7 @@
 
 临时预览：制作设置 → 选择本机影片 → 设置舞台接入点 → 检查 Dot 舞台。文件只用于当前会话，不上传。
 
-正式替换：安装 Python、ffmpeg 和 ffprobe，运行 `python scripts/prepare_film.py "D:/edits/new-cut.mp4" --stage-at 36`，将 36 改为新剪辑拉出舞台大屏的秒数。脚本生成高清/手机 MP4 和 manifest，不修改原件。然后 `node build.mjs` 重建并发布。双遍 veryslow 编码需要较长时间；新剪辑更长时可能超过 40 MB，构建会拦截，可调整 `--bitrate-k 2300`。压缩参数越小，画质越低。
+正式替换：安装 Python、ffmpeg 和 ffprobe，运行 `python scripts/prepare_film.py "D:/edits/new-cut.mp4" --stage-at 36`，将 36 改为新剪辑拉出舞台大屏的秒数。脚本生成高清/手机 MP4 和 manifest，不修改原件。然后 `node build.mjs` 重建并发布。双遍 veryslow 编码需要较长时间；新剪辑更长时可能超过 56 MB，构建会拦截，可调整 `--bitrate-k 2300`。压缩参数越小，画质越低。
 
 也可手动替换 `assets/media/film-hd.mp4` 与 `film-mobile.mp4`，同时更新 `assets/media/film-hd/manifest.json` 的时长、帧率、尺寸、两个文件字节数和 stageAt。舞台动作长度独立于接点，若剪辑改变表演节奏需同步调整 `src/config.mjs`。
 
@@ -36,4 +36,9 @@
 - `src/sound-design.mjs`、`src/opening-sound.mjs`、`src/sand-sound.mjs`：互动与开场音效。
 - `assets/media/bgm/stream/`：当前压缩音乐及循环/尾奏元数据。
 
-旧视频、重复音乐与无引用素材不在交付包内。源码中的 rXX 模块名可能是被当前版本继续引用的正式实现，不能只凭名称删除。原始高码率视频与无损音频母版应另外保存；它们不属于 40 MB 网站交付包。
+旧视频、重复音乐与无引用素材不在交付包内。源码中的 rXX 模块名可能是被当前版本继续引用的正式实现，不能只凭名称删除。原始高码率视频与无损音频母版应另外保存；它们不属于 56 MB 网站交付包。
+
+
+### r28 图文与视频
+
+14 张正文卡片各有 2–3 项对应素材，共 40 处展示。正文按原稿保留，占位行由对应媒体取代；封面、图注和段落位置在 `src/content.mjs` 编辑。素材来源、原件 SHA256 与筛选记录在 `.openai/editorial-media.json`，不进入公开构建。视频按卡片打开后准备、用户点播；收起卡片会暂停并清理动作预览。Dot 球体原型与工作台页面为本轮从历史本机快照补拍，图注明示。为本次新增媒体把完整包上限调整为 56 MB，原高清影片和移动版均保留。

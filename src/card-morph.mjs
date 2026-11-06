@@ -4,7 +4,7 @@ export function createCardMorph(el){
   const preview=document.createElement('div');preview.className='card-preview';
   for(const child of [...el.children])if(!child.classList.contains('card-detail')&&!child.classList.contains('card-read-hint'))preview.append(child);
   el.prepend(preview);const detail=el.querySelector('.card-detail');
-  const image=preview.querySelector('.card-image'),heading=preview.querySelector('h2'),destination=detail.querySelector('figure img')||detail.querySelector('.comparison'),targetHeading=detail.querySelector('h2');
+  const image=preview.querySelector('.card-image'),heading=preview.querySelector('h2'),destination=detail.querySelector('figure img')||detail.querySelector('figure video')||detail.querySelector('.comparison'),targetHeading=detail.querySelector('h2');
   const layer=document.createElement('div');layer.className='card-morph-layer';
   const travelingImage=image.cloneNode(),travelingHeading=heading.cloneNode(true);
   travelingImage.className='traveling-image';travelingHeading.className='traveling-title';layer.append(travelingImage,travelingHeading);el.append(layer);
