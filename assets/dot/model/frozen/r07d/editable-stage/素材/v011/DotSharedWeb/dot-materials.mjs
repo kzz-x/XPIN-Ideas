@@ -74,8 +74,7 @@ vec3 dotP=`);
   };
   material.customProgramCacheKey=()=>key;
 }
-export function makeDotMaterials(){
-  const atlas=makeFiberAtlas();
+export function makeDotMaterials({atlas=makeFiberAtlas()}={}){
   const body=new THREE.MeshPhysicalMaterial({name:'Dot / dense fine short fibres v005',
     color:'#0965ec',metalness:0,roughness:.94,specularIntensity:.10,
     sheen:.78,sheenColor:'#4d86ff',sheenRoughness:.85});

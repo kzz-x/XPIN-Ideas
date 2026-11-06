@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {preferCompatible,createFilmMedia} from '../src/film-media.mjs';
+import {createFilmMedia} from '../src/film-media.mjs';
 import {constrainedDevice,nextRasterScale} from '../src/performance-budget.mjs';
 import {PresentationTransport} from '../src/transport-r07.mjs';
 
@@ -8,9 +8,7 @@ class Media extends EventTarget{
   constructor(){super();Object.assign(this,{duration:51.983333,currentTime:0,readyState:3,paused:true,seeking:false,ended:false,volume:1,muted:false,buffered:{length:0}});}
   play(){this.paused=false;return Promise.resolve();}pause(){this.paused=true;}
 }
-test('low-memory, limited cores and slow/data-saver links choose compatible film',()=>{
-  for(const x of [{memory:2,cores:8},{memory:8,cores:4},{connection:{saveData:true}},{connection:{effectiveType:'3g'}}])assert.equal(preferCompatible(x),true);
-  assert.equal(preferCompatible({memory:8,cores:8,connection:{effectiveType:'4g'}}),false);assert.equal(preferCompatible({mobile:true,memory:8,cores:8}),true);
+test('rendering constraints are separate from the source film quality',()=>{
   assert.equal(constrainedDevice({memory:4,cores:8}),true);assert.equal(constrainedDevice({memory:8,cores:8}),false);
 });
 test('sustained slow frames lower raster cost promptly, while isolated stalls do not',()=>{

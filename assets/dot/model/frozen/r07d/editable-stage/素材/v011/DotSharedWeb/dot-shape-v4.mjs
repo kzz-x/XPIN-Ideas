@@ -1,5 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
+import {finishBuild,finishBuildAsync} from './cooperative-build.mjs';
 
 /* Sculpt specification, in the approved 1672 x 941 design view.
  * This is a closed, rounded 3D mesh, not a card or a camera-facing shader.
@@ -71,11 +72,11 @@ function section(points,center,ellipse){
  return {xy,parameter};
 }
 
-function closedSurface(profile,zAt,{segments=192,rings=96,hat=false}={}){
+function* closedSurface(profile,zAt,{segments=192,rings=96,hat=false}={}){
  const positions=[],uv=[],indices=[];
  const add=(r,a,h,u,v)=>{const [x,y]=profile.xy(r,a);const p=unproject(x,y,zAt(x,y,h)).applyMatrix4(designToBody);if(hat)p.applyMatrix4(bodyToHat);positions.push(...p.toArray());uv.push(u,v);};
  add(0,0,1,.5,0);
- for(let j=1;j<rings;j++)for(let i=0;i<segments;i++)add(Math.sin(j/rings*Math.PI),i/segments*TAU,Math.cos(j/rings*Math.PI),i/segments,j/rings);
+ for(let j=1;j<rings;j++){for(let i=0;i<segments;i++)add(Math.sin(j/rings*Math.PI),i/segments*TAU,Math.cos(j/rings*Math.PI),i/segments,j/rings);yield;}
  const back=positions.length/3;add(0,0,-1,.5,1);
  for(let i=0;i<segments;i++)indices.push(0,1+i,1+(i+1)%segments);
  for(let j=0;j<rings-2;j++)for(let i=0;i<segments;i++){
@@ -88,11 +89,12 @@ function closedSurface(profile,zAt,{segments=192,rings=96,hat=false}={}){
 // Finite-element Poisson thickness: -Laplacian(u)=4, u=0 on the outline.
 // Unlike a radial loft, this spreads boundary curvature smoothly through the
 // entire front. sqrt(u) gives a rounded tangent at the joined front/back edge.
-function smoothThickness(profile,center,ellipse,segments=192,rings=48){
+function* smoothThickness(profile,center,ellipse,segments=192,rings=48){
  const points=[[0,0]],radii=[0],faces=[];
  for(let j=1;j<=rings;j++){
   const r=Math.sin(j/rings*Math.PI/2);radii.push(r);
   for(let i=0;i<segments;i++){const p=profile.xy(r,i/segments*TAU);points.push([(p[0]-center[0])/ellipse[0],(center[1]-p[1])/ellipse[1]]);}
+  if(j%4===0)yield;
  }
  for(let i=0;i<segments;i++)faces.push([0,1+i,1+(i+1)%segments]);
  for(let j=0;j<rings-1;j++)for(let i=0;i<segments;i++){
@@ -103,12 +105,14 @@ function smoothThickness(profile,center,ellipse,segments=192,rings=48){
   if(a<n){diag[a]+=w;if(b<n)neighbors[a].set(b,(neighbors[a].get(b)||0)-w);}
   if(b<n){diag[b]+=w;if(a<n)neighbors[b].set(a,(neighbors[b].get(a)||0)-w);}
  }
+ let faceIndex=0;
  for(const tri of faces){
   const [ia,ib,ic]=tri,[a,b,c]=tri.map(i=>points[i]);
   const area2=Math.abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]));
   for(const i of tri)if(i<n)rhs[i]+=area2*2/3;
   const cot=(p,q,r)=>((p[0]-r[0])*(q[0]-r[0])+(p[1]-r[1])*(q[1]-r[1]))/area2;
   edge(ia,ib,.5*cot(a,b,c));edge(ib,ic,.5*cot(b,c,a));edge(ic,ia,.5*cot(c,a,b));
+  if(++faceIndex%256===0)yield;
  }
  const ids=[],weights=[],offsets=[0];for(const row of neighbors){for(const [id,w]of row){ids.push(id);weights.push(w);}offsets.push(ids.length);}
  const u=new Float64Array(points.length),r=rhs.slice(),z=new Float64Array(n),p=new Float64Array(n),ap=new Float64Array(n);
@@ -119,6 +123,7 @@ function smoothThickness(profile,center,ellipse,segments=192,rings=48){
   const alpha=rz/pap;let next=0;
   for(let i=0;i<n;i++){u[i]+=alpha*p[i];r[i]-=alpha*ap[i];z[i]=r[i]/diag[i];next+=r[i]*z[i];}
   const beta=next/rz;for(let i=0;i<n;i++)p[i]=z[i]+beta*p[i];rz=next;
+  if((iterations+1)%4===0)yield;
  }
  let max=0;for(const value of u)max=Math.max(max,value);
  const sample=(x,y)=>{
@@ -130,9 +135,10 @@ function smoothThickness(profile,center,ellipse,segments=192,rings=48){
  return {sample,iterations,residual:rz};
 }
 
-export function makeDotShape(mouth,axis){
+function* buildDotShape(mouth,axis){
  const s=SHAPE_SPEC,bodyProfile=section(s.bodyOutline,s.bodyCenter,s.ellipse);
- const thickness=smoothThickness(bodyProfile,s.bodyCenter,s.ellipse);
+ yield;
+ const thickness=yield* smoothThickness(bodyProfile,s.bodyCenter,s.ellipse);
  // Fit the entire smooth front surface's depth and tilt to the existing cup's
  // tangent plane. No local pin, Gaussian dent, seam, or detached muzzle.
  const contact=mouth.clone().addScaledVector(axis,-.004).applyMatrix4(bodyToDesign);
@@ -144,7 +150,7 @@ export function makeDotShape(mouth,axis){
  const dy=((planeZ(mx,my+.1)-planeZ(mx,my-.1))-(bulge(mx,my+.1)-bulge(mx,my-.1)))/.2;
  const constant=contact.z-bulge(mx,my);
  const zAt=(x,y,h)=>constant+dx*(x-mx)+dy*(y-my)+(h>=0?s.frontDepth:-s.backDepth)*thickness.sample(x,y);
- const body=closedSurface(bodyProfile,zAt);
+ const body=yield* closedSurface(bodyProfile,zAt);
  const surface=(x,y)=>{const {r}=bodyProfile.parameter(x,y);return unproject(x,y,zAt(x,y,Math.sqrt(Math.max(0,1-r*r)))).applyMatrix4(designToBody);};
  function lid(points,radius){
   const c=new T.CubicBezierCurve(...points.map(p=>new T.Vector2(...p)));
@@ -155,11 +161,16 @@ export function makeDotShape(mouth,axis){
   const g=mergeGeometries([tube,...caps]);for(const a of[tube,...caps])a.dispose();g.computeBoundingBox();return g;
  }
  const hatProfile=section(s.hatOutline,s.hatCenter,s.hatEllipse);
+ yield;
  // A convex crown and a smaller rounded underside share one watertight surface.
  const hatZ=(x,y,h)=>-8.91+.00125*(y-335)+(h>=0?s.hatFrontDepth:s.hatBackDepth)*h;
- const hat=closedSurface(hatProfile,hatZ,{segments:160,rings:64,hat:true});
+ const hat=yield* closedSurface(hatProfile,hatZ,{segments:160,rings:64,hat:true});
  const stemPoint=unproject(633,255,hatZ(633,272,Math.sqrt(1-hatProfile.parameter(633,272).r**2))+.006).applyMatrix4(designToBody).applyMatrix4(bodyToHat);
  const stem=new T.SphereGeometry(.064,32,20).scale(.96,1.05,.96).translate(...stemPoint.toArray());stem.computeBoundingBox();
  body.userData.thicknessSolver={iterations:thickness.iterations,residual:thickness.residual};
- return {body,hat,stem,nearEye:lid(s.eyeNear,.0185),farEye:lid(s.eyeFar,.0145),spec:s};
+ const nearEye=lid(s.eyeNear,.0185);yield;
+ const farEye=lid(s.eyeFar,.0145);
+ return {body,hat,stem,nearEye,farEye,spec:s};
 }
+export const makeDotShape=(mouth,axis)=>finishBuild(buildDotShape(mouth,axis));
+export const makeDotShapeAsync=(mouth,axis,options)=>finishBuildAsync(buildDotShape(mouth,axis),options);

@@ -1,8 +1,9 @@
 import * as T from './vendor/three.module.js';
+import {finishBuild,finishBuildAsync} from './cooperative-build.mjs';
 
 // Seeded short curved fibres. Data only: no canvas, external texture, AI image,
 // geometry or per-frame work. RGB = filament coverage / tuft / fine undercoat.
-export function makeFiberAtlas(){
+function* buildFiberAtlas(){
  const size=1024,coverage=new Float32Array(size*size);
  let state=0x6d2b79f5;const rand=()=>{state^=state<<13;state^=state>>>17;state^=state<<5;return(state>>>0)/4294967296;};
  function dab(x,y,r,energy){
@@ -25,14 +26,17 @@ export function makeFiberAtlas(){
    const px=x+Math.cos(angle)*l*(t-.5)-Math.sin(a)*bend,py=y+Math.sin(angle)*l*(t-.5)+Math.cos(a)*bend;
    const taper=.35+.65*Math.sin(Math.PI*t)**.35;dab(px,py,r*taper,energy*taper*.55);
   }
+  if((i+1)%64===0)yield;
  }
  const data=new Uint8Array(size*size*4);
- for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+ for(let y=0;y<size;y++){for(let x=0;x<size;x++){
   const i=x+y*size,k=i*4,v=coverage[i];
   // Smooth, low-energy variation prevents a printed repeating-field appearance.
   const clump=.5+.25*Math.sin(x*.027+Math.sin(y*.019)*2)+.15*Math.sin(y*.041+x*.007);
   data[k]=Math.round(Math.min(1,v)*255);data[k+1]=Math.round(T.MathUtils.clamp(clump,0,1)*255);data[k+2]=Math.floor(rand()*255);data[k+3]=255;
- }
+ }if((y+1)%8===0)yield;}
  const tex=new T.DataTexture(data,size,size,T.RGBAFormat,T.UnsignedByteType);tex.name='Dot / seeded short-fibre field';tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.magFilter=T.LinearFilter;tex.minFilter=T.LinearMipmapLinearFilter;tex.generateMipmaps=true;tex.colorSpace=T.NoColorSpace;tex.needsUpdate=true;
  return tex;
 }
+export const makeFiberAtlas=()=>finishBuild(buildFiberAtlas());
+export const makeFiberAtlasAsync=options=>finishBuildAsync(buildFiberAtlas(),options);

@@ -33,11 +33,11 @@ test('bounded part downloads assemble original byte order and deduplicate homepa
   await f.media.prime();assert.equal(f.requests.length,4);
 });
 
-test('compatible devices assemble mobile parts and keep decode preflight silent and cached',async t=>{
-  const f=fixture(t,{constrained:true,manifest:{...manifest,mobileFallback:'old-mobile.mp4',mobileBytes:3,mobileParts:[{src:'m1.bin',bytes:2},{src:'m2.bin',bytes:1}]},fetchPart:async url=>new Response(new Uint8Array(url.endsWith('m1.bin')?[9,8]:[7]))});
-  await f.media.preparePlayback();assert.equal(f.media.snapshot().mode,'720p-compatible');
-  assert.deepEqual([...new Uint8Array(await f.blob.arrayBuffer())],[9,8,7]);assert.ok(f.requests.every(r=>!r.includes('p1.bin')&&!r.endsWith('.mp4')));
-  const first=await f.media.preflightDecode(),second=await f.media.preflightDecode();assert.equal(second,first);assert.equal(f.requests.length,3);
+test('constrained devices keep original parts and silent cached decode preflight',async t=>{
+  const f=fixture(t,{constrained:true,manifest:{...manifest,mobileFallback:'old-mobile.mp4',mobileBytes:3,mobileParts:[{src:'m1.bin',bytes:2},{src:'m2.bin',bytes:1}]},fetchPart:async url=>{assert.ok(!url.includes('m1.bin')&&!url.includes('m2.bin'));const index=Number(url.match(/p(\d)/)[1]);return new Response(new Uint8Array([index*2-1,index*2]));}});
+  await f.media.preparePlayback();assert.equal(f.media.snapshot().mode,'1080p-file');
+  assert.deepEqual([...new Uint8Array(await f.blob.arrayBuffer())],[1,2,3,4,5,6]);assert.ok(f.requests.every(r=>!r.endsWith('.mp4')));
+  const first=await f.media.preflightDecode(),second=await f.media.preflightDecode();assert.equal(second,first);assert.equal(f.requests.length,4);
   assert.equal(f.video.currentTime,0);assert.equal(f.video.paused,true);assert.equal(f.video.volume,.15);assert.equal(f.video.muted,false);
 });
 

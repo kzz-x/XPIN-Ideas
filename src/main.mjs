@@ -1,5 +1,5 @@
 import {yieldTask,nextPaint,delay,waitFor} from './preparation.mjs';
-import {prefetchProducts,assetJSON} from './asset-prefetch.mjs';
+import {prefetchProducts,prefetchImages,assetBytes,assetJSON} from './asset-prefetch.mjs';
 import {warmScene,warmEnvironment} from './scene-warm.mjs';
 import {createFilmMedia} from './film-media.mjs';
 import {createStreamingBgm} from './bgm-stream.mjs';
@@ -105,7 +105,15 @@ function setPhase(phase){requestRendering();const priorPhase=ui.phase;ui.phase=p
   if(!scroll){ui.target=0;games?.setActiveChapter(-1);}if(!movingIntro)ui.held=false;
 }
 function setBubble(text,duration=5){if(!text)return;bubbleEmphasis.announce();$('dot-bubble-text').textContent=text;ui.bubbleUntil=time+duration;}
+async function revealOpening(){
+  previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');runtime.openingReadyAt=performance.now();animationReady=true;frameLoop.setHidden(document.hidden);frameLoop.wake();
+  await nextPaint();document.body.classList.add('scene-visible');$('loading').classList.add('leave');setTimeout(()=>$('loading').style.display='none',700);
+}
 async function init(){
+  // Download while the opening builds and the viewer reads. This promise never
+  // blocks the opening; only the later listening gate awaits the real reserve.
+  runtime.backgroundStartedAt=performance.now();
+  const filmReady=media.preparePlayback(0);filmReady.catch(()=>{});
   renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;
   scene=new T.Scene();glassEnvironment(scene);scene.background=new T.Color('#0b0c0e');scene.fog=new T.Fog('#0b0c0e',48,100);camera=new T.PerspectiveCamera(innerWidth<700?48:42,innerWidth/innerHeight,.05,220);camera.position.set(3,18,22);camera.lookAt(0,0,-3);
   scene.add(new T.HemisphereLight(0xf0f1f3,0x222327,1.35));key=new T.DirectionalLight(0xfffdf8,3.0);key.position.set(-6,18,12);key.castShadow=true;key.shadow.mapSize.set(1536,1536);key.shadow.camera.left=-18;key.shadow.camera.right=18;key.shadow.camera.top=21;key.shadow.camera.bottom=-21;key.shadow.camera.near=.1;key.shadow.camera.far=65;key.shadow.bias=-.0007;key.shadow.normalBias=.035;keyTarget=new T.Object3D();scene.add(keyTarget);key.target=keyTarget;scene.add(key);const fill=new T.DirectionalLight(0xbfc7d0,.6);fill.position.set(-12,8,-12);scene.add(fill);
@@ -124,38 +132,47 @@ async function init(){
   opening.update({time:0,dt:0,phase:'intro'});await warmScene(renderer,opening.scene,opening.camera);renderer.render(opening.scene,opening.camera);
   window.__linggan={ui,bgm,sound,audioMix,listeningGate,returnVisit,returnHold,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,prepareScroll,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),rendering:{...renderStats,loop:frameLoop.snapshot()},events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),bubble:bubbleEmphasis.snapshot(),audioMix:audioMix.snapshot(),listening:listeningGate.snapshot(),returnEntry:{...returnVisit.snapshot(),held:returnHold.held,holdProgress:returnHold.progress,busy:returnBusy},games:games?.snapshot()})};
   rigModule=await rigModuleJob;await stageModuleJob;bootProgress(.94,'正在准备连续画面');
+  // Fetch the shared actor and the small stage document before the sustainable
+  // video reserve finishes. Actual rig/camera mutations still wait for launch.
+  prepareRigAssets().catch(()=>{});
+  assetJSON(new URL('../assets/r03-stage/document-source.json',import.meta.url)).catch(()=>{});
   const {makeEnvironment}=await environmentModule;globalThis.DOT_PREWARM_ENVIRONMENT=makeEnvironment();
   stageRenderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});stageRenderer.outputColorSpace=T.SRGBColorSpace;stageRenderer.toneMapping=T.ACESFilmicToneMapping;
   dotForeground=createDotForeground({scene,camera,worldRenderer:renderer});
   await warmEnvironment(stageRenderer,globalThis.DOT_PREWARM_ENVIRONMENT,camera);await warmEnvironment(renderer,scene.environment,camera);await warmEnvironment(dotForeground.renderer,scene.environment,camera);
-  opening.update({time:0,dt:0,phase:'intro'});renderer.render(opening.scene,opening.camera);bootProgress(1,'画面已就绪');await delay(Math.max(0,2000-(performance.now()-(window.__bootStart||0))));
-  previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');runtime.openingReadyAt=performance.now();animationReady=true;frameLoop.setHidden(document.hidden);frameLoop.wake();
-  await nextPaint();document.body.classList.add('scene-visible');$('loading').classList.add('leave');setTimeout(()=>$('loading').style.display='none',700);
-  runtime.backgroundStartedAt=performance.now();
+  opening.update({time:0,dt:0,phase:'intro'});renderer.render(opening.scene,opening.camera);bootProgress(1,'画面已就绪');
+  // Reveal the prepared first shot at the next paint, including a cached visit.
+  // The curtain's existing fade stays; no artificial loading minimum is added.
+  await revealOpening();
   // Give the real startup buffer and its short decoder check first access to
   // bandwidth. Products and card images follow; the rest of the film streams.
-  media.preparePlayback(0).then(async()=>{
+  filmReady.then(async()=>{
     if(!transport.started&&!filmStarting)await media.preflightDecode();
     runtime.backgroundFilmReadyAt=performance.now();transport.restoreVolumes();media.prime().catch(()=>{});
-    prepareRigAssets().catch(()=>{});
     prefetchProducts().then(()=>runtime.backgroundProductsReadyAt=performance.now()).catch(()=>{});
-    assetJSON(new URL('../assets/r03-stage/document-source.json',import.meta.url)).catch(()=>{});
     Promise.all([import('./games.mjs'),import('./scroll-space.mjs')]).catch(()=>{});
     const pictures=[...new Set(CHAPTERS.flatMap(c=>c.cards.flatMap(c=>[c.image,...(c.images||[])])))].filter(Boolean);
-    runtime.backgroundPictures=pictures.map(src=>{const image=new Image();image.fetchPriority='low';image.decoding='async';image.src=src;image.decode().catch(()=>{});return image;});
-    if(returnVisit.eligible)setTimeout(()=>{if(ui.phase==='intro'&&!ui.held)prepareScroll().catch(()=>{});},900);
+    prefetchImages(pictures).then(images=>{runtime.backgroundPictures=images;}).catch(()=>{});
+    // A return visitor still preloads bytes, but does not build the cold 3D
+    // scroll while the opening and its hold gesture are visibly animating.
   }).catch(error=>{runtime.backgroundError=error.message;transport.restoreVolumes();});
   worldReady.catch(error=>{ui.errors.push(String(error));console.error(error);toast('下一幕准备失败，请刷新后重试。');});
 }
 // Only the real first shot is on the opening critical path. Fetch later assets
 // while the viewer reads, then build the rig in the existing black beat.
-function prepareRigAssets(){return rigAssets??=Promise.all([rigModule||import('../assets/dot/index.mjs'),fetch(new URL('../assets/dot/model/assets/dot-character.glb',import.meta.url),{priority:'low'}).then(r=>{if(!r.ok)throw Error('Dot 模型暂未载入');return r.blob();})]);}
-function prepareRig(){return rigJob??=(async()=>{const [{loadSharedDot},blob]=await prepareRigAssets(),asset=URL.createObjectURL(blob);try{const rig=await loadSharedDot({asset,camera,scene,coordinates:'normalized',context:'stage',state:'trumpet',instrument:true});dotForeground.bindRoot(rig.root);return rig;}finally{URL.revokeObjectURL(asset);}})();}
+function prepareRigAssets(){return rigAssets??=Promise.all([rigModule||import('../assets/dot/index.mjs'),assetBytes(new URL('../assets/dot/model/assets/dot-character.glb',import.meta.url)).then(data=>new Blob([data],{type:'model/gltf-binary'}))]);}
+function tracePreparation(label){(runtime.prepTrace??=[]).push({label,at:performance.now()});}
+function prepareRig(){return rigJob??=(async()=>{
+  const [{loadSharedDot},blob]=await prepareRigAssets(),asset=URL.createObjectURL(blob);tracePreparation('actor-build-start');
+  try{const rig=await loadSharedDot({asset,camera,scene,coordinates:'normalized',context:'stage',state:'trumpet',instrument:true});dotForeground.bindRoot(rig.root);tracePreparation('actor-build-end');return rig;}finally{URL.revokeObjectURL(asset);}
+})();}
 async function prepareActor(){
   if(actorJob)return actorJob;actorJob=(async()=>{
     const rig=await prepareRig();await yieldTask();
     const {createDotStage}=await import('./dot-stage-r07.mjs');
+    tracePreparation('actor-adapter-start');
     dot=await createDotStage({scene,camera,film,rig,stageRenderer,deferStage:true,isPlaying:()=>transport.playing,onAction:action=>{if(['scroll','departure'].includes(ui.phase))sound.dotAction(action);}});
+    tracePreparation('actor-adapter-end');
     window.__linggan.dot=dot;runtime.actorReady=true;advanceScrollProgress(.14,'正在准备空间');
   })();return actorJob;
 }
@@ -177,13 +194,18 @@ async function prepareScroll(){
   if(scrollJob)return scrollJob;scrollJob=(async()=>{
     await prepareActor();await fontsReady;advanceScrollProgress(.16,'正在准备卷轴');
     const [{createGames},{createScrollSpace}]=await Promise.all([import('./games.mjs'),import('./scroll-space.mjs')]);await loadType();advanceScrollProgress(.20,'正在准备卷轴');await yieldTask();
+    tracePreparation('scroll-build-start');
     space=await createScrollSpace({scene,camera,onFocus:v=>{ui.focusLock=v;if(v){ui.target=ui.scroll;ui.scrollVelocity=0;}},onSound:(t,options)=>sound.play(t,options)});
-    advanceScrollProgress(.30,'内容正在就位');await yieldTask();games=await createGames({scene,camera,renderer,canvas,chapterPositions:CONFIG.chapters,onFeedback:event=>{if(event.type==='level-success')sound.levelWin(event.chapter);else if(!['info','warning','complete'].includes(event.type))sound.play(event.type,event);if(event.text)setBubble(event.text,event.type==='complete'?7:4);},onProgress:()=>updateCompletion(),onInteractionLock:locked=>{ui.gameLock=locked;if(locked){ui.target=ui.scroll;ui.scrollVelocity=0;}},onGuide:guide=>{if(guide.text)setBubble(guide.text,7);const target=guide.target?.isVector3?guide.target:guide.target?.getWorldPosition?.(vec());if(target)dot?.setAttention(target);}});
+    tracePreparation('scroll-build-end');advanceScrollProgress(.30,'内容正在就位');await yieldTask();tracePreparation('games-build-start');games=await createGames({scene,camera,renderer,canvas,chapterPositions:CONFIG.chapters,onFeedback:event=>{if(event.type==='level-success')sound.levelWin(event.chapter);else if(!['info','warning','complete'].includes(event.type))sound.play(event.type,event);if(event.text)setBubble(event.text,event.type==='complete'?7:4);},onProgress:()=>updateCompletion(),onInteractionLock:locked=>{ui.gameLock=locked;if(locked){ui.target=ui.scroll;ui.scrollVelocity=0;}},onGuide:guide=>{if(guide.text)setBubble(guide.text,7);const target=guide.target?.isVector3?guide.target:guide.target?.getWorldPosition?.(vec());if(target)dot?.setAttention(target);}});
+    tracePreparation('games-build-end');
     // Await actual model/texture decode, not just the creation of their loaders.
-    advanceScrollProgress(.42,'内容正在就位');
-    const images=[...document.querySelectorAll('.process-card img')],assets=[...games.loads,...images.map(img=>img.decode())];let finishedAssets=0;
+    advanceScrollProgress(.42,'内容正在就位');tracePreparation('scroll-assets-start');
+    // CSS3D cards are still detached here, so querying document would silently
+    // find none. Covers are required; unopened article media stays lazy.
+    const images=space.cards.map(card=>card.el.querySelector('.card-image')).filter(Boolean),assets=[...games.loads,...images.map(img=>img.decode())];let finishedAssets=0;
     await Promise.all(assets.map(job=>Promise.resolve(job).then(()=>advanceScrollProgress(.42+(++finishedAssets/Math.max(1,assets.length))*.21,'内容正在就位'))));
     if(games.snapshot().products.models.some(model=>!model.loaded)||images.some(img=>!img.naturalWidth))throw Error('部分卷轴内容尚未载入，请重新加载。');
+    tracePreparation('scroll-assets-end');
     Object.assign(window.__linggan,{games,space,dotForeground});
     const warmCamera=camera.clone();warmCamera.position.set(innerWidth<700?2.04:1.2,innerWidth<700?28.9:17,innerWidth<700?40.8:24);warmCamera.lookAt(0,0,-3);warmCamera.updateMatrixWorld();
     // Use the exact production light lists and draw passes. A combined layer
@@ -226,9 +248,10 @@ async function warmHandoff(){
 function prepareWorld(){
   if(worldJob)return worldJob;worldJob=(async()=>{
     runtime.worldPreparing=true;runtime.stageReady=false;
-    // Start CPU preparation as soon as the startup buffer is available, not
-    // after the complete film. Never modify a stage that is already visible.
-    await media.preparePlayback(0);
+    // The first decoded frame is enough to create the shared screen texture.
+    // A slow connection may need a much longer playback reserve; build the
+    // next scenes in parallel with that download, behind the existing cover.
+    await media.open();
     await waitFor(()=>!['stage','transition','departure'].includes(ui.phase),{timeout:120000,label:'下一幕'});
     // A return visit may already be assembling the scroll. Complete that work
     // before the cinema re-parents the shared character.
@@ -263,6 +286,9 @@ async function enterScrollDirect(){
   $('return-entry').classList.remove('leaving');$('return-entry').classList.add('visible');$('return-entry').setAttribute('aria-hidden','false');setPhase('return-wait');
   const shownAt=performance.now(),timer=setTimeout(()=>{if(generation===returnGeneration&&!runtime.scrollReady)$('return-loading').classList.add('visible');},300);
   try{
+    // Commit the opaque cover before cold geometry/shader work can occupy JS.
+    // Pressing the return button itself only starts low-priority data requests.
+    await nextPaint();if(generation!==returnGeneration)return;
     await prepareScroll();if(generation!==returnGeneration)return;clearTimeout(timer);
     await delay(Math.max(0,190-(performance.now()-shownAt)));if(generation!==returnGeneration)return;
     document.body.classList.add('return-entering');setPhase('scroll');
@@ -275,7 +301,10 @@ async function enterScrollDirect(){
   finally{clearTimeout(timer);}
 }
 const returnButton=$('return-scroll');
-function startReturnHold(){if(ui.phase!=='intro'||returnBusy||!returnVisit.eligible)return;ui.held=false;ui.hold=0;returnHold.press(performance.now());sound.unlock();prepareScroll().catch(()=>{});}
+function startReturnHold(){
+  if(ui.phase!=='intro'||returnBusy||!returnVisit.eligible)return;ui.held=false;ui.hold=0;returnHold.press(performance.now());sound.unlock();
+  prepareRigAssets().catch(()=>{});prefetchProducts().catch(()=>{});
+}
 returnButton.addEventListener('pointerdown',e=>{if(ui.phase!=='intro')return;e.preventDefault();returnButton.setPointerCapture(e.pointerId);startReturnHold();});
 for(const type of ['pointerup','pointercancel'])returnButton.addEventListener(type,()=>returnHold.release());
 returnButton.addEventListener('keydown',e=>{if([' ','Enter'].includes(e.key)){e.preventDefault();startReturnHold();}});

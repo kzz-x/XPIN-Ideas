@@ -2,6 +2,7 @@ import {restoreApprovedBody} from '../model/approved-body-restore.mjs';
 import {createClosedEyeModes} from '../model/closed-eye-modes.mjs';
 import * as T from '../model/frozen/r07d/editable-stage/素材/v011/DotSharedWeb/vendor/three.module.js';
 import {loadDot} from '../model/frozen/r07d/editable-stage/素材/v011/DotSharedWeb/dot-component.mjs';
+import {yieldBuild} from '../model/frozen/r07d/editable-stage/素材/v011/DotSharedWeb/cooperative-build.mjs';
 import {controlledPose} from '../model/frozen/r07d/editable-stage/素材/v020-white-encore-cpu/controlled-animation.mjs';
 import {sampleMotion,ACTION_MAP} from '../model/frozen/r02/素材/recovery-actions/spirit-motions.mjs';
 import {sampleResponseRoll} from '../model/c-response-only.mjs';
@@ -17,10 +18,13 @@ function zeroPose(p){return {...p,x:0,y:0,sx:1,sy:1,sz:1,roll:0,hatY:0,hatRoll:0
 function blendRest(p,w){const n=zeroPose(p),out={...p};for(const k of ['x','y','sx','sy','sz','roll','hatY','hatRoll','driftX','driftY','driftZ','yaw','tilt','hornAmount'])out[k]=T.MathUtils.lerp(p[k],n[k],w);return out;}
 export async function loadAcceptedModel(data,contract,{asset=globalThis.DOT_COMPONENT_ASSET}={}){
  const dot=await loadDot({asset}),doc=JSON.parse(JSON.stringify(data?.motion?data:DEFAULT_DOCUMENT));dot.setState('idle');dot.update(0,{events:[],phrases:[],amount:0,drift:0});dot.horn.visible=false;
+ await yieldBuild();
  dot.body.geometry.computeBoundingBox();dot.root.updateWorldMatrix(true,true);const originalPlacementBox=dot.body.geometry.boundingBox.clone().applyMatrix4(dot.body.matrixWorld);const nativeCentre=dot.body.geometry.boundingBox.getCenter(new T.Vector3()),nativeHeight=dot.body.geometry.boundingBox.max.y-dot.body.geometry.boundingBox.min.y,frontQ=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),.88),inverseFrontQ=frontQ.clone().invert(),nativeToFront=new T.Matrix4().makeRotationY(.88).multiply(new T.Matrix4().makeTranslation(-nativeCentre.x,-nativeCentre.y,-nativeCentre.z)),frontToNative=nativeToFront.clone().invert(),nap=dot.deform.children.find(o=>o.isInstancedMesh);
  if(!nap)throw Error('Original A velvet nap missing');const restoredBody=restoreApprovedBody(dot);dot.mouth.addScaledVector(dot.axis,.030886044807003656);restoredBody.trumpetAnchorOutward=.030886044807003656;const closedModes=createClosedEyeModes(dot,{nativeToFront,frontToNative});dot.closedModeController=closedModes;
  const bodySpin=new T.Group();bodySpin.name='D / A body+nap only / C front-plane response';bodySpin.position.copy(nativeCentre);dot.deform.add(bodySpin);bodySpin.add(dot.body,nap);dot.body.position.copy(nativeCentre).negate();nap.position.copy(nativeCentre).negate();
+ await yieldBuild();
  const heightField=createAHeightField(dot.body.geometry,nativeToFront),actionUnit=nativeHeight/contract.CBodyHeight,frontTargets=contract.CNeutralEyeAnchors.map(p=>[(p[0]-contract.CBodyCentre[0])*actionUnit,(p[1]-contract.CBodyCentre[1])*actionUnit]),eyeAdapter=createAFrontEyes(dot,{field:heightField,nativeToFront,frontToNative,frontTargets});
+ await yieldBuild();
  const placement=new T.Group();placement.name='D / A exact model / single candidate';placement.add(dot.root);dot.root.updateWorldMatrix(true,true);const restBounds=originalPlacementBox,restCentre=restBounds.getCenter(new T.Vector3()),normalScale=2.35/restBounds.getSize(new T.Vector3()).y;placement.scale.setScalar(normalScale);placement.position.copy(restCentre).multiplyScalar(-normalScale);
  const shadowFlags=[],hornMaterials=new Map();dot.root.traverse(o=>{if(o.isMesh)shadowFlags.push({object:o,castShadow:o.castShadow,receiveShadow:o.receiveShadow});});
  dot.horn.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;for(const m of Array.isArray(o.material)?o.material:[o.material])if(!hornMaterials.has(m))hornMaterials.set(m,{opacity:m.opacity,transparent:m.transparent,depthWrite:m.depthWrite});});

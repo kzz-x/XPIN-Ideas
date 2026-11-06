@@ -8,7 +8,7 @@ export function mediaFigure(item, index) {
   if (item.kind === 'video') {
     content = `<video controls playsinline preload="none"${dimensions(item)} data-media-poster="${escape(item.poster)}" data-media-src="${escape(item.src)}" aria-label="${caption}"></video>`;
   } else {
-    content = `<img ${index ? 'data-media-src' : 'src'}="${escape(item.src)}"${dimensions(item)} alt="${caption}" decoding="async">`;
+    content = `<img data-media-src="${escape(item.src)}"${dimensions(item)} alt="${caption}" decoding="async">`;
   }
   return `<figure class="editorial-media media-${escape(item.kind || 'image')}" data-media-index="${index}">${content}<figcaption>${caption}</figcaption></figure>`;
 }

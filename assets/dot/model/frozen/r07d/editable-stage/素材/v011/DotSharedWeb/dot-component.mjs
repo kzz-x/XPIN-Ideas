@@ -2,7 +2,9 @@ import * as THREE from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {pose} from './animation.mjs';
 import {makeDotMaterials,SURFACE_STATUS} from './dot-materials.mjs';
-import {makeDotShape} from './dot-shape-v4.mjs';
+import {makeDotShape,makeDotShapeAsync} from './dot-shape-v4.mjs';
+import {makeFiberAtlasAsync} from './dot-fiber-atlas.mjs';
+import {yieldBuild} from './cooperative-build.mjs';
 import {makeTrumpetV6} from './trumpet-v6.mjs';
 import {finishLeatherBeret} from './beret-leather-v7.mjs';
 
@@ -11,15 +13,31 @@ export async function loadDot({asset=DEFAULT_DOT_ASSET,manager,onStage=()=>{}}={
   const loadStarted=performance.now();
   const gltf=await new GLTFLoader(manager).loadAsync(String(asset));
   onStage('gltf_load_parse',performance.now()-loadStarted);
-  const buildStarted=performance.now(),dot=createDot(gltf.scene);
+  const buildStarted=performance.now();
+  const dot=await createDotAsync(gltf.scene);
   onStage('character_construct',performance.now()-buildStarted);
   return dot;
+}
+export async function createDotAsync(sourceScene,options){
+  const source=sourceScene.getObjectByName('DOT_HERO_ROOT');
+  if(!source)throw Error('Dot asset is missing DOT_HERO_ROOT');
+  const sourceAnchor=source.getObjectByName('MOUTHPIECE_FIXED_ANCHOR'),sourceHorn=source.getObjectByName('TRUMPET_ASSEMBLY');
+  if(!sourceAnchor||!sourceHorn)throw Error('Dot asset is missing its mouth/trumpet hierarchy');
+  await yieldBuild();
+  const atlas=await makeFiberAtlasAsync(options),materials=makeDotMaterials({atlas});
+  await yieldBuild();
+  sourceScene.updateMatrixWorld(true);
+  const mouth=sourceAnchor.getWorldPosition(new THREE.Vector3());mouth.z+=.003;
+  const axis=new THREE.Vector3(1,0,0).transformDirection(sourceHorn.matrixWorld);
+  const shape=await makeDotShapeAsync(mouth,axis,options);
+  await yieldBuild();
+  return createDot(sourceScene,{materials,shape});
 }
 /** Renderer/camera/room/audio/storage-independent character. No internal RAF.
  * root: caller-owned placement; update(t,{events,phrases,...}): absolute time.
  * Only idle and trumpet are implemented. Unsupported states fail explicitly.
  */
-export function createDot(sourceScene){
+export function createDot(sourceScene,prepared={}){
   const source=sourceScene.getObjectByName('DOT_HERO_ROOT');
   if(!source)throw Error('Dot asset is missing DOT_HERO_ROOT');
   sourceScene.updateMatrixWorld(true);
@@ -37,9 +55,9 @@ export function createDot(sourceScene){
   const openEyes=new THREE.Group();openEyes.name='Dot / idle eyes';deform.add(openEyes);
   const anchor=new THREE.Group();anchor.name='Dot / fixed mouth anchor';motion.add(anchor);
   const horn=new THREE.Group();horn.name='Dot / trumpet';anchor.add(horn);
-  const materials=makeDotMaterials(),morphs=[];
+  const materials=prepared.materials||makeDotMaterials(),morphs=[];
   finishLeatherBeret(materials.hat);
-  const shape=makeDotShape(mouth,axis);
+  const shape=prepared.shape||makeDotShape(mouth,axis);
   const originalMaterials=new Set(),originalGeometries=new Set();
   let body;
   const up=new THREE.Vector3(0,axis.z,-axis.y).normalize();

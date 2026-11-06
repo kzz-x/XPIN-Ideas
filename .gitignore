@@ -1,5 +1,6 @@
 dist/
 assets/media/film-placeholder.mp4
+assets/media/film-hd.mp4
 test-games.html
 *.log
 node_modules/
