@@ -28,7 +28,7 @@ import {loadType,clamp,smooth,damp,vec,project} from './space-utils.mjs';
 const $=id=>document.getElementById(id),canvas=$('world'),film=$('film'),audio=$('stage-audio'),portal=$('portal');
 const ui={phase:'loading',phaseAt:0,scroll:0,target:0,scrollVelocity:0,held:false,hold:0,holdStart:0,muted:false,gameLock:false,focusLock:false,bubbleUntil:0,bubbleX:0,bubbleY:0,chapter:0,game:-1,stageEntryAt:0,frameTimes:[],blackAt:0,events:[],errors:[]};
 let opening,dot,dotForeground,games,space,renderer,scene,camera,css,key,keyTarget,quality,previous=performance.now()/1000,time=0,startedAt=previous,toastTimer;
-const runtime={ready:false,actorReady:false,stageReady:false,scrollReady:false,scrollProgress:0,scrollLabel:'正在准备空间',openingReadyAt:null,stageReadyAt:null,worldReadyAt:null,requested:false,longTasks:[]};
+const runtime={ready:false,actorReady:false,stagePrepared:false,stageReady:false,worldPreparing:false,scrollReady:false,scrollProgress:0,scrollLabel:'正在准备空间',openingReadyAt:null,stagePreparedAt:null,stageReadyAt:null,worldReadyAt:null,requested:false,longTasks:[]};
 let actorJob,stageJob,screenReady,scrollJob,worldJob,fontsReady,rigModule,rigAssets,rigJob,stageRenderer,filmStarting=false;
 let animationReady=false;
 const renderStats={world:0,css:0,foreground:0,mode:'loading'};
@@ -41,10 +41,10 @@ function paintDiagnostics(now,mode=renderStats.mode){
   renderStats.mode=mode;if(!diagnostics||mode===diagnostics.dataset.mode&&now-lastDiagnostics<1000)return;
   lastDiagnostics=now;diagnostics.dataset.mode=mode;
   const frames=ui.frameTimes.slice(-240).sort((a,b)=>a-b),at=p=>frames.length?Number(frames[Math.min(frames.length-1,Math.floor(frames.length*p))].toFixed(2)):null;
-  diagnostics.textContent=JSON.stringify({mode,phase:ui.phase,samples:frames.length,activeFrameMs:{p50:at(.5),p95:at(.95)},renders:{...renderStats},loop:frameLoop.snapshot(),worldDrawCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles});
+  const m=media.snapshot();diagnostics.textContent=JSON.stringify({mode,phase:ui.phase,samples:frames.length,activeFrameMs:{p50:at(.5),p95:at(.95)},renders:{...renderStats},loop:frameLoop.snapshot(),worldDrawCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles,readiness:{stage:runtime.stageReady,scroll:runtime.scrollReady,handoff:!!runtime.handoffReady},media:{mode:m.mode,bytes:m.bytes,totalBytes:m.totalBytes,bufferedAhead:m.bufferedAhead,complete:m.complete,preflighting:m.preflighting},errors:ui.errors});
 }
 for(const type of ['pointerdown','pointerup','keydown','click','resize'])window.addEventListener(type,requestRendering,{capture:true,passive:true});
-let cueEdited=false;const media=createFilmMedia(film,{manifestURL:new URL(CONFIG.film.manifest,location.href).href,onManifest:m=>{if(!cueEdited&&Number.isFinite(m.stageAt))applyCue(m.stageAt);$('film-status').textContent=m.label+' · 同源大屏 / 整片预载';}});
+let cueEdited=false;const media=createFilmMedia(film,{manifestURL:new URL(CONFIG.film.manifest,location.href).href,onManifest:m=>{if(!cueEdited&&Number.isFinite(m.stageAt))applyCue(m.stageAt);$('film-status').textContent=m.label+' · 同源大屏 / 按需缓冲';}});
 const waitLabel=document.createElement('div');waitLabel.id='media-wait';waitLabel.setAttribute('role','status');waitLabel.textContent='[ · · · ] 正在准备下一幕';document.body.append(waitLabel);
 function buffering(on){waitLabel.classList.toggle('visible',!!on);}
 if(globalThis.PerformanceObserver)try{new PerformanceObserver(list=>runtime.longTasks.push(...list.getEntries().map(e=>({at:e.startTime,ms:e.duration,phase:ui.phase})))).observe({type:'longtask',buffered:true});}catch{}
@@ -80,7 +80,7 @@ sound.connectMediaElement(film);sound.connectMediaElement(audio);
 function updateCompletion(){if(games)bgm.setComplete(COUNTS.every((n,i)=>games.getState().done[i].length===n));}
 window.addEventListener('pointermove',e=>{if(ui.phase==='scroll'&&!ui.focusLock&&e.pointerType!=='touch'){scrollPointer.x=e.clientX/innerWidth*2-1;scrollPointer.y=1-e.clientY/innerHeight*2;space?.pointerMove(e);}},true);
 document.addEventListener('pointerleave',()=>{scrollPointer.x=scrollPointer.y=0;space?.clearHover();});
-const transport=new PresentationTransport(film,audio,{managedMedia:true,getVideoVolume:()=>media.preflighting?0:audioMix.snapshot().video,getMediaOffset:()=>media.timeOffset,canPlayAt:at=>media.canPlayAt(at),requestMedia:at=>media.ensure(at,3).catch(error=>toast(error.message)),canEnterStage:()=>runtime.ready,canDepart:()=>runtime.ready,onBuffering:buffering,onFilm(){setPhase('film');prepareWorld().catch(()=>{});},onStage(){ui.stageEntryAt=time;setPhase('stage');},onTransition(){ui.stageEntryAt=time;setPhase('transition');},onDeparture(){if(ui.phase==='film'){dot?.update({time,dt:0,mode:'stage',stageTime:CONFIG.stage.end,pixelRatio:renderer.getPixelRatio()});camera.copy(dot.stageCamera,false);camera.layers.set(0);look.copy(camera.position).add(camera.getWorldDirection(vec()).multiplyScalar(10));}setPhase('departure');},onError:toast});
+const transport=new PresentationTransport(film,audio,{managedMedia:true,getVideoVolume:()=>media.preflighting?0:audioMix.snapshot().video,getMediaOffset:()=>media.timeOffset,canPlayAt:at=>media.canPlayAt(at),requestMedia:at=>media.ensure(at,3).catch(error=>toast(error.message)),canEnterStage:()=>runtime.stageReady,canDepart:()=>runtime.ready,onBuffering:buffering,onFilm(){setPhase('film');prepareWorld().catch(()=>{});},onStage(){ui.stageEntryAt=time;setPhase('stage');},onTransition(){ui.stageEntryAt=time;setPhase('transition');},onDeparture(){if(ui.phase==='film'){dot?.update({time,dt:0,mode:'stage',stageTime:CONFIG.stage.end,pixelRatio:renderer.getPixelRatio()});camera.copy(dot.stageCamera,false);camera.layers.set(0);look.copy(camera.position).add(camera.getWorldDirection(vec()).multiplyScalar(10));}setPhase('departure');},onError:toast});
 const mixControls=bindAudioMix(audioMix,{onToast:toast,onPreview:()=>{sound.unlock();sound.play('click');setTimeout(()=>sound.play('win'),230);}});
 function applyAudioMix(values){sound.setVolume(values.sfx);bgm.setVolume(values.bgm);transport.restoreVolumes();}
 audioMix.subscribe(applyAudioMix);applyAudioMix(audioMix.snapshot());
@@ -101,6 +101,7 @@ function setPhase(phase){requestRendering();const priorPhase=ui.phase;ui.phase=p
   if(phase==='scroll'){returnVisit.markScrollVisited();ui.target=ui.scroll=ui.scrollVelocity=0;ui.game=-1;setBubble('你好，我是 Dot。我们把这次创作慢慢展开。',7);}
   if(phase==='stage'){ui.scroll=ui.target=ui.scrollVelocity=0;ui.stageGreeting=false;}
   if(phase==='black'){ui.blackAt=performance.now();ui.events.push({event:'pure-black-start',at:ui.blackAt});}
+  if(phase==='launch')setTimeout(()=>{if(['launch','listen','black','film-wait','film'].includes(ui.phase))prepareWorld().catch(()=>{});},1100);
   if(!scroll){ui.target=0;games?.setActiveChapter(-1);}if(!movingIntro)ui.held=false;
 }
 function setBubble(text,duration=5){if(!text)return;bubbleEmphasis.announce();$('dot-bubble-text').textContent=text;ui.bubbleUntil=time+duration;}
@@ -130,17 +131,20 @@ async function init(){
   opening.update({time:0,dt:0,phase:'intro'});renderer.render(opening.scene,opening.camera);bootProgress(1,'画面已就绪');await delay(Math.max(0,2000-(performance.now()-(window.__bootStart||0))));
   previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');runtime.openingReadyAt=performance.now();animationReady=true;frameLoop.setHidden(document.hidden);frameLoop.wake();
   await nextPaint();document.body.classList.add('scene-visible');$('loading').classList.add('leave');setTimeout(()=>$('loading').style.display='none',700);
-  prepareRigAssets().catch(()=>{});
   runtime.backgroundStartedAt=performance.now();
-  // Start at the first real homepage paint. No gesture or headphone screen is
-  // needed for downloads or the muted decoder preflight.
-  media.prime().then(()=>media.preflightDecode()).then(()=>{runtime.backgroundFilmReadyAt=performance.now();transport.restoreVolumes();}).catch(error=>{runtime.backgroundError=error.message;transport.restoreVolumes();});
-  prefetchProducts().then(()=>runtime.backgroundProductsReadyAt=performance.now()).catch(()=>{});
-  assetJSON(new URL('../assets/r03-stage/document-source.json',import.meta.url)).catch(()=>{});
-  Promise.all([import('./games.mjs'),import('./scroll-space.mjs')]).catch(()=>{});
-  const pictures=[...new Set(CHAPTERS.flatMap(c=>c.cards.flatMap(c=>[c.image,...(c.images||[])])))];
-  runtime.backgroundPictures=pictures.map(src=>{const image=new Image();image.src=src;image.decode().catch(()=>{});return image;});
-  if(returnVisit.eligible)setTimeout(()=>{if(ui.phase==='intro'&&!ui.held)prepareScroll().catch(()=>{});},900);
+  // Give the real startup buffer and its short decoder check first access to
+  // bandwidth. Products and card images follow; the rest of the film streams.
+  media.preparePlayback(0).then(async()=>{
+    if(!transport.started&&!filmStarting)await media.preflightDecode();
+    runtime.backgroundFilmReadyAt=performance.now();transport.restoreVolumes();media.prime().catch(()=>{});
+    prepareRigAssets().catch(()=>{});
+    prefetchProducts().then(()=>runtime.backgroundProductsReadyAt=performance.now()).catch(()=>{});
+    assetJSON(new URL('../assets/r03-stage/document-source.json',import.meta.url)).catch(()=>{});
+    Promise.all([import('./games.mjs'),import('./scroll-space.mjs')]).catch(()=>{});
+    const pictures=[...new Set(CHAPTERS.flatMap(c=>c.cards.flatMap(c=>[c.image,...(c.images||[])])))].filter(Boolean);
+    runtime.backgroundPictures=pictures.map(src=>{const image=new Image();image.fetchPriority='low';image.decoding='async';image.src=src;image.decode().catch(()=>{});return image;});
+    if(returnVisit.eligible)setTimeout(()=>{if(ui.phase==='intro'&&!ui.held)prepareScroll().catch(()=>{});},900);
+  }).catch(error=>{runtime.backgroundError=error.message;transport.restoreVolumes();});
   worldReady.catch(error=>{ui.errors.push(String(error));console.error(error);toast('下一幕准备失败，请刷新后重试。');});
 }
 // Only the real first shot is on the opening critical path. Fetch later assets
@@ -166,7 +170,7 @@ async function prepareStage(){
     runtime.prepTrace.push({label:'stage-draw-start',at:performance.now()});
     for(const at of [0,3,9,15.7]){dot.update({time:0,dt:0,mode:'stage',stageTime:at,pixelRatio:.25});dot.renderStage();await yieldTask();}
     dot.update({time:0,dt:0,mode:'stage',stageTime:0,pixelRatio:renderer.getPixelRatio()});await dot.source.seek(0);dot.renderStage();dot.source.hide();dot.source.renderer.domElement.style.visibility='';
-    runtime.prepTrace.push({label:'stage-draw-end',at:performance.now()});runtime.stageReady=true;runtime.stageReadyAt=performance.now();screenReady=Promise.resolve();
+    runtime.prepTrace.push({label:'stage-draw-end',at:performance.now()});runtime.stagePrepared=true;runtime.stagePreparedAt=performance.now();screenReady=Promise.resolve();
   })();return stageJob;
 }
 async function prepareScroll(){
@@ -221,13 +225,21 @@ async function warmHandoff(){
 }
 function prepareWorld(){
   if(worldJob)return worldJob;worldJob=(async()=>{
+    runtime.worldPreparing=true;runtime.stageReady=false;
+    // Start CPU preparation as soon as the startup buffer is available, not
+    // after the complete film. Never modify a stage that is already visible.
+    await media.preparePlayback(0);
+    await waitFor(()=>!['stage','transition','departure'].includes(ui.phase),{timeout:120000,label:'下一幕'});
     // A return visit may already be assembling the scroll. Complete that work
     // before the cinema re-parents the shared character.
     if(scrollJob)await scrollJob;
     await prepareStage();await prepareScroll();await screenReady;
+    // Handoff warming hides renderers and re-parents the shared rig. Keep the
+    // native stage gate closed until this finishes behind an opaque surface.
+    await waitFor(()=>['listen','black','film-wait','film','return-wait'].includes(ui.phase)||$('settings').open&&!['stage','transition','departure'].includes(ui.phase),{timeout:120000,label:'转场画面'});
     await warmHandoff();
-    runtime.ready=true;runtime.worldReadyAt=performance.now();resolveWorld();
-  })().catch(error=>{rejectWorld(error);throw error;});worldJob.catch(()=>{});return worldJob;
+    runtime.worldPreparing=false;runtime.stageReady=true;runtime.stageReadyAt=performance.now();runtime.ready=true;runtime.worldReadyAt=performance.now();resolveWorld();
+  })().catch(error=>{runtime.worldPreparing=false;runtime.stageReady=false;rejectWorld(error);throw error;});worldJob.catch(()=>{});return worldJob;
 }
 function placeReturnButton(){
   const button=$('return-scroll');if(button.hidden)return;const rect=$('hold').getBoundingClientRect();if(!rect.height)return;
@@ -274,8 +286,14 @@ window.addEventListener('blur',()=>returnHold.cancel());document.addEventListene
 for(const type of ['pointerdown','keydown'])$('hold').addEventListener(type,()=>returnHold.cancel(),{capture:true});
 
 function beginListening(){
-  const generation=++listenGeneration;listeningGate.reset();setPhase('listen');ui.listenStartedAt=performance.now();ui.listenFinishedAt=null;$('listening-status').textContent='正在准备影片';sound.play('headphones');
-  media.prime().catch(()=>{});Promise.all([media.preparePlayback(0),prepareWorld()]).then(async()=>{if(generation!==listenGeneration)return;await media.preflightDecode();transport.restoreVolumes();}).then(()=>{if(generation!==listenGeneration)return;listeningGate.ready=true;$('listening-status').textContent='准备就绪，即将开始';}).catch(error=>{if(generation===listenGeneration&&ui.phase==='listen'){toast(error.message);setPhase('chat');}});
+  const generation=++listenGeneration;listeningGate.reset();paintListeningProgress(media.snapshot());setPhase('listen');ui.listenStartedAt=performance.now();ui.listenFinishedAt=null;sound.play('headphones');
+  prepareWorld().catch(()=>{});media.preparePlayback(0).then(async()=>{if(generation!==listenGeneration)return;await media.preflightDecode();transport.restoreVolumes();media.prime().catch(()=>{});}).then(()=>{if(generation!==listenGeneration)return;listeningGate.ready=true;$('listening-status').textContent='准备就绪，即将开始';}).catch(error=>{if(generation===listenGeneration&&ui.phase==='listen'){toast(error.message);setPhase('chat');}});
+}
+function paintListeningProgress(m){
+  const progress=m.startupProgress??m.downloadProgress,percent=Math.floor(progress*100),bar=$('listening-fill').parentElement;
+  $('listening-fill').style.transform='scaleX('+progress+')';bar.setAttribute('aria-valuenow',String(percent));
+  const label=listeningGate.ready?'准备就绪，即将开始':progress<1?'影片播放缓冲 '+percent+'%':m.preflighting?'缓冲已就绪 · 正在预热解码':'缓冲已就绪 · 正在读取首帧';
+  $('listening-status').textContent=label;bar.setAttribute('aria-valuetext',label);
 }
 const listeningRange=$('listening-volume');
 listeningRange.addEventListener('pointerdown',()=>listeningGate.adjusting=true);
@@ -285,7 +303,7 @@ listeningRange.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Arro
 listeningRange.addEventListener('keyup',()=>{listeningGate.adjusting=false;listeningGate.adjusted();});
 async function startFilm(at=0){
   if(filmStarting)return;filmStarting=true;let shown=false;const timer=setTimeout(()=>{shown=true;buffering(true);},300);
-  try{media.prime().catch(()=>{});await media.preparePlayback(at);await prepareWorld();transport.started=true;await transport.start(at);}
+  try{prepareWorld().catch(()=>{});await media.preparePlayback(at);if(media.preflighting)await media.preflightDecode();media.prime().catch(()=>{});transport.started=true;await transport.start(at);}
   catch(error){toast(error.message);setPhase('chat');}
   finally{clearTimeout(timer);if(shown)buffering(false);filmStarting=false;}
 }
@@ -325,8 +343,8 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
   if(ui.phase==='intro'){ui.hold=ui.held?clamp(current-ui.holdStart):clamp(ui.hold-dt*1.65);$('hold').style.setProperty('--hold',ui.hold);if(ui.hold>=1&&opening.prepared){sound.unlock();ui.held=false;setPhase('morph');}}
   else if(ui.phase==='morph'&&age>=OPENING_TIMING.morph&&opening.ready)setPhase('chat');
   else if(ui.phase==='launch'&&age>=4.35)beginListening();
-  else if(ui.phase==='listen'){const state=listeningGate.update(dt,{paused:document.hidden||$('settings').open});if(!state.ready){const m=media.snapshot();$('listening-status').textContent=m.preflighting?'正在预热影片解码':m.complete?'正在准备舞台与卷轴':'影片正在载入 '+Math.floor(m.progress*100)+'%';}
-    $('listening-fill').style.transform='scaleX('+state.progress+')';$('listening-fill').parentElement.setAttribute('aria-valuenow',String(Math.round(state.progress*100)));if(state.done){ui.listenFinishedAt=performance.now();setPhase('black');requestAnimationFrame(()=>setTimeout(()=>prepareWorld().catch(()=>{}),0));}}
+  else if(ui.phase==='listen'){const m=media.snapshot(),state=listeningGate.update(dt,{paused:document.hidden||$('settings').open,progress:m.startupProgress??m.downloadProgress});paintListeningProgress(m);
+    if(state.done){ui.listenFinishedAt=performance.now();setPhase('black');requestAnimationFrame(()=>setTimeout(()=>prepareWorld().catch(()=>{}),0));}}
   else if(ui.phase==='black'&&performance.now()-ui.blackAt>=750){setPhase('film-wait');startFilm();}
   if(['film','stage','transition'].includes(ui.phase))transport.update(dt);
   chatPresentation.update(ui.phase,time-ui.phaseAt);cinemaControls.update();

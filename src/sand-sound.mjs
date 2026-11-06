@@ -1,5 +1,6 @@
 const clamp=x=>Math.max(0,Math.min(1,Number(x)||0));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
+const OUTPUT_GAIN=.7;
 // The same release/gather/lock clocks as the visual solver; finishing uses the
 // actual UI refinement, so a slow frame or a resumed tab cannot outrun the image.
 export function sandProfile(state={}){
@@ -25,16 +26,19 @@ export function createSandOpening(context,output){
  }
  function start(state){
   if(!ready||sandProfile(state).complete)return null;
-  const bus=context.createGain(),soften=context.createWaveShaper(),nodes=new Set(),filters=[];
+  const bus=context.createGain(),soften=context.createWaveShaper(),outputGain=context.createGain(),nodes=new Set(),filters=[];
   // A few natural slate clicks are much louder than the sand bed. Round only
   // this new texture before the approved master; keep the low flow audible.
   const curve=new Float32Array(32769);for(let i=0;i<curve.length;i++){const x=i/(curve.length-1)*2-1;curve[i]=.038*Math.tanh(x*1.35/.038);}
-  soften.curve=curve;soften.oversample='4x';bus.gain.value=1;bus.connect(soften).connect(output);
+  soften.curve=curve;soften.oversample='4x';bus.gain.value=1;
+  // Apply the requested 30% reduction after nonlinear shaping so every sand
+  // sample is exactly 70% of its previous output, without changing its motion.
+  outputGain.gain.value=OUTPUT_GAIN;bus.connect(soften).connect(outputGain).connect(output);
   function filter(type,hz){const f=context.createBiquadFilter();f.type=type;f.frequency.value=hz;f.Q.value=.65;f.connect(bus);filters.push(f);return f;}
   const low=filter('lowpass',1900),move=filter('bandpass',2100),high=filter('highpass',1800);
   const trace={style:'1 / layered dry sand',startVisual:state.time,startAudio:context.currentTime,updates:[],contacts:0,stop:null};lastTrace=trace;
   let stopped=false,disconnected=false,nextBody=0,nextMove=0,nextFine=0,lastBucket=Math.floor((state.settled||0)/Math.max(1,state.count)*8),lastTime=state.time,lastAdvance=context.currentTime,lastLog=-1;
-  function cleanup(){if(stopped&&!nodes.size&&!disconnected){disconnected=true;for(const f of filters)f.disconnect();bus.disconnect();soften.disconnect();}}
+  function cleanup(){if(stopped&&!nodes.size&&!disconnected){disconnected=true;for(const f of filters)f.disconnect();bus.disconnect();soften.disconnect();outputGain.disconnect();}}
   function grain(buffer,dest,at,duration,gain,rate,pan,visualTime){
    const source=context.createBufferSource(),envelope=context.createGain(),panner=context.createStereoPanner();
    source.buffer=buffer;source.playbackRate.value=rate;panner.pan.value=Math.max(-.7,Math.min(.7,pan));
@@ -67,5 +71,5 @@ export function createSandOpening(context,output){
    cleanup();
   }};voices.add(voice);return voice;
  }
- return{load,start,get ready(){return ready;},snapshot:()=>({style:'1 / layered dry sand',ready,voices:voices.size,lastTrace})};
+ return{load,start,get ready(){return ready;},snapshot:()=>({style:'1 / layered dry sand',ready,outputGain:OUTPUT_GAIN,voices:voices.size,lastTrace})};
 }

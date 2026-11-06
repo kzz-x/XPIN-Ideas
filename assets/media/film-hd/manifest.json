@@ -5,15 +5,199 @@
   "height": 1080,
   "fps": 60,
   "duration": 51.983333,
-  "timestampOffset": 0,
-  "mime": "video/mp4; codecs=\"avc1.64002a, mp4a.40.2\"",
+  "timestampOffset": -0.03333333333333333,
+  "mime": "video/mp4; codecs=\"avc1.640033, mp4a.40.2\"",
   "fallback": "../film-mobile.mp4",
   "stageAt": 36,
-  "segments": [],
+  "segments": [
+    {
+      "src": "./fragments/segment-000-4b5b3b3280fc.bin",
+      "start": 0,
+      "duration": 2,
+      "bytes": 277873,
+      "sha256": "4b5b3b3280fc7fa35c4503e0f0b350669e7828427d33f1c0f875823656f73f10"
+    },
+    {
+      "src": "./fragments/segment-001-9c481cfa524b.bin",
+      "start": 2,
+      "duration": 2,
+      "bytes": 277225,
+      "sha256": "9c481cfa524b7bd3d02f42c9226f4c8c6629cce77ba31519d033217836b7af99"
+    },
+    {
+      "src": "./fragments/segment-002-54394c82f804.bin",
+      "start": 4,
+      "duration": 2,
+      "bytes": 406087,
+      "sha256": "54394c82f80488e444d7363c636b12c5cd25c9b8bfdd28bd1051db15ea0e1031"
+    },
+    {
+      "src": "./fragments/segment-003-9a60ce3f61f7.bin",
+      "start": 6,
+      "duration": 2,
+      "bytes": 408901,
+      "sha256": "9a60ce3f61f78e9d91cdf1a5f267021ba6238103ed75400af3b51d700721baf0"
+    },
+    {
+      "src": "./fragments/segment-004-b17b59abddd5.bin",
+      "start": 8,
+      "duration": 2,
+      "bytes": 1408198,
+      "sha256": "b17b59abddd588510779969ac299473c8f735320b3acfd4db9622fbd01d5a0e3"
+    },
+    {
+      "src": "./fragments/segment-005-f55bcecf5a0d.bin",
+      "start": 10,
+      "duration": 2,
+      "bytes": 965554,
+      "sha256": "f55bcecf5a0d9bbe675c8982c2285631827e6316c064b791229e3f6f916949d6"
+    },
+    {
+      "src": "./fragments/segment-006-539c81a0fca2.bin",
+      "start": 12,
+      "duration": 2,
+      "bytes": 636620,
+      "sha256": "539c81a0fca2eadd9a63b73d4c842d72275de5ef7eddfd243f05e51b58713f66"
+    },
+    {
+      "src": "./fragments/segment-007-92ff9f960714.bin",
+      "start": 14,
+      "duration": 2,
+      "bytes": 594116,
+      "sha256": "92ff9f9607146b3ab6b8382cc21444a18287f064285d7f626c3c31ef359a89cb"
+    },
+    {
+      "src": "./fragments/segment-008-35e467d47043.bin",
+      "start": 16,
+      "duration": 2,
+      "bytes": 809701,
+      "sha256": "35e467d47043f368ffa3ffca3a7855639c441d6fcd1375be4af7aa11f8b59194"
+    },
+    {
+      "src": "./fragments/segment-009-869fc8b3e78f.bin",
+      "start": 18,
+      "duration": 2,
+      "bytes": 721850,
+      "sha256": "869fc8b3e78f9834ac63997edec7d134ed69c9826ca456546885ddfc41ffd0a4"
+    },
+    {
+      "src": "./fragments/segment-010-3dfa15e47e11.bin",
+      "start": 20,
+      "duration": 2,
+      "bytes": 729339,
+      "sha256": "3dfa15e47e117e5358b7af896a1cc4b8a4e9c21a52d3c172f163bc14ffc4c6ba"
+    },
+    {
+      "src": "./fragments/segment-011-390357f31d9e.bin",
+      "start": 22,
+      "duration": 2,
+      "bytes": 503918,
+      "sha256": "390357f31d9e0b3e0fa593ad780bfde57268e3ca38a7fa8315c8abc314692d5d"
+    },
+    {
+      "src": "./fragments/segment-012-0a0f03dde996.bin",
+      "start": 24,
+      "duration": 2,
+      "bytes": 1136801,
+      "sha256": "0a0f03dde9968839f45d33cba974ac72b530b38cbdc94ce3616d40e2d071708d"
+    },
+    {
+      "src": "./fragments/segment-013-d86bf1893b59.bin",
+      "start": 26,
+      "duration": 2,
+      "bytes": 1096254,
+      "sha256": "d86bf1893b5921ea4beeae97853c2907c0632a723ee09a10485f74f64e0adfa4"
+    },
+    {
+      "src": "./fragments/segment-014-4fb4b24d5931.bin",
+      "start": 28,
+      "duration": 2,
+      "bytes": 1068068,
+      "sha256": "4fb4b24d5931541aebd4c013ff10c549e334da03e404cb82ea0e4bfd2d4d9644"
+    },
+    {
+      "src": "./fragments/segment-015-f0a1e20986de.bin",
+      "start": 30,
+      "duration": 2,
+      "bytes": 1048733,
+      "sha256": "f0a1e20986de83479cff862667e96357ba946260e13fbb5609f5ef10f5098400"
+    },
+    {
+      "src": "./fragments/segment-016-75dbd538ad70.bin",
+      "start": 32,
+      "duration": 2,
+      "bytes": 917721,
+      "sha256": "75dbd538ad70067ee7d063dfb14fc418da929f5b5a41b8957085d7ab01ddf14a"
+    },
+    {
+      "src": "./fragments/segment-017-d37dcb2a6ad7.bin",
+      "start": 34,
+      "duration": 2,
+      "bytes": 985100,
+      "sha256": "d37dcb2a6ad799863d20230c7029853abaeefc39fb9573015cfc96fefe993627"
+    },
+    {
+      "src": "./fragments/segment-018-f5a558cf6783.bin",
+      "start": 36,
+      "duration": 2,
+      "bytes": 935677,
+      "sha256": "f5a558cf6783c6f66f2d399bc972238567fc22f7ab7a0e997d636341b2300bd2"
+    },
+    {
+      "src": "./fragments/segment-019-1f4cf0dcb37f.bin",
+      "start": 38,
+      "duration": 2,
+      "bytes": 433740,
+      "sha256": "1f4cf0dcb37f890e0ef446bd6a3ede3e03b623a276a8222e540d5c9c9b80949c"
+    },
+    {
+      "src": "./fragments/segment-020-4b475fe79fff.bin",
+      "start": 40,
+      "duration": 2,
+      "bytes": 106277,
+      "sha256": "4b475fe79fff589684d8689defc36bc707955848d03b9dc557d387419e93f667"
+    },
+    {
+      "src": "./fragments/segment-021-35c911a09520.bin",
+      "start": 42,
+      "duration": 2,
+      "bytes": 97176,
+      "sha256": "35c911a09520dcce8a850b68fbbfa491307d9eff7f9b015fd49d1a90b835e66f"
+    },
+    {
+      "src": "./fragments/segment-022-1677e18238c0.bin",
+      "start": 44,
+      "duration": 2,
+      "bytes": 98126,
+      "sha256": "1677e18238c07175f0638b9bce6ba961e129033f7e09e648412f169165dbda96"
+    },
+    {
+      "src": "./fragments/segment-023-952bd1950e4a.bin",
+      "start": 46,
+      "duration": 2,
+      "bytes": 107071,
+      "sha256": "952bd1950e4a5f27655fa7c4c1fd6771f7dadd50b71ebabf4732554e3a058313"
+    },
+    {
+      "src": "./fragments/segment-024-cb513b0d044c.bin",
+      "start": 48,
+      "duration": 2,
+      "bytes": 35301,
+      "sha256": "cb513b0d044cd4dfa62a68e56f9f3ee87c9fde9983f8b73eebd66f8c7775c817"
+    },
+    {
+      "src": "./fragments/segment-025-c5d9146b6d5e.bin",
+      "start": 50,
+      "duration": 1.983333,
+      "bytes": 23035,
+      "sha256": "c5d9146b6d5e70325b369277754bd5035a074df0417ba75c49fd75826d5abc05"
+    }
+  ],
   "encoding": {
     "video": "H.264 1080p60 / two-pass 2.3 Mbps VBR / veryslow",
     "audio": "AAC 160 kbps",
-    "framesRemoved": false
+    "framesRemoved": false,
+    "remux": "stream copy; all encoded video and audio packets retained"
   },
   "mobileFallback": "../film-mobile.mp4",
   "mobileBytes": 5575215,
@@ -57,8 +241,45 @@
   ],
   "mobileSha256": "02854298058384a7bff0da7993a930e9a6d30f0cfeb8d3238dbc278a04ee1920",
   "hostingTransport": {
-    "kind": "ordered-binary-parts",
-    "partBytes": 4194304,
-    "originalVideoUnchanged": true
-  }
+    "kind": "progressive-fmp4",
+    "originalVideoUnchanged": true,
+    "independentVideoSegments": true
+  },
+  "init": "./fragments/init-f935b3f6f019.bin",
+  "initBytes": 1426,
+  "initSha256": "f935b3f6f019f5b60553fb92713da79ef5213ae17a4983f5a31ff3655bf99994",
+  "totalBytes": 15829888,
+  "remuxVerification": {
+    "sourceSHA256": "404595b9184c088d29474ae66741f267a2c964ceab88eb40466a5c74e6c89199",
+    "sourceBytes": 15862306,
+    "sourceVideoDuration": 51.983333,
+    "timestampOffset": -0.03333333333333333,
+    "streams": [
+      {
+        "kind": "video",
+        "codec": "h264",
+        "packets": 3119,
+        "timeBase": "1/15360",
+        "originalFirstPTS": 0,
+        "originalFirstDTS": -0.03333333333333333,
+        "remuxShift": 0.03333333333333333,
+        "allPacketPayloadsEqual": true,
+        "allPacketTimestampsEqualAfterOffset": true,
+        "packetHashSequenceSHA256": "21017ba66baace4c89a4d43188fe5d98fead04b4a46a5bddb16e4dfc5554297a"
+      },
+      {
+        "kind": "audio",
+        "codec": "aac",
+        "packets": 2438,
+        "timeBase": "1/48000",
+        "originalFirstPTS": -0.021333333333333333,
+        "originalFirstDTS": -0.021333333333333333,
+        "remuxShift": 0.03333333333333333,
+        "allPacketPayloadsEqual": true,
+        "allPacketTimestampsEqualAfterOffset": true,
+        "packetHashSequenceSHA256": "4b190c61ab5e9e4d89a767808c1b59f997dd579c64dcb0a85e63f32bc6f2c703"
+      }
+    ]
+  },
+  "streamBytes": 15829888
 }

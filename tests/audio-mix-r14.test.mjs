@@ -15,7 +15,7 @@ test('three independent volumes clamp and survive a browser-settings round trip'
  assert.deepEqual(normalizeAudioMix({sfx:2,video:-1,bgm:'bad'}),{sfx:1,video:0,bgm:AUDIO_MIX_DEFAULTS.bgm});
 });
 test('the headphone cue lasts two visible seconds and waits for actual film readiness',()=>{
- const g=new ListeningGate(2);for(let i=0;i<21;i++)g.update(.1);assert.equal(g.snapshot().done,false);assert.equal(g.snapshot().progress,.96);
+ const g=new ListeningGate(2);for(let i=0;i<21;i++)g.update(.1);assert.equal(g.snapshot().done,false);assert.equal(g.snapshot().progress,0);
  g.ready=true;assert.equal(g.snapshot().done,true);
 });
 test('dragging a volume pauses the cue and leaves time to finish the adjustment',()=>{

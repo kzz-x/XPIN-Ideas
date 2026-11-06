@@ -4,7 +4,8 @@ import path from 'node:path';
 export async function releaseFiles(root){
  const film=JSON.parse(await fs.readFile(path.join(root,'assets/media/film-hd/manifest.json'),'utf8'));
  const assembledFiles=new Set();
- if(film.fileParts?.length)assembledFiles.add('assets/media/film-hd.mp4');
+ if(film.fileParts?.length||film.segments?.length)assembledFiles.add('assets/media/film-hd.mp4');
+ if(film.segments?.length)for(const part of film.fileParts||[])assembledFiles.add(path.posix.normalize(path.posix.join('assets/media/film-hd',part.src||part)));
  if(film.mobileParts?.length)assembledFiles.add('assets/media/film-mobile.mp4');
  const html=await fs.readFile(path.join(root,'index.html'),'utf8'),map=JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]).imports;
  const found=new Set(),queue=['index.html'],css=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m=>m[1].replace(/^\.\//,''));
@@ -31,7 +32,7 @@ export async function releaseFiles(root){
   if(rel.endsWith('.html'))for(const m of text.matchAll(/(?:src|href)="([^"]+)"/g))await add(m[1],rel);
   if(rel.endsWith('.css'))for(const m of text.matchAll(/url\(['"]?([^)'"\s]+)['"]?\)/g))await add(m[1],rel);
   if(/\.(mjs|js)$/.test(rel))for(const m of text.matchAll(/['"]([^'"\n]+\.(?:json|svg|png|jpe?g|webp|glb|wav|m4a|mp4|woff2?)(?:[?#][^'"\n]*)?)['"]/g))await add(m[1],rel);
-  if(rel==='assets/media/film-hd/manifest.json'){const m=JSON.parse(text);for(const v of [m.file,m.mobileFallback,m.fallback])await add(v,rel,true);for(const part of [...(m.fileParts||[]),...(m.mobileParts||[])])await add(part.src||part,rel,true);}
+  if(rel==='assets/media/film-hd/manifest.json'){const m=JSON.parse(text);for(const v of [m.segments?.length?null:m.file,m.mobileFallback,m.fallback])await add(v,rel,true);for(const part of [...(m.segments?.length?[]:m.fileParts||[]),...(m.mobileParts||[])])await add(part.src||part,rel,true);if(m.segments?.length){await add(m.init,rel,true);for(const segment of m.segments)await add(segment.src,rel,true);}}
   if(rel==='assets/media/bgm/stream/manifest.json')for(const t of Object.values(JSON.parse(text).tracks))for(const c of t.chunks)await add(c.src,rel,true);
  }
  return{files:[...found].sort(),css};
