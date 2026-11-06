@@ -1,6 +1,6 @@
 {
   "limitBytes": 40000000,
-  "bytes": 39470004,
+  "bytes": 39485153,
   "fileCount": 170,
   "sourceFiles": [
     "assets/dot/dot-outline-r12.svg",
@@ -136,6 +136,7 @@
     "design-r14.css",
     "design-r17.css",
     "design-r22.css",
+    "design-r27.css",
     "index.html",
     "src/asset-prefetch.mjs",
     "src/audio-master.mjs",
@@ -717,7 +718,7 @@
     },
     {
       "path": "src/content.mjs",
-      "bytes": 12599
+      "bytes": 26829
     },
     {
       "path": "src/dot-foreground.mjs",
@@ -837,7 +838,7 @@
     },
     {
       "path": "src/scroll-space.mjs",
-      "bytes": 42407
+      "bytes": 42496
     },
     {
       "path": "src/sound-design.mjs",
@@ -865,7 +866,7 @@
     },
     {
       "path": "styles-combined.css",
-      "bytes": 65077
+      "bytes": 65907
     }
   ]
 }

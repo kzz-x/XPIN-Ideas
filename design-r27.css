@@ -1,0 +1,10 @@
+/* Author copy: every card carries its chapter and local number. */
+.process-card .card-preview .card-meta{font-size:min(var(--thumb-meta,24px),36px)}
+.process-card .card-preview h2{font-size:min(var(--thumb-title,32px),54px);overflow-wrap:anywhere}
+.card-detail .detail-label{line-height:1.6;letter-spacing:.04em}
+.card-detail .media-placeholder{border:1px dashed #c7d9e65c;padding:16px 18px;color:#c7d9e6;background:#ffffff05}
+@media(max-width:700px){
+  .process-card .card-preview,.support-card .card-preview{grid-template-rows:auto auto minmax(0,1fr);gap:12px}
+  .process-card .card-preview .card-meta{display:flex!important;font-size:36px}
+  .process-card .card-preview h2,.support-card .card-preview h2{display:block;-webkit-line-clamp:unset;overflow:visible;font-size:min(var(--thumb-title,32px),54px);line-height:1.18}
+}
