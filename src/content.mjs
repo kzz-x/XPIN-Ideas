@@ -1,4 +1,4 @@
-// Author copy with media selected from local process archives, 2026-11-06.
+// Author copy and locally sourced process media, revised from the author annotations on 2026-11-06.
 export const CHAPTERS = [
   {
     "title": "看清想法",
@@ -26,19 +26,25 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/mood-catch.webp",
             "after": 0,
-            "caption": "《Catch Me If You Can》片头 · 爵士乐与图形节奏参考"
+            "caption": "《Catch Me If You Can》片头 · 爵士乐与图形节奏参考",
+            "width": 1080,
+            "height": 608
           },
           {
             "kind": "image",
             "src": "./assets/editorial/mood-rog.webp",
             "after": 2,
-            "caption": "ROG 实验室 · 空间、背光与产品亮相参考"
+            "caption": "ROG 实验室 · 空间、背光与产品亮相参考",
+            "width": 900,
+            "height": 502
           },
           {
             "kind": "image",
             "src": "./assets/editorial/mood-monsters.webp",
             "after": 4,
-            "caption": "《Monsters, Inc.》片头 · 形状组装与运动节奏参考"
+            "caption": "《Monsters, Inc.》片头 · 形状组装与运动节奏参考",
+            "width": 1080,
+            "height": 584
           }
         ]
       },
@@ -62,19 +68,25 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/style-products.webp",
             "after": 0,
-            "caption": "产品与动词 · SEE / MOVE / DRIVE 的画面方向"
+            "caption": "产品与动词 · SEE / MOVE / DRIVE 的画面方向",
+            "width": 511,
+            "height": 1000
           },
           {
             "kind": "image",
             "src": "./assets/editorial/style-drive.webp",
             "after": 2,
-            "caption": "SU7 · DRIVE 印刷质感视觉锚点"
+            "caption": "SU7 · DRIVE 印刷质感视觉锚点",
+            "width": 1200,
+            "height": 675
           },
           {
             "kind": "image",
             "src": "./assets/editorial/style-move.webp",
             "after": 3,
-            "caption": "G1 · 让动作进入图形化构图"
+            "caption": "G1 · 让动作进入图形化构图",
+            "width": 1672,
+            "height": 941
           }
         ]
       },
@@ -99,20 +111,17 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/pr-timeline.webp",
             "after": 0,
-            "caption": "PR 真实时间线 · 先切出文字图层与音乐段落"
-          },
-          {
-            "kind": "video",
-            "src": "./assets/editorial/pr-animatic.mp4",
-            "poster": "./assets/editorial/pr-animatic-poster.webp",
-            "after": 4,
-            "caption": "文字动态分镜 · 51.98 秒原始预演"
+            "caption": "PR 真实时间线 · 先切出文字图层与音乐段落",
+            "width": 1800,
+            "height": 1227
           },
           {
             "kind": "image",
             "src": "./assets/editorial/storyboard.webp",
             "after": 6,
-            "caption": "图片分镜 · 前 12 秒早期概念草稿（含 Spark 旧方向）"
+            "caption": "图片分镜 · 前 12 秒早期概念草稿（含 Spark 旧方向）",
+            "width": 1800,
+            "height": 518
           }
         ]
       }
@@ -150,20 +159,25 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/rubin-board.webp",
             "after": 0,
-            "caption": "Rubin 板卡 · 官方参考与 v2 / v3 建模候选对照"
+            "caption": "Rubin 板卡 · 官方参考与 v2 / v3 建模候选对照",
+            "width": 1800,
+            "height": 1140
           },
           {
             "kind": "image",
             "src": "./assets/editorial/rubin-die.webp",
             "after": 6,
-            "caption": "Rubin 封装 · 官方参考与 V3 / V4 候选对照"
+            "caption": "Rubin 封装 · 官方参考与 V3 / V4 候选对照",
+            "width": 1280,
+            "height": 312
           },
           {
-            "kind": "interactive",
-            "src": "./assets/editorial/dot-motion.html",
-            "poster": "./assets/editorial/dot-motion.webp",
-            "after": 11,
-            "caption": "Dot 球体动作原型 · 本轮从保留的 HTML 补拍"
+            "kind": "image",
+            "src": "./assets/editorial/dot-design-process.webp",
+            "after": 8,
+            "caption": "Dot 角色设计过程 · 六瓣轮廓与眼睛贴合的正面、侧面对照",
+            "width": 1280,
+            "height": 720
           }
         ]
       },
@@ -188,21 +202,27 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/g1-collision.webp",
             "after": 0,
-            "caption": "G1 · 左手穿头 V2 / V3 同时间点修复对照"
+            "caption": "G1 · 左手穿头 V2 / V3 同时间点修复对照",
+            "width": 1280,
+            "height": 584
           },
           {
             "kind": "video",
             "src": "./assets/editorial/g1-boxing.mp4",
             "poster": "./assets/editorial/g1-boxing-poster.webp",
             "after": 3,
-            "caption": "G1 · 低清白模拳击动作测试"
+            "caption": "G1 · 低清白模拳击动作测试",
+            "width": 768,
+            "height": 576
           },
           {
             "kind": "video",
             "src": "./assets/editorial/g1-kick.mp4",
             "poster": "./assets/editorial/g1-kick-poster.webp",
             "after": 6,
-            "caption": "G1 · 右侧踢动作筛选预览"
+            "caption": "G1 · 右侧踢动作筛选预览",
+            "width": 720,
+            "height": 406
           }
         ]
       },
@@ -226,19 +246,25 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/su7-halftone.webp",
             "after": 0,
-            "caption": "SU7 · 黑剪影与法线半调光影对照"
+            "caption": "SU7 · 黑剪影与法线半调光影对照",
+            "width": 1800,
+            "height": 544
           },
           {
             "kind": "image",
             "src": "./assets/editorial/g1-material.webp",
             "after": 3,
-            "caption": "G1 · 同机位工业金属材质小样"
+            "caption": "G1 · 同机位工业金属材质小样",
+            "width": 1000,
+            "height": 1000
           },
           {
             "kind": "image",
             "src": "./assets/editorial/style-move.webp",
             "after": 5,
-            "caption": "G1 · 图形化着色与动作合成"
+            "caption": "G1 · 图形化着色与动作合成",
+            "width": 1672,
+            "height": 941
           }
         ]
       }
@@ -271,20 +297,26 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/dot-render-compare.webp",
             "after": 0,
-            "caption": "Dot · 参考目标与 Blender 候选画面对照"
+            "caption": "Dot · 参考目标与 Blender 候选画面对照",
+            "width": 1280,
+            "height": 924
           },
           {
             "kind": "video",
             "src": "./assets/editorial/su7-seedance.mp4",
             "poster": "./assets/editorial/su7-seedance-poster.webp",
             "after": 4,
-            "caption": "SU7 · 用户保留的 Seedance 车载视角生成片段"
+            "caption": "SU7 · 用户保留的 Seedance 车载视角生成片段",
+            "width": 960,
+            "height": 540
           },
           {
             "kind": "image",
             "src": "./assets/editorial/style-move.webp",
             "after": 6,
-            "caption": "G1 · 原模型上的图形化着色结果"
+            "caption": "G1 · 原模型上的图形化着色结果",
+            "width": 1672,
+            "height": 941
           }
         ]
       },
@@ -309,21 +341,27 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/ascii-lab.webp",
             "after": 0,
-            "caption": "ASCII Track Lab · 字符、彩色跟踪窗与参数界面"
+            "caption": "ASCII Track Lab · 字符、彩色跟踪窗与参数界面",
+            "width": 1180,
+            "height": 760
           },
           {
             "kind": "video",
-            "src": "./assets/editorial/ascii-su7.mp4",
-            "poster": "./assets/editorial/ascii-su7-poster.webp",
+            "src": "./assets/editorial/ascii-user-00.mp4",
+            "poster": "./assets/editorial/ascii-user-00-poster.webp",
             "after": 3,
-            "caption": "ASCII + Tracker · SU7 彩色窗口演示"
+            "caption": "ASCII + Tracker · 作者提供的 SU7 彩色窗口演示",
+            "width": 1920,
+            "height": 1080
           },
           {
             "kind": "video",
             "src": "./assets/editorial/ascii-lab-demo.mp4",
             "poster": "./assets/editorial/ascii-lab-demo-poster.webp",
             "after": 6,
-            "caption": "ASCII Track Lab · 真实工具界面录屏"
+            "caption": "ASCII Track Lab · 真实工具界面录屏",
+            "width": 1180,
+            "height": 760
           }
         ]
       },
@@ -347,14 +385,18 @@ export const CHAPTERS = [
             "src": "./assets/editorial/react-gradient.mp4",
             "poster": "./assets/editorial/react-gradient-poster.webp",
             "after": 0,
-            "caption": "React Bits / Gradient ASCII · 已留存的官方效果参考"
+            "caption": "React Bits / Gradient ASCII · 已留存的官方效果参考",
+            "width": 800,
+            "height": 500
           },
           {
             "kind": "video",
             "src": "./assets/editorial/react-terminal.mp4",
             "poster": "./assets/editorial/react-terminal-poster.webp",
             "after": 3,
-            "caption": "React Bits / Faulty Terminal · 已留存的官方效果参考"
+            "caption": "React Bits / Faulty Terminal · 已留存的官方效果参考",
+            "width": 800,
+            "height": 500
           }
         ]
       }
@@ -388,19 +430,17 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/g1-collision.webp",
             "after": 0,
-            "caption": "G1 · 对照同一时间点查找动作穿插"
+            "caption": "G1 · 对照同一时间点查找动作穿插",
+            "width": 1280,
+            "height": 584
           },
           {
             "kind": "image",
             "src": "./assets/editorial/frame-failed.webp",
             "after": 6,
-            "caption": "第 118 帧 · 前景 B 层突然消失的失败状态"
-          },
-          {
-            "kind": "image",
-            "src": "./assets/editorial/frame-repaired.webp",
-            "after": 7,
-            "caption": "同文件第 118 帧 · 局部修正候选"
+            "caption": "第 118 帧 · 前景 B 层突然消失的失败状态",
+            "width": 640,
+            "height": 360
           }
         ]
       },
@@ -425,19 +465,25 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/feedback-dot.webp",
             "after": 0,
-            "caption": "原始反馈 · 用红框与文字指出 Dot 的光影问题"
+            "caption": "原始反馈 · 用红框与文字指出 Dot 的光影问题",
+            "width": 1655,
+            "height": 979
           },
           {
             "kind": "image",
             "src": "./assets/editorial/feedback-sketch.webp",
             "after": 2,
-            "caption": "原始草图 · 舞台透视与角色位置关系"
+            "caption": "原始草图 · 舞台透视与角色位置关系",
+            "width": 297,
+            "height": 166
           },
           {
             "kind": "image",
             "src": "./assets/editorial/su7-blue.webp",
             "after": 4,
-            "caption": "颜色反馈 · 官方蓝、原偏青与修正后对照"
+            "caption": "颜色反馈 · 官方蓝、原偏青与修正后对照",
+            "width": 1800,
+            "height": 542
           }
         ]
       },
@@ -461,13 +507,17 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/su7-wing.webp",
             "after": 0,
-            "caption": "SU7 V3 · 尾翼收纳失败的过程记录"
+            "caption": "SU7 V3 · 尾翼收纳失败的过程记录",
+            "width": 1067,
+            "height": 1000
           },
           {
             "kind": "image",
             "src": "./assets/editorial/su7-blue.webp",
             "after": 3,
-            "caption": "SU7 · 保留原蓝色与外观作为后续基线"
+            "caption": "SU7 · 保留原蓝色与外观作为后续基线",
+            "width": 1800,
+            "height": 542
           }
         ]
       }
@@ -501,20 +551,17 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/workbench.webp",
             "after": 0,
-            "caption": "创作工作台 · 项目概览与进度入口（本轮补拍历史快照）"
-          },
-          {
-            "kind": "interactive",
-            "src": "./assets/editorial/dot-motion.html",
-            "poster": "./assets/editorial/dot-motion.webp",
-            "after": 3,
-            "caption": "可替换角色的动作工坊 · 54 项动作预览"
+            "caption": "创作工作台 · 项目概览与进度入口（本轮补拍历史快照）",
+            "width": 1265,
+            "height": 712
           },
           {
             "kind": "image",
             "src": "./assets/editorial/versions.webp",
             "after": 6,
-            "caption": "资料档案 · 来源与版本记录（本轮补拍历史快照）"
+            "caption": "资料档案 · 来源与版本记录（本轮补拍历史快照）",
+            "width": 1265,
+            "height": 712
           }
         ]
       },
@@ -537,19 +584,17 @@ export const CHAPTERS = [
             "kind": "image",
             "src": "./assets/editorial/archive.webp",
             "after": 0,
-            "caption": "工程归档 · 按模块记录工程包、预览与校验信息"
+            "caption": "工程归档 · 按模块记录工程包、预览与校验信息",
+            "width": 1265,
+            "height": 712
           },
           {
             "kind": "image",
             "src": "./assets/editorial/batch-delivery.webp",
             "after": 3,
-            "caption": "批量交付记录 · 一批成果，一个审核入口"
-          },
-          {
-            "kind": "image",
-            "src": "./assets/editorial/html-reopen.webp",
-            "after": 4,
-            "caption": "交付验证 · 将内嵌模型的 HTML 重新打开"
+            "caption": "批量交付记录 · 一批成果，一个审核入口",
+            "width": 1265,
+            "height": 712
           }
         ]
       }

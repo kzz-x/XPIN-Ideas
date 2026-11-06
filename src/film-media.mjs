@@ -10,15 +10,16 @@ export function preferCompatible({connection=globalThis.navigator?.connection,me
  * fully downloaded before playback, so changing network speed cannot outrun it. */
 export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()=>{}}){
   let manifest,source,buffer,objectURL,opening,pump,local=false,aborted=false,complete=false,serial=Promise.resolve(),loaded=new Set(),pending=new Map(),bytes=0,mode='idle',error=null,revision=0,totalBytes=0,notifiedAt=0;
-  const abort=new AbortController(),events=[],partial=new Map();
+  const abort=new AbortController(),events=[],partial=new Map(),filePartCache=new Map();
   let preflighting=false,decodeJob,decodeProbe=null,decodeKey='';
   const url=path=>new URL(path,manifestURL).href;
   const record=(event,detail={})=>{events.push({event,at:performance.now(),...detail});if(events.length>80)events.shift();onChange(snapshot());};
-  function snapshot(){const downloading=bytes+[...partial.values()].reduce((a,b)=>a+b,0);return{mode,local,revision,complete,preflighting,decodeProbe,progress:complete?1:Math.min(.99,totalBytes?downloading/totalBytes:0),ready:video.readyState>=2,width:video.videoWidth,height:video.videoHeight,duration:video.duration||0,bytes:downloading,totalBytes,segmentsReady:loaded.size,segmentsTotal:manifest?.segments.length||0,bufferedAhead:bufferedAhead(video),error,events:[...events]};}
+  function snapshot(){const downloading=bytes+[...partial.values()].reduce((a,b)=>a+b,0);return{mode,local,revision,complete,preflighting,decodeProbe,progress:complete?1:Math.min(.99,totalBytes?downloading/totalBytes:0),ready:video.readyState>=2,width:video.videoWidth,height:video.videoHeight,duration:video.duration||0,bytes:downloading,totalBytes,segmentsReady:loaded.size,segmentsTotal:manifest?.segments?.length||0,bufferedAhead:bufferedAhead(video),error,events:[...events]};}
   // Timeout means no incoming bytes, not a total time limit on a slow link.
   async function fetchBytes(path){
     let failure;
     for(let retry=0;retry<3;retry++){
+      if(aborted||abort.signal.aborted)throw abort.signal.reason||new DOMException('Cancelled','AbortError');
       const request=new AbortController();let timer;
       const cancel=()=>request.abort(abort.signal.reason),watch=()=>{clearTimeout(timer);timer=setTimeout(()=>request.abort(Error('影片下载暂时中断')),45000);};
       abort.signal.addEventListener('abort',cancel,{once:true});partial.set(path,0);
@@ -37,16 +38,52 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
     }
     throw failure;
   }
+  // Hosting services may limit a single upload. Byte parts are assembled into
+  // one original MP4 Blob: there is still one decoder, timebase and audio track.
+  // Two requests at a time keep memory/network pressure bounded. Finished
+  // parts survive a retry of open(), so one failed part does not restart the film.
+  async function fileBlob(parts,path,expectedBytes){
+    if(!parts?.length){
+      const data=await fetchBytes(path);if(aborted)throw abort.signal.reason;
+      return new Blob([data],{type:'video/mp4'});
+    }
+    const entries=parts.map(part=>typeof part==='string'?{src:part}:part);
+    if(entries.some(part=>!part||typeof part.src!=='string'||!part.src))throw Error('影片分块清单无效');
+    const ordered=new Array(entries.length);let next=0,failure;
+    async function worker(){
+      while(!failure&&next<entries.length){
+        const index=next++,part=entries[index],key=url(part.src);
+        try{
+          if(aborted)throw abort.signal.reason||new DOMException('Cancelled','AbortError');
+          let data=filePartCache.get(key);
+          if(data)bytes+=data.byteLength;
+          else{
+            data=await fetchBytes(part.src);
+            if(Number.isFinite(part.bytes)&&data.byteLength!==part.bytes)throw Error('影片分块长度不符');
+            if(aborted)throw abort.signal.reason;
+            filePartCache.set(key,data);
+          }
+          ordered[index]=data;record('file-part-ready',{index,parts:entries.length});
+        }catch(error){failure??=error;}
+      }
+    }
+    await Promise.all(Array.from({length:Math.min(2,entries.length)},worker));
+    if(failure)throw failure;
+    if(aborted)throw abort.signal.reason||new DOMException('Cancelled','AbortError');
+    const result=new Blob(ordered,{type:'video/mp4'});
+    if(Number.isFinite(expectedBytes)&&result.size!==expectedBytes)throw Error('影片文件长度不符');
+    return result;
+  }
   function append(data){const task=serial.then(()=>new Promise((resolve,reject)=>{if(aborted)return reject(new DOMException('Cancelled','AbortError'));const done=()=>{clear();resolve();},fail=()=>{clear();reject(Error('影片分段解码失败'));},clear=()=>{buffer.removeEventListener('updateend',done);buffer.removeEventListener('error',fail);};buffer.addEventListener('updateend',done,{once:true});buffer.addEventListener('error',fail,{once:true});try{buffer.appendBuffer(data);}catch(e){clear();reject(e);}}));serial=task.catch(()=>{});return task;}
   async function chunk(index){if(loaded.has(index))return;if(pending.has(index))return pending.get(index);const task=(async()=>{const data=await fetchBytes(manifest.segments[index].src);await append(data);loaded.add(index);record('segment-ready',{index});})();pending.set(index,task);try{await task;}finally{pending.delete(index);}}
   async function compatible(){
     mode='720p-compatible';bytes=0;totalBytes=manifest.mobileBytes||0;partial.clear();
     // Full local data also works where MediaSource/preload is unavailable.
-    const data=await fetchBytes(manifest.mobileFallback||manifest.fallback),previous=objectURL;
-    objectURL=URL.createObjectURL(new Blob([data],{type:'video/mp4'}));video.src=objectURL;video.load();if(previous)URL.revokeObjectURL(previous);
+    const data=await fileBlob(manifest.mobileParts,manifest.mobileFallback||manifest.fallback,manifest.mobileBytes),previous=objectURL;
+    objectURL=URL.createObjectURL(data);video.src=objectURL;video.load();if(previous)URL.revokeObjectURL(previous);
     buffer=null;source=null;complete=true;
     await waitFor(()=>{if(video.error)throw Error('浏览器无法解码影片');return video.readyState>=2;},{label:'影片首帧',signal:abort.signal});
-    onManifest({...manifest,label:video.videoHeight+'p / 30 fps · 兼容播放'});record('complete');
+    filePartCache.clear();onManifest({...manifest,label:video.videoHeight+'p / 30 fps · 兼容播放'});record('complete');
   }
   async function open(){
     if(local)return;if(opening)return opening;
@@ -54,11 +91,11 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
       mode='preparing';error=null;record('prepare');manifest=JSON.parse(new TextDecoder().decode(await fetchBytes(manifestURL)));onManifest(manifest);
       let capability=null;try{if(globalThis.navigator?.mediaCapabilities?.decodingInfo)capability=await Promise.race([navigator.mediaCapabilities.decodingInfo({type:'media-source',video:{contentType:'video/mp4; codecs="avc1.64002a"',width:manifest.width,height:manifest.height,bitrate:12000000,framerate:manifest.fps}}),new Promise(resolve=>setTimeout(()=>resolve(null),1200))]);}catch{}
       if(capability)record('decode-capability',{supported:capability.supported,smooth:capability.smooth,powerEfficient:capability.powerEfficient});
-      if(manifest.file){
+      if(manifest.file||manifest.fileParts?.length){
         video.preload='auto';video.playsInline=true;
         if(preferCompatible()||capability?.supported===false||capability?.smooth===false){await compatible();return;}
-        mode='1080p-file';bytes=0;totalBytes=manifest.fileBytes;const data=await fetchBytes(manifest.file);objectURL=URL.createObjectURL(new Blob([data],{type:'video/mp4'}));video.src=objectURL;video.load();
-        await waitFor(()=>{if(video.error)throw Error('浏览器无法解码影片');return video.readyState>=2;},{label:'影片首帧',signal:abort.signal});complete=true;record('complete');return;
+        mode='1080p-file';bytes=0;totalBytes=manifest.fileBytes;const data=await fileBlob(manifest.fileParts,manifest.file,manifest.fileBytes);objectURL=URL.createObjectURL(data);video.src=objectURL;video.load();
+        await waitFor(()=>{if(video.error)throw Error('浏览器无法解码影片');return video.readyState>=2;},{label:'影片首帧',signal:abort.signal});complete=true;filePartCache.clear();record('complete');return;
       }
       bytes=0;totalBytes=manifest.segments.reduce((n,s)=>n+(s.bytes||0),0);video.preload='auto';video.playsInline=true;
       if(preferCompatible()||capability?.supported===false||capability?.smooth===false||!globalThis.MediaSource?.isTypeSupported(manifest.mime)){await compatible();return;}
@@ -114,9 +151,9 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
   async function useLocal(file){
     const nextURL=URL.createObjectURL(file),probe=document.createElement('video');probe.muted=true;probe.preload='auto';probe.src=nextURL;probe.load();
     try{await waitFor(()=>{if(probe.error)throw Error('浏览器无法读取这份影片，请使用 H.264 / AAC MP4');return probe.readyState>=2;},{label:'替换影片'});}catch(e){URL.revokeObjectURL(nextURL);throw e;}finally{probe.removeAttribute('src');probe.load();}
-    aborted=true;abort.abort();await serial.catch(()=>{});video.pause();if(objectURL)URL.revokeObjectURL(objectURL);local=true;complete=true;mode='local-original';error=null;revision++;
+    aborted=true;abort.abort();filePartCache.clear();await serial.catch(()=>{});video.pause();if(objectURL)URL.revokeObjectURL(objectURL);local=true;complete=true;mode='local-original';error=null;revision++;
     objectURL=nextURL;video.src=objectURL;video.load();await waitFor(()=>video.readyState>=2,{label:'本机影片'});record('local-ready',{name:file.name});return snapshot();
   }
   for(const name of ['waiting','stalled','playing'])video.addEventListener(name,()=>record(name,{time:video.currentTime}));
-  return{open,prime,ensure,preparePlayback,preflightDecode,get preflighting(){return preflighting;},canPlayAt,useLocal,snapshot,get manifest(){return manifest;},get timeOffset(){return 0;},dispose(){aborted=true;abort.abort();video.pause();if(objectURL)URL.revokeObjectURL(objectURL);}};
+  return{open,prime,ensure,preparePlayback,preflightDecode,get preflighting(){return preflighting;},canPlayAt,useLocal,snapshot,get manifest(){return manifest;},get timeOffset(){return 0;},dispose(){aborted=true;abort.abort();filePartCache.clear();video.pause();if(objectURL)URL.revokeObjectURL(objectURL);}};
 }

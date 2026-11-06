@@ -21,6 +21,7 @@ import {createDotForeground} from './dot-foreground.mjs';
 import {PresentationTransport,bindSeekControl} from './transport-r07.mjs';
 import {CONFIG} from './config.mjs';
 import {createRenderQuality} from './render-quality.mjs';
+import {createFrameLoop} from './frame-loop.mjs';
 import {CHAPTERS} from './content.mjs';
 import {loadType,clamp,smooth,damp,vec,project} from './space-utils.mjs';
 
@@ -29,6 +30,20 @@ const ui={phase:'loading',phaseAt:0,scroll:0,target:0,scrollVelocity:0,held:fals
 let opening,dot,dotForeground,games,space,renderer,scene,camera,css,key,keyTarget,quality,previous=performance.now()/1000,time=0,startedAt=previous,toastTimer;
 const runtime={ready:false,actorReady:false,stageReady:false,scrollReady:false,scrollProgress:0,scrollLabel:'正在准备空间',openingReadyAt:null,stageReadyAt:null,worldReadyAt:null,requested:false,longTasks:[]};
 let actorJob,stageJob,screenReady,scrollJob,worldJob,fontsReady,rigModule,rigAssets,rigJob,stageRenderer,filmStarting=false;
+let animationReady=false;
+const renderStats={world:0,css:0,foreground:0,mode:'loading'};
+const frameLoop=createFrameLoop({onFrame:frame,onWake:at=>{previous=at/1000;},hidden:document.hidden});
+const requestRendering=()=>{if(animationReady)frameLoop.wake();};
+const diagnostics=new URLSearchParams(location.search).get('diagnostics')==='1'?document.createElement('output'):null;
+let lastDiagnostics=-Infinity;
+if(diagnostics){diagnostics.id='render-diagnostics';diagnostics.setAttribute('aria-label','运行性能诊断');Object.assign(diagnostics.style,{position:'fixed',left:'8px',bottom:'8px',zIndex:'10000',maxWidth:'calc(100vw - 16px)',whiteSpace:'pre-wrap',padding:'8px',font:'11px/1.5 monospace',color:'#d6f4e5',background:'#081416eb',pointerEvents:'none'});document.body.append(diagnostics);}
+function paintDiagnostics(now,mode=renderStats.mode){
+  renderStats.mode=mode;if(!diagnostics||mode===diagnostics.dataset.mode&&now-lastDiagnostics<1000)return;
+  lastDiagnostics=now;diagnostics.dataset.mode=mode;
+  const frames=ui.frameTimes.slice(-240).sort((a,b)=>a-b),at=p=>frames.length?Number(frames[Math.min(frames.length-1,Math.floor(frames.length*p))].toFixed(2)):null;
+  diagnostics.textContent=JSON.stringify({mode,phase:ui.phase,samples:frames.length,activeFrameMs:{p50:at(.5),p95:at(.95)},renders:{...renderStats},loop:frameLoop.snapshot(),worldDrawCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles});
+}
+for(const type of ['pointerdown','pointerup','keydown','click','resize'])window.addEventListener(type,requestRendering,{capture:true,passive:true});
 let cueEdited=false;const media=createFilmMedia(film,{manifestURL:new URL(CONFIG.film.manifest,location.href).href,onManifest:m=>{if(!cueEdited&&Number.isFinite(m.stageAt))applyCue(m.stageAt);$('film-status').textContent=m.label+' · 同源大屏 / 整片预载';}});
 const waitLabel=document.createElement('div');waitLabel.id='media-wait';waitLabel.setAttribute('role','status');waitLabel.textContent='[ · · · ] 正在准备下一幕';document.body.append(waitLabel);
 function buffering(on){waitLabel.classList.toggle('visible',!!on);}
@@ -63,7 +78,7 @@ for(const id of ['bgm-toggle','bgm-enabled'])$(id).addEventListener('click',()=>
 bgm.setMasterMuted(false);
 sound.connectMediaElement(film);sound.connectMediaElement(audio);
 function updateCompletion(){if(games)bgm.setComplete(COUNTS.every((n,i)=>games.getState().done[i].length===n));}
-window.addEventListener('pointermove',e=>{if(ui.phase==='scroll'&&e.pointerType!=='touch'){scrollPointer.x=e.clientX/innerWidth*2-1;scrollPointer.y=1-e.clientY/innerHeight*2;space?.pointerMove(e);}},true);
+window.addEventListener('pointermove',e=>{if(ui.phase==='scroll'&&!ui.focusLock&&e.pointerType!=='touch'){scrollPointer.x=e.clientX/innerWidth*2-1;scrollPointer.y=1-e.clientY/innerHeight*2;space?.pointerMove(e);}},true);
 document.addEventListener('pointerleave',()=>{scrollPointer.x=scrollPointer.y=0;space?.clearHover();});
 const transport=new PresentationTransport(film,audio,{managedMedia:true,getVideoVolume:()=>media.preflighting?0:audioMix.snapshot().video,getMediaOffset:()=>media.timeOffset,canPlayAt:at=>media.canPlayAt(at),requestMedia:at=>media.ensure(at,3).catch(error=>toast(error.message)),canEnterStage:()=>runtime.ready,canDepart:()=>runtime.ready,onBuffering:buffering,onFilm(){setPhase('film');prepareWorld().catch(()=>{});},onStage(){ui.stageEntryAt=time;setPhase('stage');},onTransition(){ui.stageEntryAt=time;setPhase('transition');},onDeparture(){if(ui.phase==='film'){dot?.update({time,dt:0,mode:'stage',stageTime:CONFIG.stage.end,pixelRatio:renderer.getPixelRatio()});camera.copy(dot.stageCamera,false);camera.layers.set(0);look.copy(camera.position).add(camera.getWorldDirection(vec()).multiplyScalar(10));}setPhase('departure');},onError:toast});
 const mixControls=bindAudioMix(audioMix,{onToast:toast,onPreview:()=>{sound.unlock();sound.play('click');setTimeout(()=>sound.play('win'),230);}});
@@ -75,7 +90,7 @@ window.addEventListener('error',e=>ui.errors.push(e.message));window.addEventLis
 function updateSoundButton(){const blocked=!ui.muted&&sound.context?.state!=='running';$('sound').textContent=ui.muted?'声 / 关':blocked?'声 / 启用':'声 / 开';$('sound').setAttribute('aria-label',ui.muted?'打开声音':blocked?'启用声音与背景音乐':'关闭声音');}
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4200);}
 function display(id,show,mode='block'){$(id).style.display=show?mode:'none';}
-function setPhase(phase){const priorPhase=ui.phase;ui.phase=phase;ui.phaseAt=time;document.body.dataset.phase=phase;ui.events.push({phase,time,at:performance.now()});const scroll=phase==='scroll',intro=phase==='intro',movingIntro=['intro','morph','chat','launch','black'].includes(phase),watch=['film','transition','stage'].includes(phase);
+function setPhase(phase){requestRendering();const priorPhase=ui.phase;ui.phase=phase;ui.phaseAt=time;document.body.dataset.phase=phase;ui.events.push({phase,time,at:performance.now()});const scroll=phase==='scroll',intro=phase==='intro',movingIntro=['intro','morph','chat','launch','black'].includes(phase),watch=['film','transition','stage'].includes(phase);
   if(intro)dot?.update({mode:'hidden'});
   if(!['stage','transition','departure'].includes(phase))dot?.source?.hide();
   if(scroll&&camera){camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?48:42;camera.near=.05;camera.far=220;camera.updateProjectionMatrix();}
@@ -106,14 +121,14 @@ async function init(){
   opening=await createOpening({canvas,onInteract:()=>sound.play('select',{pitch:.8,intensity:.75})});resize();bootProgress(.45,'正在准备字符与光影');bgm.enter({restart:true,section:'opening'});
   await Promise.all([fontsReady,chatPresentation.ready,sound.prepareOpening()]);portalLayout(0);await opening.prepare(renderer);bootProgress(.82,'正在准备第一帧');
   opening.update({time:0,dt:0,phase:'intro'});await warmScene(renderer,opening.scene,opening.camera);renderer.render(opening.scene,opening.camera);
-  window.__linggan={ui,bgm,sound,audioMix,listeningGate,returnVisit,returnHold,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,prepareScroll,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),bubble:bubbleEmphasis.snapshot(),audioMix:audioMix.snapshot(),listening:listeningGate.snapshot(),returnEntry:{...returnVisit.snapshot(),held:returnHold.held,holdProgress:returnHold.progress,busy:returnBusy},games:games?.snapshot()})};
+  window.__linggan={ui,bgm,sound,audioMix,listeningGate,returnVisit,returnHold,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,prepareScroll,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),rendering:{...renderStats,loop:frameLoop.snapshot()},events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),bubble:bubbleEmphasis.snapshot(),audioMix:audioMix.snapshot(),listening:listeningGate.snapshot(),returnEntry:{...returnVisit.snapshot(),held:returnHold.held,holdProgress:returnHold.progress,busy:returnBusy},games:games?.snapshot()})};
   rigModule=await rigModuleJob;await stageModuleJob;bootProgress(.94,'正在准备连续画面');
   const {makeEnvironment}=await environmentModule;globalThis.DOT_PREWARM_ENVIRONMENT=makeEnvironment();
   stageRenderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});stageRenderer.outputColorSpace=T.SRGBColorSpace;stageRenderer.toneMapping=T.ACESFilmicToneMapping;
   dotForeground=createDotForeground({scene,camera,worldRenderer:renderer});
   await warmEnvironment(stageRenderer,globalThis.DOT_PREWARM_ENVIRONMENT,camera);await warmEnvironment(renderer,scene.environment,camera);await warmEnvironment(dotForeground.renderer,scene.environment,camera);
   opening.update({time:0,dt:0,phase:'intro'});renderer.render(opening.scene,opening.camera);bootProgress(1,'画面已就绪');await delay(Math.max(0,2000-(performance.now()-(window.__bootStart||0))));
-  previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');runtime.openingReadyAt=performance.now();requestAnimationFrame(frame);
+  previous=performance.now()/1000;time=previous-startedAt;setPhase('intro');runtime.openingReadyAt=performance.now();animationReady=true;frameLoop.setHidden(document.hidden);frameLoop.wake();
   await nextPaint();document.body.classList.add('scene-visible');$('loading').classList.add('leave');setTimeout(()=>$('loading').style.display='none',700);
   prepareRigAssets().catch(()=>{});
   runtime.backgroundStartedAt=performance.now();
@@ -295,13 +310,15 @@ function fitCompanionTarget(){
 }
 let lastPhase='loading',lastChapter=-1,renderedFrames=0,departureFov=42;
 function paintTransport(now){if(now-(ui.transportPaint||0)<66)return;ui.transportPaint=now;seekControl.update();$('timecode').textContent=`${timeText(transport.currentTime)} / ${timeText(transport.duration)}`;$('play-pause').textContent=transport.playing?'Ⅱ':'▶';$('play-pause').setAttribute('aria-label',transport.playing?'暂停影片':'继续播放');$('transport-label').textContent=ui.phase==='transition'?'进入创作':ui.phase==='stage'?'Dot 舞台':'影片';}
-function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.05,Math.max(.001,rawDt));previous=current;time=current-startedAt;ui.frameTimes.push(rawDt*1000);if(ui.frameTimes.length>600)ui.frameTimes.shift();const age=time-ui.phaseAt;
+function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.05,Math.max(.001,rawDt));previous=current;time=current-startedAt;
+  // A settled article and a hidden tab own no 3D animation work. The next
+  // close/resize/UI event wakes exactly one frame and resets the elapsed clock.
+  if(document.hidden){paintDiagnostics(now,'hidden');return;}
+  if(ui.phase==='scroll'&&space?.readingStable&&!$('settings').open){paintDiagnostics(now,'reading-idle');return;}
+  ui.frameTimes.push(rawDt*1000);if(ui.frameTimes.length>600)ui.frameTimes.shift();const age=time-ui.phaseAt;
   // Pure film playback does no scene, sound-solver or CSS3D work. Keep the
   // browser's video compositor free; the same transport owns the cut to stage.
-  if(ui.phase==='film'){if(lastPhase!=='film'){portalLayout(age);css.domElement.style.visibility='hidden';dotForeground?.setActive(false);}transport.update(dt);cinemaControls.update();if(ui.phase==='film'){paintTransport(now);lastPhase='film';requestAnimationFrame(frame);return;}}
-  // Native scrolling owns the settled article. Leave its background frame alone:
-  // no CSS3D transforms, typography writes, shadow/foreground passes or games.
-  if(ui.phase==='scroll'&&space?.readingStable&&!$('settings').open){requestAnimationFrame(frame);return;}
+  if(ui.phase==='film'){if(lastPhase!=='film'){portalLayout(age);css.domElement.style.visibility='hidden';dotForeground?.setActive(false);}transport.update(dt);cinemaControls.update();if(ui.phase==='film'){paintTransport(now);lastPhase='film';paintDiagnostics(now,'video-compositor');frameLoop.schedule();return;}}
   if(ui.phase==='intro'&&returnHold.update(now))enterScrollDirect();
   $('return-scroll').style.setProperty('--return-hold',returnHold.progress);
   sound.updateHold(returnHold.held?returnHold.progress:ui.hold,ui.phase==='intro'&&(ui.held||returnHold.held));
@@ -315,7 +332,7 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
   chatPresentation.update(ui.phase,time-ui.phaseAt);cinemaControls.update();
   const introRender=['intro','morph','chat','launch','black','film-wait'].includes(ui.phase);
   dotForeground?.setActive(ui.phase==='scroll'||ui.phase==='departure');
-  if(introRender){portalLayout(time-ui.phaseAt);const state=opening.update({time,dt,phase:ui.phase==='film-wait'?'black':ui.phase,phaseTime:time-ui.phaseAt,holdProgress:ui.hold});if(ui.phase==='morph')sound.particleMotion(state);if(ui.phase==='launch')sound.codeTick(age);renderer.render(opening.scene,opening.camera);css.domElement.style.visibility='hidden';if(ui.phase==='launch')drawCode(age);portalLayout(time-ui.phaseAt);}
+  if(introRender){portalLayout(time-ui.phaseAt);const state=opening.update({time,dt,phase:ui.phase==='film-wait'?'black':ui.phase,phaseTime:time-ui.phaseAt,holdProgress:ui.hold});if(ui.phase==='morph')sound.particleMotion(state);if(ui.phase==='launch')sound.codeTick(age);renderer.render(opening.scene,opening.camera);renderStats.world++;css.domElement.style.visibility='hidden';if(ui.phase==='launch')drawCode(age);portalLayout(time-ui.phaseAt);}
   else if(ui.phase==='film'){if(lastPhase!=='film')portalLayout(age);css.domElement.style.visibility='hidden';}
   else if(['stage','transition','departure','scroll'].includes(ui.phase)){
     css.domElement.style.visibility='visible';
@@ -346,11 +363,11 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
       display('scroll-cue',ui.scroll<1.2&&!ui.focusLock);display('chapter-caption',ui.scroll>1.2&&gameIndex<0&&!ui.focusLock&&chapter<5);display('game-controls',gameIndex>=0&&!ui.focusLock,'flex');$('game-instruction').textContent=gameIndex<0?'':['拖动旋转 · 清楚停留后自动收词','把步骤板拖入六个顺序槽','拖动工具，连接适合的用途','点击模型的问题区域','先安放三项成果，再拖动印章'][gameIndex];$('position-label').textContent=String(chapter+1).padStart(2,'0')+' / 06';$('scroll-progress').firstElementChild.style.width=(ui.scroll/CONFIG.scroll.max*100)+'%';
       const body=dot.actorWorldPos.clone().add(vec(0,1.2,0));const screen=project(body,camera);const narrow=innerWidth<700;const bx=narrow?clamp(screen.x-115,55,innerWidth-205):clamp(screen.x-90,35,innerWidth-255),by=narrow?Math.max(90,innerHeight*.105):clamp(screen.y-85,90,innerHeight-180);ui.bubbleX=damp(ui.bubbleX,bx,8,dt);ui.bubbleY=damp(ui.bubbleY,by,8,dt);$('dot-bubble').style.left=ui.bubbleX+'px';$('dot-bubble').style.top=ui.bubbleY+'px';display('dot-bubble',screen.visible&&time<ui.bubbleUntil&&!ui.focusLock);
     }
-    if(ui.phase==='stage'||ui.phase==='transition'){renderer.setClearColor('#000000',1);renderer.clear();dot.renderStage();}else{camera.lookAt(look);camera.updateMatrixWorld();key.position.set(-6,18,12-ui.scroll);keyTarget.position.set(0,0,-ui.scroll-3);quality.stabilizeShadow({phase:ui.phase});games.update(dt,time);dot.beforeRender(renderer);dotForeground.renderWorld(()=>renderer.render(scene,camera));css.render(scene,camera);space.syncReading();dotForeground.render();}
+    if(ui.phase==='stage'||ui.phase==='transition'){renderer.setClearColor('#000000',1);renderer.clear();dot.renderStage();renderStats.world++;}else{camera.lookAt(look);camera.updateMatrixWorld();key.position.set(-6,18,12-ui.scroll);keyTarget.position.set(0,0,-ui.scroll-3);quality.stabilizeShadow({phase:ui.phase});games.update(dt,time);dot.beforeRender(renderer);dotForeground.renderWorld(()=>renderer.render(scene,camera));renderStats.world++;css.render(scene,camera);renderStats.css++;space.syncReading();dotForeground.render();renderStats.foreground++;}
   }
   bubbleEmphasis.update($('dot-bubble').style.display!=='none');
   if(['film','transition','stage'].includes(ui.phase))paintTransport(now);
-  quality.sampleFrame({dt:rawDt,time:current,phase:ui.phase});lastPhase=ui.phase;renderedFrames++;requestAnimationFrame(frame);
+  quality.sampleFrame({dt:rawDt,time:current,phase:ui.phase});lastPhase=ui.phase;renderedFrames++;paintDiagnostics(now,'animated');frameLoop.schedule();
 }
 const hold=$('hold');hold.addEventListener('pointermove',e=>{const r=hold.getBoundingClientRect();hold.style.setProperty('--mx',(e.clientX-r.x)/r.width);hold.style.setProperty('--my',(e.clientY-r.y)/r.height);});hold.addEventListener('pointerleave',()=>{hold.style.setProperty('--mx','.5');hold.style.setProperty('--my','.5');});hold.addEventListener('pointerdown',e=>{if(ui.phase!=='intro')return;e.preventDefault();hold.setPointerCapture(e.pointerId);if(!ui.held)ui.holdStart=performance.now()/1000;ui.held=true;sound.unlock();media.prime().catch(error=>toast(error.message));});hold.addEventListener('pointerup',()=>ui.held=false);hold.addEventListener('pointercancel',()=>ui.held=false);hold.addEventListener('keydown',e=>{if([' ','Enter'].includes(e.key)&&ui.phase==='intro'){e.preventDefault();if(!ui.held)ui.holdStart=performance.now()/1000;ui.held=true;sound.unlock();media.prime().catch(error=>toast(error.message));}});hold.addEventListener('keyup',e=>{if([' ','Enter'].includes(e.key)){e.preventDefault();ui.held=false;}});window.addEventListener('blur',()=>ui.held=false);
 $('send').addEventListener('click',()=>{if(ui.phase!=='chat')return;sound.unlock();media.prime().catch(()=>{});media.ensure(0,2).then(()=>{if(!media.preflighting)return transport.unlock();}).catch(()=>{});setPhase('launch');});
@@ -372,11 +389,11 @@ $('film-file').addEventListener('change',async e=>{const file=e.target.files?.[0
 $('quality').addEventListener('change',e=>{const q=e.target.value;quality.setMode(q);dot?.setReflectionEnabled(q!=='low');resize();});
 function restart(){transport.pause();space?.close();ui.hold=0;ui.held=false;setPhase('intro');}
 $('back-start').addEventListener('click',restart);document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();restart();});$('replay').addEventListener('click',()=>{transport.pause();space?.close();beginListening();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){listeningGate.adjusting=false;listeningGate.adjusted();ui.held=false;sound.updateHold(0,false);sound.stopParticles();if(transport.playing)transport.pause();}});
+document.addEventListener('visibilitychange',()=>{if(animationReady)frameLoop.setHidden(document.hidden);else if(document.hidden)frameLoop.setHidden(true);if(document.hidden){listeningGate.adjusting=false;listeningGate.adjusted();ui.held=false;sound.updateHold(0,false);sound.stopParticles();if(transport.playing)transport.pause();paintDiagnostics(performance.now(),'hidden');}});
 
 let dotPress=null;
-window.addEventListener('pointermove',e=>{if(ui.phase!=='scroll')return;dot.pointer(e.clientX,e.clientY);dot.hover(dot.hitTest(e.clientX,e.clientY));},true);
-window.addEventListener('pointerdown',e=>{if(ui.phase!=='scroll'||$('settings').open||!dot.hitTest(e.clientX,e.clientY))return;dotPress={id:e.pointerId,x:e.clientX,y:e.clientY};e.preventDefault();e.stopImmediatePropagation();},true);
+window.addEventListener('pointermove',e=>{if(ui.phase!=='scroll'||ui.focusLock||document.hidden)return;dot.pointer(e.clientX,e.clientY);dot.hover(dot.hitTest(e.clientX,e.clientY));},true);
+window.addEventListener('pointerdown',e=>{if(ui.phase!=='scroll'||ui.focusLock||$('settings').open||!dot.hitTest(e.clientX,e.clientY))return;dotPress={id:e.pointerId,x:e.clientX,y:e.clientY};e.preventDefault();e.stopImmediatePropagation();},true);
 window.addEventListener('pointerup',e=>{if(!dotPress||e.pointerId!==dotPress.id)return;const click=Math.hypot(e.clientX-dotPress.x,e.clientY-dotPress.y)<9;dotPress=null;e.preventDefault();e.stopImmediatePropagation();if(click)dot.react('click');},true);
 window.addEventListener('pointercancel',()=>dotPress=null,true);
 

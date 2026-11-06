@@ -1,6 +1,6 @@
 {
   "limitBytes": 56000000,
-  "bytes": 52588147,
+  "bytes": 44485782,
   "fileCount": 201,
   "sourceFiles": [
     "assets/dot/dot-outline-r12.svg",
@@ -38,28 +38,23 @@
     "assets/editorial/ascii-lab-demo-poster.webp",
     "assets/editorial/ascii-lab-demo.mp4",
     "assets/editorial/ascii-lab.webp",
-    "assets/editorial/ascii-su7-poster.webp",
-    "assets/editorial/ascii-su7.mp4",
+    "assets/editorial/ascii-user-00-poster.webp",
+    "assets/editorial/ascii-user-00.mp4",
     "assets/editorial/batch-delivery.webp",
-    "assets/editorial/dot-motion.html",
-    "assets/editorial/dot-motion.webp",
+    "assets/editorial/dot-design-process.webp",
     "assets/editorial/dot-render-compare.webp",
     "assets/editorial/feedback-dot.webp",
     "assets/editorial/feedback-sketch.webp",
     "assets/editorial/frame-failed.webp",
-    "assets/editorial/frame-repaired.webp",
     "assets/editorial/g1-boxing-poster.webp",
     "assets/editorial/g1-boxing.mp4",
     "assets/editorial/g1-collision.webp",
     "assets/editorial/g1-kick-poster.webp",
     "assets/editorial/g1-kick.mp4",
     "assets/editorial/g1-material.webp",
-    "assets/editorial/html-reopen.webp",
     "assets/editorial/mood-catch.webp",
     "assets/editorial/mood-monsters.webp",
     "assets/editorial/mood-rog.webp",
-    "assets/editorial/pr-animatic-poster.webp",
-    "assets/editorial/pr-animatic.mp4",
     "assets/editorial/pr-timeline.webp",
     "assets/editorial/react-gradient-poster.webp",
     "assets/editorial/react-gradient.mp4",
@@ -90,9 +85,13 @@
     "assets/media/bgm/stream/manifest.json",
     "assets/media/bgm/stream/outro.m4a",
     "assets/media/bgm/tank-b-loop.json",
-    "assets/media/film-hd.mp4",
     "assets/media/film-hd/manifest.json",
-    "assets/media/film-mobile.mp4",
+    "assets/media/film-hd/parts/film-hd-404595b9184c.part-001.bin",
+    "assets/media/film-hd/parts/film-hd-404595b9184c.part-002.bin",
+    "assets/media/film-hd/parts/film-hd-404595b9184c.part-003.bin",
+    "assets/media/film-hd/parts/film-hd-404595b9184c.part-004.bin",
+    "assets/media/film-hd/parts/film-mobile-028542980583.part-001.bin",
+    "assets/media/film-hd/parts/film-mobile-028542980583.part-002.bin",
     "assets/media/film-preview.jpg",
     "assets/media/sfx/CREDITS.md",
     "assets/media/sfx/glass-b-air.wav",
@@ -185,6 +184,7 @@
     "src/dot-stage-r07.mjs",
     "src/film-media.mjs",
     "src/first-game-hints.mjs",
+    "src/frame-loop.mjs",
     "src/frosted-glass.mjs",
     "src/games-cube.mjs",
     "src/games-glyphs.mjs",
@@ -353,12 +353,12 @@
       "bytes": 58462
     },
     {
-      "path": "assets/editorial/ascii-su7-poster.webp",
-      "bytes": 192382
+      "path": "assets/editorial/ascii-user-00-poster.webp",
+      "bytes": 33608
     },
     {
-      "path": "assets/editorial/ascii-su7.mp4",
-      "bytes": 5992919
+      "path": "assets/editorial/ascii-user-00.mp4",
+      "bytes": 2342451
     },
     {
       "path": "assets/editorial/batch-delivery.webp",
@@ -366,15 +366,11 @@
     },
     {
       "path": "assets/editorial/CREDITS.md",
-      "bytes": 638
+      "bytes": 674
     },
     {
-      "path": "assets/editorial/dot-motion.html",
-      "bytes": 3372570
-    },
-    {
-      "path": "assets/editorial/dot-motion.webp",
-      "bytes": 43014
+      "path": "assets/editorial/dot-design-process.webp",
+      "bytes": 25974
     },
     {
       "path": "assets/editorial/dot-render-compare.webp",
@@ -391,10 +387,6 @@
     {
       "path": "assets/editorial/frame-failed.webp",
       "bytes": 28630
-    },
-    {
-      "path": "assets/editorial/frame-repaired.webp",
-      "bytes": 33822
     },
     {
       "path": "assets/editorial/g1-boxing-poster.webp",
@@ -421,10 +413,6 @@
       "bytes": 35946
     },
     {
-      "path": "assets/editorial/html-reopen.webp",
-      "bytes": 61902
-    },
-    {
       "path": "assets/editorial/mood-catch.webp",
       "bytes": 75594
     },
@@ -435,14 +423,6 @@
     {
       "path": "assets/editorial/mood-rog.webp",
       "bytes": 30282
-    },
-    {
-      "path": "assets/editorial/pr-animatic-poster.webp",
-      "bytes": 5322
-    },
-    {
-      "path": "assets/editorial/pr-animatic.mp4",
-      "bytes": 812177
     },
     {
       "path": "assets/editorial/pr-timeline.webp",
@@ -570,15 +550,31 @@
     },
     {
       "path": "assets/media/film-hd/manifest.json",
-      "bytes": 579
+      "bytes": 1972
     },
     {
-      "path": "assets/media/film-hd.mp4",
-      "bytes": 15862306
+      "path": "assets/media/film-hd/parts/film-hd-404595b9184c.part-001.bin",
+      "bytes": 4194304
     },
     {
-      "path": "assets/media/film-mobile.mp4",
-      "bytes": 5575215
+      "path": "assets/media/film-hd/parts/film-hd-404595b9184c.part-002.bin",
+      "bytes": 4194304
+    },
+    {
+      "path": "assets/media/film-hd/parts/film-hd-404595b9184c.part-003.bin",
+      "bytes": 4194304
+    },
+    {
+      "path": "assets/media/film-hd/parts/film-hd-404595b9184c.part-004.bin",
+      "bytes": 3279394
+    },
+    {
+      "path": "assets/media/film-hd/parts/film-mobile-028542980583.part-001.bin",
+      "bytes": 4194304
+    },
+    {
+      "path": "assets/media/film-hd/parts/film-mobile-028542980583.part-002.bin",
+      "bytes": 1380911
     },
     {
       "path": "assets/media/film-preview.jpg",
@@ -854,7 +850,7 @@
     },
     {
       "path": "src/card-media.mjs",
-      "bytes": 2459
+      "bytes": 3055
     },
     {
       "path": "src/card-morph.mjs",
@@ -874,7 +870,7 @@
     },
     {
       "path": "src/content.mjs",
-      "bytes": 34477
+      "bytes": 35457
     },
     {
       "path": "src/dot-foreground.mjs",
@@ -886,11 +882,15 @@
     },
     {
       "path": "src/film-media.mjs",
-      "bytes": 12958
+      "bytes": 15134
     },
     {
       "path": "src/first-game-hints.mjs",
       "bytes": 2785
+    },
+    {
+      "path": "src/frame-loop.mjs",
+      "bytes": 1051
     },
     {
       "path": "src/frosted-glass.mjs",
@@ -926,7 +926,7 @@
     },
     {
       "path": "src/main.mjs",
-      "bytes": 57220
+      "bytes": 59434
     },
     {
       "path": "src/opening-assembly.mjs",
@@ -994,7 +994,7 @@
     },
     {
       "path": "src/scroll-space.mjs",
-      "bytes": 41497
+      "bytes": 43064
     },
     {
       "path": "src/sound-design.mjs",
@@ -1022,7 +1022,7 @@
     },
     {
       "path": "styles-combined.css",
-      "bytes": 67092
+      "bytes": 66789
     }
   ]
 }

@@ -54,6 +54,18 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
   for(const [divisions,color,opacity] of [[500,0x77797c,.13],[50,0xa1a2a5,.16]]){const layer=new T.GridHelper(500,divisions,color,color);layer.position.y=-.13;layer.material.transparent=true;layer.material.opacity=opacity;grid.add(layer);}root.add(grid);
   const rails=new T.Group();for(const x of [-11,11]){const pts=[];for(let z=33;z>=-70;z-=.5){const over=Math.max(0,-z-35),a=Math.min(over/18,1.42);pts.push(vec(x,over>0?18*(1-Math.cos(a))+.025:.025,over>0?-35-18*Math.sin(a):z));}rails.add(line(pts,0xdddfe2,.42));}root.add(rails);
   let focus=null,focusMix=0,focusGoal=0,hover=null,focusAge=0;
+  const projectionX0=vec(),projectionX1=vec(),projectionY0=vec(),projectionY1=vec(),projectionCorner=vec(),labelBottom=vec(),labelTop=vec(),cornerSigns=[-1,1];
+  const focusCamera={target:vec(),position:vec(),mix:0};let focusCameraCard=null,focusCameraWidth=0,focusCameraHeight=0,focusCameraFov=0;
+  function cameraFocus(){
+    if(!focus)return null;
+    if(focus!==focusCameraCard||innerWidth!==focusCameraWidth||innerHeight!==focusCameraHeight||camera.fov!==focusCameraFov){
+      focusCameraCard=focus;focusCameraWidth=innerWidth;focusCameraHeight=innerHeight;focusCameraFov=camera.fov;
+      const target=focusCamera.target.copy(focus.base);target.y=focus.isResource?5:6;target.z+=1;
+      const widthPx=Math.min(innerWidth*.84,920),distance=focus.width*innerHeight/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*widthPx);
+      focusCamera.position.set(0,.25,1).normalize().multiplyScalar(distance).add(target);
+    }
+    focusCamera.mix=smooth(focusMix);return focusCamera;
+  }
   const backdrop=document.querySelector('#focus-backdrop');
   const readingLayer=document.createElement('div');readingLayer.id='reading-layer';Object.assign(readingLayer.style,{position:'fixed',inset:'0',zIndex:'6',pointerEvents:'none'});document.body.append(readingLayer);let readingCard=null;
   function surface(el){const wrapper=document.createElement('div');wrapper.className='spatial-surface';wrapper.append(el);return new CSS3DObject(wrapper);}
@@ -279,7 +291,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
     const lines=layoutLines.filter(visible).map(o=>{const a=o.geometry.attributes.position,points=[];for(let i=0;i<a.count;i++)points.push(project(vec(a.getX(i),a.getY(i),a.getZ(i)).applyMatrix4(o.matrixWorld)));return {id:o.name,points};});
     return {viewport:{width:innerWidth,height:innerHeight},records,lines};
   }
-  return {root,ribbon,grid,cards,resources,industrials,titles,ending,close,cancelFocus,open,pointerHit,pointerMove,clearHover,syncReading,invalidateReading:restoreReading,get readingStable(){return !!readingCard&&!!focusGoal&&focusMix===1;},readingSnapshot:()=>({stable:!!readingCard,card:readingCard?.el.dataset.cardId,transform:readingCard?.el.style.transform}),snapshotLayout,get focused(){return !!focus;},get focusMix(){return focusMix;},get focusState(){return{age:focusAge,goal:focusGoal,isResource:!!focus?.isResource,resourcePlaybackRate:2};},cameraFocus(){if(!focus)return null;const target=focus.base.clone();target.y=focus.isResource?5:6;target.z+=1;const widthPx=Math.min(innerWidth*.84,920),distance=focus.width*innerHeight/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*widthPx);const position=target.clone().add(vec(0,.25,1).normalize().multiplyScalar(distance));return {target,position,mix:smooth(focusMix)};},update({scroll,time,dt,unfold=1}){
+  return {root,ribbon,grid,cards,resources,industrials,titles,ending,close,cancelFocus,open,pointerHit,pointerMove,clearHover,syncReading,invalidateReading:restoreReading,get readingStable(){return !!readingCard&&!!focusGoal&&focusMix===1;},readingSnapshot:()=>({stable:!!readingCard,card:readingCard?.el.dataset.cardId,transform:readingCard?.el.style.transform}),snapshotLayout,get focused(){return !!focus;},get focusMix(){return focusMix;},get focusState(){return{age:focusAge,goal:focusGoal,isResource:!!focus?.isResource,resourcePlaybackRate:2};},cameraFocus,update({scroll,time,dt,unfold=1}){
       animationTime=time;
       uniforms.scroll.value=scroll;uniforms.unfold.value=unfold;ribbon.position.z=-scroll;rails.position.z=-scroll;
       // The side grid is fixed in the same world coordinates as the content.
@@ -293,8 +305,9 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
       const fm=smooth(focusMix),contentReveal=smooth((unfold-.42)/.5);
       for(const o of objects)o.group.visible=Math.abs(o.z+scroll)<51&&unfold>.43;
       for(const text of layoutLabels){
+        if(!text.visible||Math.abs(text.position.z+scroll)>=19){text.visible=false;continue;}
         const meta=text.userData.typography,desired=text.userData.readableLabel.kind==='description'?16:13;text.scale.setScalar(1);text.updateMatrixWorld(true);
-        const a=vec(0,-meta.worldHeight/2,0).applyMatrix4(text.matrixWorld).project(camera),b=vec(0,meta.worldHeight/2,0).applyMatrix4(text.matrixWorld).project(camera),pixels=Math.hypot((b.x-a.x)*innerWidth/2,(b.y-a.y)*innerHeight/2)*meta.fontPx/meta.canvasHeight;
+        const a=labelBottom.set(0,-meta.worldHeight/2,0).applyMatrix4(text.matrixWorld).project(camera),b=labelTop.set(0,meta.worldHeight/2,0).applyMatrix4(text.matrixWorld).project(camera),pixels=Math.hypot((b.x-a.x)*innerWidth/2,(b.y-a.y)*innerHeight/2)*meta.fontPx/meta.canvasHeight;
         const grow=Math.min(2.4,20/meta.worldWidth,Math.max(1,desired/Math.max(.01,pixels)));text.scale.setScalar(grow);text.userData.screenFontEstimate=pixels*grow;
         const alpha=1-smooth((Math.abs(text.position.z+scroll)-13)/6);text.material.opacity=alpha*(1-fm*.9);text.visible=text.visible&&alpha>.01&&!(innerWidth<700&&['action','kicker'].includes(text.userData.readableLabel.kind));
       }
@@ -302,6 +315,7 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
       for(const t of titles)t.update(dt,time);
       // Extract, open, emerge and only then move into the reading position.
       for(const r of resources){
+        if(!shelf.visible&&focus!==r.card){r.guide.visible=false;continue;}
         const selected=focus===r.card,p=resourcePhases(selected?focusAge:0);r.phases=p;r.tagEl.style.opacity=String(1-p.extract);r.tagEl.style.pointerEvents=focus?"none":"auto";
         const hoverTarget=r.hover||hoveredResource===r?1:0;
         r.group.position.copy(r.base);r.group.position.z+=p.extract*(r.kind==='book'?2.7:3.3)+hoverTarget*.04;r.group.rotation.y=-p.extract*.1;
@@ -312,11 +326,23 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
       for(const card of cards){
         if(card===readingCard)continue;
         if(card.isResource&&card!==focus)continue;
+        // Cards already fade to zero at 17 world units. Do not measure DOM,
+        // rewrite typography, or project corners for those invisible chapters.
+        if(card!==focus&&(!card.group.visible||Math.abs(card.base.z+scroll)>=17)){
+          card.group.visible=false;
+          if(card.nearby!==false){card.nearby=false;card.readable=0;card.el.style.pointerEvents=card.css.element.style.pointerEvents='none';card.el.tabIndex=-1;}
+          continue;
+        }
+        card.nearby=true;
         const narrowFocus=card===focus&&innerWidth<700,domW=narrowFocus?340:640,domH=narrowFocus?T.MathUtils.lerp(420*340/640,640,fm):420;
-        card.el.style.width=domW+'px';card.el.style.height=domH+'px';card.css.element.style.width=domW+'px';card.css.element.style.height=domH+'px';card.css.element.style.pointerEvents=focus&&card!==focus?'none':'auto';card.css.scale.setScalar(card.width/domW);
-        const backing=card.group.children.find(c=>c.isMesh);if(backing)backing.scale.y=(domH/domW)/(420/640);if(card.frame)card.frame.scale.y=(domH/domW)/(420/640);
+        const backing=card.backing??=card.group.children.find(c=>c.isMesh);
+        if(card.domWidth!==domW||card.domHeight!==domH){
+          card.domWidth=domW;card.domHeight=domH;card.el.style.width=domW+'px';card.el.style.height=domH+'px';card.css.element.style.width=domW+'px';card.css.element.style.height=domH+'px';card.css.scale.setScalar(card.width/domW);
+          if(backing)backing.scale.y=(domH/domW)/(420/640);if(card.frame)card.frame.scale.y=(domH/domW)/(420/640);
+        }
+        card.css.element.style.pointerEvents=focus&&card!==focus?'none':'auto';
         if(card===focus){
-          const cf=this.cameraFocus(),rot=new T.Matrix4().lookAt(cf.position,cf.target,vec(0,1,0)),q=new T.Quaternion().setFromRotationMatrix(rot);
+          const cf=cameraFocus(),rot=new T.Matrix4().lookAt(cf.position,cf.target,vec(0,1,0)),q=new T.Quaternion().setFromRotationMatrix(rot);
           if(card.isResource){
             const r=resources.find(r=>r.card===card),p=r.phases,origin=r.group.localToWorld(vec(0,r.kind==='book'?1:.7,.25));
             const emerged=origin.clone().add(vec(0,2.3,1.4));card.group.position.lerpVectors(origin,emerged,p.emerge).lerp(cf.target,fm);card.group.quaternion.copy(q);
@@ -328,9 +354,10 @@ export async function createScrollSpace({scene,camera,onFocus=()=>{},onSound=()=
         }else{
           card.hover=damp(card.hover,hover===card?1:0,9,dt);const tilt=(reduced?0:card.hover)*T.MathUtils.degToRad(7);
           card.group.position.copy(card.base);card.group.position.y=card.base.y+Math.sin(tilt)*card.height/2+card.hover*.06;card.group.rotation.set(-Math.PI/2+tilt,0,0);card.group.updateMatrixWorld(true);card.morph?.update(0);
-          const px=vec(-.5,0,0).applyMatrix4(card.group.matrixWorld).project(camera),qx=vec(.5,0,0).applyMatrix4(card.group.matrixWorld).project(camera),py=vec(0,-.5,0).applyMatrix4(card.group.matrixWorld).project(camera),qy=vec(0,.5,0).applyMatrix4(card.group.matrixWorld).project(camera);
+          const px=projectionX0.set(-.5,0,0).applyMatrix4(card.group.matrixWorld).project(camera),qx=projectionX1.set(.5,0,0).applyMatrix4(card.group.matrixWorld).project(camera),py=projectionY0.set(0,-.5,0).applyMatrix4(card.group.matrixWorld).project(camera),qy=projectionY1.set(0,.5,0).applyMatrix4(card.group.matrixWorld).project(camera);
           const ratio=Math.hypot((qy.x-py.x)*innerWidth,(qy.y-py.y)*innerHeight)/Math.max(.0001,Math.hypot((qx.x-px.x)*innerWidth,(qx.y-px.y)*innerHeight));
-          const nearZ=Math.max(...[-1,1].flatMap(x=>[-1,1].map(y=>vec(x*card.width/2,y*card.height/2,0).applyMatrix4(card.group.matrixWorld).applyMatrix4(camera.matrixWorldInverse).z))),nearFade=1-smooth((nearZ+2.5)/2),passedFade=1-smooth((card.base.z+scroll-7)/5);
+          let nearZ=-Infinity;for(const x of cornerSigns)for(const y of cornerSigns)nearZ=Math.max(nearZ,projectionCorner.set(x*card.width/2,y*card.height/2,0).applyMatrix4(card.group.matrixWorld).applyMatrix4(camera.matrixWorldInverse).z);
+          const nearFade=1-smooth((nearZ+2.5)/2),passedFade=1-smooth((card.base.z+scroll-7)/5);
           const readable=nearZ<-camera.near?smooth((ratio-.28)/.12)*nearFade*passedFade:0,nearContent=1-smooth((Math.abs(card.base.z+scroll)-13)/4);
           const screenScale=Math.hypot((qx.x-px.x)*innerWidth/2,(qx.y-px.y)*innerHeight/2)*card.width/640;
           const fontScale=screenScale*Math.min(1,Math.max(.70,ratio));

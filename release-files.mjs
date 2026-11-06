@@ -2,6 +2,10 @@ import {pathToFileURL} from 'node:url';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 export async function releaseFiles(root){
+ const film=JSON.parse(await fs.readFile(path.join(root,'assets/media/film-hd/manifest.json'),'utf8'));
+ const assembledFiles=new Set();
+ if(film.fileParts?.length)assembledFiles.add('assets/media/film-hd.mp4');
+ if(film.mobileParts?.length)assembledFiles.add('assets/media/film-mobile.mp4');
  const html=await fs.readFile(path.join(root,'index.html'),'utf8'),map=JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]).imports;
  const found=new Set(),queue=['index.html'],css=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m=>m[1].replace(/^\.\//,''));
  async function add(value,parent='index.html',must=false){
@@ -9,7 +13,7 @@ export async function releaseFiles(root){
   for(const [prefix,target]of Object.entries(map))if(value===prefix||prefix.endsWith('/')&&value.startsWith(prefix)){value=target+value.slice(prefix.length);parent='index.html';break;}
   const choices=[];if(value.startsWith('./assets/'))choices.push(value.slice(2));
   choices.push(path.posix.normalize(path.posix.join(path.posix.dirname(parent),value)));
-  for(let rel of choices){rel=decodeURIComponent(rel.split(/[?#]/)[0]).replace(/\\/g,'/');if(rel.startsWith('../')||path.isAbsolute(rel))continue;try{if((await fs.stat(path.join(root,rel))).isFile()){if(!found.has(rel))queue.push(rel);return;}}catch{}}
+  for(let rel of choices){rel=decodeURIComponent(rel.split(/[?#]/)[0]).replace(/\\/g,'/');if(rel.startsWith('../')||path.isAbsolute(rel))continue;if(assembledFiles.has(rel))return;try{if((await fs.stat(path.join(root,rel))).isFile()){if(!found.has(rel))queue.push(rel);return;}}catch{}}
   if(must&&(value.startsWith('.')||value.includes('/')))throw Error('Missing imported file: '+parent+' -> '+value);
  }
  for(const rel of ['assets/editorial/CREDITS.md','assets/editorial/REACT-BITS-LICENSE.md','assets/media/film-hd/manifest.json','assets/media/bgm/stream/manifest.json','assets/vendor/MESHOPT-LICENSE.md','assets/vendor/THREE-LICENSE.txt','assets/products/S11-source-licenses.txt','assets/dot/licenses/THREE-LICENSE.txt','assets/media/sfx/CREDITS.md'])await add('./'+rel);
@@ -27,7 +31,7 @@ export async function releaseFiles(root){
   if(rel.endsWith('.html'))for(const m of text.matchAll(/(?:src|href)="([^"]+)"/g))await add(m[1],rel);
   if(rel.endsWith('.css'))for(const m of text.matchAll(/url\(['"]?([^)'"\s]+)['"]?\)/g))await add(m[1],rel);
   if(/\.(mjs|js)$/.test(rel))for(const m of text.matchAll(/['"]([^'"\n]+\.(?:json|svg|png|jpe?g|webp|glb|wav|m4a|mp4|woff2?)(?:[?#][^'"\n]*)?)['"]/g))await add(m[1],rel);
-  if(rel==='assets/media/film-hd/manifest.json'){const m=JSON.parse(text);for(const v of [m.file,m.mobileFallback,m.fallback])await add(v,rel,true);}
+  if(rel==='assets/media/film-hd/manifest.json'){const m=JSON.parse(text);for(const v of [m.file,m.mobileFallback,m.fallback])await add(v,rel,true);for(const part of [...(m.fileParts||[]),...(m.mobileParts||[])])await add(part.src||part,rel,true);}
   if(rel==='assets/media/bgm/stream/manifest.json')for(const t of Object.values(JSON.parse(text).tracks))for(const c of t.chunks)await add(c.src,rel,true);
  }
  return{files:[...found].sort(),css};

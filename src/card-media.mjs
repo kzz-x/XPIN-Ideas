@@ -1,14 +1,14 @@
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const observers = new WeakMap();
+const dimensions = item => item.width && item.height ? ` width="${item.width}" height="${item.height}"` : '';
 
 export function mediaFigure(item, index) {
   const caption = escape(item.caption);
   let content;
   if (item.kind === 'video') {
-    content = `<video controls playsinline preload="none" poster="${escape(item.poster)}" data-media-src="${escape(item.src)}" aria-label="${caption}"></video>`;
-  } else if (item.kind === 'interactive') {
-    content = `<div class="interactive-preview"><img src="${escape(item.poster)}" alt="${caption}"><button type="button" data-interactive-src="${escape(item.src)}">打开动作原型 ↗</button></div>`;
+    content = `<video controls playsinline preload="none"${dimensions(item)} data-media-poster="${escape(item.poster)}" data-media-src="${escape(item.src)}" aria-label="${caption}"></video>`;
   } else {
-    content = `<img src="${escape(item.src)}" alt="${caption}" ${index ? 'loading="lazy"' : ''} decoding="async">`;
+    content = `<img ${index ? 'data-media-src' : 'src'}="${escape(item.src)}"${dimensions(item)} alt="${caption}" decoding="async">`;
   }
   return `<figure class="editorial-media media-${escape(item.kind || 'image')}" data-media-index="${index}">${content}<figcaption>${caption}</figcaption></figure>`;
 }
@@ -21,28 +21,42 @@ export function cardDetailHTML(card) {
 }
 
 export function prepareCardMedia(element) {
-  for (const video of element.querySelectorAll('video[data-media-src]')) {
-    if (!video.hasAttribute('src')) video.src = video.dataset.mediaSrc;
-  }
+  observers.get(element)?.disconnect();
+  const detail = element.querySelector('.card-detail');
+  const activate = node => {
+    if (node.dataset.mediaPoster) node.poster = node.dataset.mediaPoster;
+    if (node.dataset.mediaSrc && !node.hasAttribute('src')) node.src = node.dataset.mediaSrc;
+  };
+  const pending = [...detail.querySelectorAll('img[data-media-src],video[data-media-src]')];
+  if (typeof IntersectionObserver === 'undefined') { pending.forEach(activate); return; }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      activate(entry.target);
+      observer.unobserve(entry.target);
+    });
+  }, {root:detail,rootMargin:'240px 0px'});
+  pending.forEach(node => observer.observe(node));
+  observers.set(element, observer);
 }
 
 export function stopCardMedia(element) {
-  element?.querySelectorAll('video').forEach(video => video.pause());
-  element?.querySelectorAll('.interactive-preview iframe').forEach(frame => {
-    frame.remove();
+  if (!element) return;
+  observers.get(element)?.disconnect();
+  observers.delete(element);
+  element.querySelectorAll('video').forEach(video => {
+    if (!video.hasAttribute('src')) return;
+    video.dataset.resumeTime = String(video.currentTime || 0);
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
   });
+  element.querySelectorAll('img[data-media-src]').forEach(img => img.removeAttribute('src'));
 }
 
 export function bindCardMedia(element) {
-  element.querySelectorAll('[data-interactive-src]').forEach(button => button.addEventListener('click', event => {
-    event.stopPropagation();
-    const host = button.parentElement;
-    if (host.querySelector('iframe')) return;
-    const frame = document.createElement('iframe');
-    frame.src = button.dataset.interactiveSrc;
-    frame.title = 'Dot 球体动作原型';
-    frame.setAttribute('sandbox', 'allow-scripts');
-    frame.setAttribute('loading', 'lazy');
-    host.append(frame);
+  element.querySelectorAll('video').forEach(video => video.addEventListener('loadedmetadata', () => {
+    const at = Number(video.dataset.resumeTime || 0);
+    if (at > 0 && at < video.duration - .1) video.currentTime = at;
   }));
 }

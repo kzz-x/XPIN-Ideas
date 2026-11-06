@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-06",
+  "changes": [
+    "Remove PR text animatic video",
+    "Remove all embedded HTML action prototypes",
+    "Insert Dot character-design process image after paragraph 8 of 02.01",
+    "Remove frame-repaired from 04.01",
+    "Remove action studio from 05.01",
+    "Remove HTML export tool image from 05.02",
+    "Replace 03.02 video with author source/00.mp4"
+  ],
+  "replacementSource": "D:/1.works/AI分享/source/00.mp4",
+  "replacementOutput": "./assets/editorial/ascii-user-00.mp4",
+  "dimensions": [
+    1920,
+    1080
+  ],
+  "fps": 60
+}

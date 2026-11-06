@@ -3,6 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {releaseFiles} from './release-files.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),dist=path.resolve(root,'dist');
+await fs.mkdir(path.join(root,'.openai'),{recursive:true});
 if(!dist.startsWith(root+path.sep)||path.basename(dist)!=='dist')throw Error('Unsafe build target');
 const {files,css}=await releaseFiles(root);
 await fs.rm(dist,{recursive:true,force:true});await fs.mkdir(dist,{recursive:true});

@@ -19,5 +19,46 @@
   "mobileBytes": 5575215,
   "mobileFps": 30,
   "file": "../film-hd.mp4",
-  "fileBytes": 15862306
+  "fileBytes": 15862306,
+  "fileParts": [
+    {
+      "src": "./parts/film-hd-404595b9184c.part-001.bin",
+      "bytes": 4194304,
+      "sha256": "b8eecbd6dc487cc499625dea362c28bc21c1fe134f2bec82f9982449bdc32b35"
+    },
+    {
+      "src": "./parts/film-hd-404595b9184c.part-002.bin",
+      "bytes": 4194304,
+      "sha256": "b0f3b8acaed7f6a358d65ce8a4f18619f9ce1374cc30b971ce1a730443b95141"
+    },
+    {
+      "src": "./parts/film-hd-404595b9184c.part-003.bin",
+      "bytes": 4194304,
+      "sha256": "e789a37924fd425be8d8eb7e21f56085a4230529cde6e850fbaffda69e5f4401"
+    },
+    {
+      "src": "./parts/film-hd-404595b9184c.part-004.bin",
+      "bytes": 3279394,
+      "sha256": "889c3c3e3f0e7052dd4afe2880a0fd0467bf72adb68c9b1d5a41ae648e6c5f30"
+    }
+  ],
+  "fileSha256": "404595b9184c088d29474ae66741f267a2c964ceab88eb40466a5c74e6c89199",
+  "mobileParts": [
+    {
+      "src": "./parts/film-mobile-028542980583.part-001.bin",
+      "bytes": 4194304,
+      "sha256": "544a488de63a2a69cd186422c8d1965bdd59d53c35989101dda1b756435f84ad"
+    },
+    {
+      "src": "./parts/film-mobile-028542980583.part-002.bin",
+      "bytes": 1380911,
+      "sha256": "74f68048e586a6cb934e226c68fb337d3d9199b2bc7f83ca91dd389e8007ead7"
+    }
+  ],
+  "mobileSha256": "02854298058384a7bff0da7993a930e9a6d30f0cfeb8d3238dbc278a04ee1920",
+  "hostingTransport": {
+    "kind": "ordered-binary-parts",
+    "partBytes": 4194304,
+    "originalVideoUnchanged": true
+  }
 }

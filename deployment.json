@@ -1,0 +1,15 @@
+{
+  "format": "static-esm",
+  "entry": "index.html",
+  "buildCommand": "npm run build",
+  "publishDirectory": "dist",
+  "runtimeDependencies": [],
+  "previewCommand": "npm start",
+  "nodeServerEnvironment": {
+    "PORT": "provided by host",
+    "HOST": "configure to the platform-required host only in its managed runtime"
+  },
+  "fileLimitBytes": 5242880,
+  "filmTransport": "4 MiB binary parts; original MP4 restored in browser",
+  "externalRuntimeServices": []
+}
