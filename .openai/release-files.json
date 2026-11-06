@@ -1,8 +1,8 @@
 {
-  "version": "9a57382c2cca",
+  "version": "b7490c9fc05d",
   "limitBytes": 56000000,
-  "bytes": 44494069,
-  "fileCount": 203,
+  "bytes": 44516356,
+  "fileCount": 206,
   "sourceFiles": [
     "assets/dot/dot-outline-r12.svg",
     "assets/dot/effects/horn-dissolve-math-r05.mjs",
@@ -202,6 +202,7 @@
     "src/opening-grid.mjs",
     "src/opening-r08.mjs",
     "src/opening-sound.mjs",
+    "src/optional-assets.mjs",
     "src/particle-physics.mjs",
     "src/performance-budget.mjs",
     "src/preparation.mjs",
@@ -224,616 +225,624 @@
   ],
   "files": [
     {
-      "path": "assets/dot/dot-outline-r12.svg",
+      "path": "assets-b7490c9fc05d/dot/dot-outline-r12.svg",
       "bytes": 777
     },
     {
-      "path": "assets/dot/effects/horn-dissolve-math-r05.js",
+      "path": "assets-b7490c9fc05d/dot/effects/horn-dissolve-math-r05.js",
       "bytes": 1261
     },
     {
-      "path": "assets/dot/effects/horn-dissolve-r05.js",
-      "bytes": 8037
+      "path": "assets-b7490c9fc05d/dot/effects/horn-dissolve-r05.js",
+      "bytes": 7941
     },
     {
-      "path": "assets/dot/effects/retirement-timing.js",
+      "path": "assets-b7490c9fc05d/dot/effects/retirement-timing.js",
       "bytes": 53
     },
     {
-      "path": "assets/dot/index.js",
-      "bytes": 11148
+      "path": "assets-b7490c9fc05d/dot/index.js",
+      "bytes": 11053
     },
     {
-      "path": "assets/dot/licenses/THREE-LICENSE.txt",
+      "path": "assets-b7490c9fc05d/dot/licenses/THREE-LICENSE.txt",
       "bytes": 1102
     },
     {
-      "path": "assets/dot/model/a-eye-c-gaze.js",
-      "bytes": 9701
+      "path": "assets-b7490c9fc05d/dot/model/a-eye-c-gaze.js",
+      "bytes": 9612
     },
     {
-      "path": "assets/dot/model/a-surface-field.js",
-      "bytes": 2880
+      "path": "assets-b7490c9fc05d/dot/model/a-surface-field.js",
+      "bytes": 2791
     },
     {
-      "path": "assets/dot/model/approved-body-restore.js",
-      "bytes": 4939
+      "path": "assets-b7490c9fc05d/dot/model/approved-body-restore.js",
+      "bytes": 4850
     },
     {
-      "path": "assets/dot/model/assets/dot-character.glb",
+      "path": "assets-b7490c9fc05d/dot/model/assets/dot-character.glb",
       "bytes": 3633268
     },
     {
-      "path": "assets/dot/model/c-response-only.js",
-      "bytes": 447
+      "path": "assets-b7490c9fc05d/dot/model/c-response-only.js",
+      "bytes": 358
     },
     {
-      "path": "assets/dot/model/closed-eye-modes.js",
-      "bytes": 2621
+      "path": "assets-b7490c9fc05d/dot/model/closed-eye-modes.js",
+      "bytes": 2532
     },
     {
-      "path": "assets/dot/model/frozen/r02/resources/recovery-actions/spirit-motions.js",
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r02/resources/recovery-actions/spirit-motions.js",
       "bytes": 37749
     },
     {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/animation.js",
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/animation.js",
       "bytes": 10261
     },
     {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/beret-leather-v7.js",
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/beret-leather-v7.js",
       "bytes": 726
     },
     {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/dot-component.js",
-      "bytes": 11370
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/dot-component.js",
+      "bytes": 11336
     },
     {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/dot-fiber-atlas.js",
-      "bytes": 2316
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/dot-fiber-atlas.js",
+      "bytes": 2282
     },
     {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/dot-materials.js",
-      "bytes": 6991
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/dot-materials.js",
+      "bytes": 6957
     },
     {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/dot-shape-v4.js",
-      "bytes": 10228
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/dot-shape-v4.js",
+      "bytes": 10194
     },
     {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/trumpet-v6.js",
-      "bytes": 4886
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/trumpet-v6.js",
+      "bytes": 4852
     },
     {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/BufferGeometryUtils.js",
-      "bytes": 14060
-    },
-    {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/GLTFLoader.js",
-      "bytes": 47574
-    },
-    {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/SkeletonUtils.js",
-      "bytes": 4387
-    },
-    {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/three.core.js",
-      "bytes": 403251
-    },
-    {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/three.module.js",
-      "bytes": 378830
-    },
-    {
-      "path": "assets/dot/model/frozen/r07d/editable-stage/resources/v020-white-encore-cpu/controlled-animation.js",
-      "bytes": 11101
-    },
-    {
-      "path": "assets/dot/runtime/accepted-driver.js",
-      "bytes": 12486
-    },
-    {
-      "path": "assets/dot/runtime/contract.js",
-      "bytes": 2202
-    },
-    {
-      "path": "assets/dot/runtime/default-document.js",
-      "bytes": 9508
-    },
-    {
-      "path": "assets/editorial/archive.webp",
-      "bytes": 50804
-    },
-    {
-      "path": "assets/editorial/ascii-lab-demo-poster.webp",
-      "bytes": 29016
-    },
-    {
-      "path": "assets/editorial/ascii-lab-demo.mp4",
-      "bytes": 207209
-    },
-    {
-      "path": "assets/editorial/ascii-lab.webp",
-      "bytes": 58462
-    },
-    {
-      "path": "assets/editorial/ascii-user-00-poster.webp",
-      "bytes": 33608
-    },
-    {
-      "path": "assets/editorial/ascii-user-00.mp4",
-      "bytes": 2342451
-    },
-    {
-      "path": "assets/editorial/batch-delivery.webp",
-      "bytes": 86418
-    },
-    {
-      "path": "assets/editorial/CREDITS.md",
-      "bytes": 674
-    },
-    {
-      "path": "assets/editorial/dot-design-process.webp",
-      "bytes": 25974
-    },
-    {
-      "path": "assets/editorial/dot-render-compare.webp",
-      "bytes": 96774
-    },
-    {
-      "path": "assets/editorial/feedback-dot.webp",
-      "bytes": 56982
-    },
-    {
-      "path": "assets/editorial/feedback-sketch.webp",
-      "bytes": 2194
-    },
-    {
-      "path": "assets/editorial/frame-failed.webp",
-      "bytes": 28630
-    },
-    {
-      "path": "assets/editorial/g1-boxing-poster.webp",
-      "bytes": 7822
-    },
-    {
-      "path": "assets/editorial/g1-boxing.mp4",
-      "bytes": 75195
-    },
-    {
-      "path": "assets/editorial/g1-collision.webp",
-      "bytes": 74934
-    },
-    {
-      "path": "assets/editorial/g1-kick-poster.webp",
-      "bytes": 35408
-    },
-    {
-      "path": "assets/editorial/g1-kick.mp4",
-      "bytes": 350810
-    },
-    {
-      "path": "assets/editorial/g1-material.webp",
-      "bytes": 35946
-    },
-    {
-      "path": "assets/editorial/mood-catch.webp",
-      "bytes": 75594
-    },
-    {
-      "path": "assets/editorial/mood-monsters.webp",
-      "bytes": 91672
-    },
-    {
-      "path": "assets/editorial/mood-rog.webp",
-      "bytes": 30282
-    },
-    {
-      "path": "assets/editorial/pr-timeline.webp",
-      "bytes": 177478
-    },
-    {
-      "path": "assets/editorial/REACT-BITS-LICENSE.md",
-      "bytes": 2060
-    },
-    {
-      "path": "assets/editorial/react-gradient-poster.webp",
-      "bytes": 55466
-    },
-    {
-      "path": "assets/editorial/react-gradient.mp4",
-      "bytes": 168760
-    },
-    {
-      "path": "assets/editorial/react-terminal-poster.webp",
-      "bytes": 154646
-    },
-    {
-      "path": "assets/editorial/react-terminal.mp4",
-      "bytes": 444203
-    },
-    {
-      "path": "assets/editorial/rubin-board.webp",
-      "bytes": 215728
-    },
-    {
-      "path": "assets/editorial/rubin-die.webp",
-      "bytes": 53624
-    },
-    {
-      "path": "assets/editorial/storyboard.webp",
-      "bytes": 186694
-    },
-    {
-      "path": "assets/editorial/style-drive.webp",
-      "bytes": 196850
-    },
-    {
-      "path": "assets/editorial/style-move.webp",
-      "bytes": 392140
-    },
-    {
-      "path": "assets/editorial/style-products.webp",
-      "bytes": 63648
-    },
-    {
-      "path": "assets/editorial/su7-blue.webp",
-      "bytes": 115374
-    },
-    {
-      "path": "assets/editorial/su7-halftone.webp",
-      "bytes": 160210
-    },
-    {
-      "path": "assets/editorial/su7-seedance-poster.webp",
-      "bytes": 23756
-    },
-    {
-      "path": "assets/editorial/su7-seedance.mp4",
-      "bytes": 402887
-    },
-    {
-      "path": "assets/editorial/su7-wing.webp",
-      "bytes": 87408
-    },
-    {
-      "path": "assets/editorial/versions.webp",
-      "bytes": 52184
-    },
-    {
-      "path": "assets/editorial/workbench.webp",
-      "bytes": 51506
-    },
-    {
-      "path": "assets/favicon.svg",
-      "bytes": 221
-    },
-    {
-      "path": "assets/fonts/IdeaSans-Bold.woff",
-      "bytes": 192524
-    },
-    {
-      "path": "assets/fonts/IdeaSans-Regular.woff",
-      "bytes": 188388
-    },
-    {
-      "path": "assets/game-logos/ae.svg",
-      "bytes": 1284
-    },
-    {
-      "path": "assets/game-logos/blender-icon.svg",
-      "bytes": 3796
-    },
-    {
-      "path": "assets/game-logos/blender.svg",
-      "bytes": 8420
-    },
-    {
-      "path": "assets/game-logos/html.svg",
-      "bytes": 678
-    },
-    {
-      "path": "assets/game-logos/seedance-user-reference.webp",
-      "bytes": 9506
-    },
-    {
-      "path": "assets/media/bgm/stream/intro.m4a",
-      "bytes": 333667
-    },
-    {
-      "path": "assets/media/bgm/stream/loop.m4a",
-      "bytes": 1110873
-    },
-    {
-      "path": "assets/media/bgm/stream/manifest.json",
-      "bytes": 3028
-    },
-    {
-      "path": "assets/media/bgm/stream/outro.m4a",
-      "bytes": 381649
-    },
-    {
-      "path": "assets/media/bgm/tank-b-loop.json",
-      "bytes": 7316
-    },
-    {
-      "path": "assets/media/film-hd/manifest.json",
-      "bytes": 1972
-    },
-    {
-      "path": "assets/media/film-hd/parts/film-hd-404595b9184c.part-001.bin",
-      "bytes": 4194304
-    },
-    {
-      "path": "assets/media/film-hd/parts/film-hd-404595b9184c.part-002.bin",
-      "bytes": 4194304
-    },
-    {
-      "path": "assets/media/film-hd/parts/film-hd-404595b9184c.part-003.bin",
-      "bytes": 4194304
-    },
-    {
-      "path": "assets/media/film-hd/parts/film-hd-404595b9184c.part-004.bin",
-      "bytes": 3279394
-    },
-    {
-      "path": "assets/media/film-hd/parts/film-mobile-028542980583.part-001.bin",
-      "bytes": 4194304
-    },
-    {
-      "path": "assets/media/film-hd/parts/film-mobile-028542980583.part-002.bin",
-      "bytes": 1380911
-    },
-    {
-      "path": "assets/media/film-preview.jpg",
-      "bytes": 100159
-    },
-    {
-      "path": "assets/media/sfx/CREDITS.md",
-      "bytes": 1274
-    },
-    {
-      "path": "assets/media/sfx/glass-b-air.wav",
-      "bytes": 619774
-    },
-    {
-      "path": "assets/media/sfx/glass-b-bank.wav",
-      "bytes": 276558
-    },
-    {
-      "path": "assets/media/sfx/glass-b.json",
-      "bytes": 700
-    },
-    {
-      "path": "assets/media/sfx/sand-body.wav",
-      "bytes": 214074
-    },
-    {
-      "path": "assets/media/sfx/sand-fine.wav",
-      "bytes": 115278
-    },
-    {
-      "path": "assets/products/G1.glb",
-      "bytes": 1045156
-    },
-    {
-      "path": "assets/products/Rubin.glb",
-      "bytes": 1383488
-    },
-    {
-      "path": "assets/products/S11-source-licenses.txt",
-      "bytes": 18478
-    },
-    {
-      "path": "assets/products/SU7.glb",
-      "bytes": 1879016
-    },
-    {
-      "path": "assets/products/VisionPro.glb",
-      "bytes": 2521052
-    },
-    {
-      "path": "assets/r03-stage/document-source.json",
-      "bytes": 35719
-    },
-    {
-      "path": "assets/r03-stage/lighting-cpu/candidate/lighting-adjustment.js",
-      "bytes": 2425
-    },
-    {
-      "path": "assets/r03-stage/recovery-actions/spirit-motions.js",
-      "bytes": 38439
-    },
-    {
-      "path": "assets/r03-stage/v011/DotSharedWeb/animation.js",
-      "bytes": 10373
-    },
-    {
-      "path": "assets/r03-stage/v011/DotSharedWeb/editor.js",
-      "bytes": 29770
-    },
-    {
-      "path": "assets/r03-stage/v011/DotSharedWeb/stage-architecture.js",
-      "bytes": 1493
-    },
-    {
-      "path": "assets/r03-stage/v011/DotSharedWeb/stage-background.js",
-      "bytes": 4777
-    },
-    {
-      "path": "assets/r03-stage/v011/DotSharedWeb/stage-focus.js",
-      "bytes": 4041
-    },
-    {
-      "path": "assets/r03-stage/v011/DotSharedWeb/stage-reflection.js",
-      "bytes": 5904
-    },
-    {
-      "path": "assets/r03-stage/v011/DotSharedWeb/stage.js",
-      "bytes": 6875
-    },
-    {
-      "path": "assets/r03-stage/v011/DotSharedWeb/vendor/gsap/gsap-core.js",
-      "bytes": 57079
-    },
-    {
-      "path": "assets/r03-stage/v013-stage-bridge/bridge-director.js",
-      "bytes": 6153
-    },
-    {
-      "path": "assets/r03-stage/v013-stage-bridge/c2-motion.js",
-      "bytes": 2244
-    },
-    {
-      "path": "assets/r03-stage/v013-stage-bridge/content-backdrop.js",
-      "bytes": 4839
-    },
-    {
-      "path": "assets/r03-stage/v013-stage-bridge/screen-aware-focus.js",
-      "bytes": 6082
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/concert-encore-timing-r05.js",
-      "bytes": 1039
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/concert-physics-r04.js",
-      "bytes": 2172
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/concert-revision-r05.js",
-      "bytes": 7208
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/concert-side-fx-cdx.js",
-      "bytes": 3411
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/concert-v024.js",
-      "bytes": 19847
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/concert-venue-r06.js",
-      "bytes": 13018
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/controlled-animation.js",
-      "bytes": 11222
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/document.js",
-      "bytes": 10067
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/encore-cues.js",
-      "bytes": 1608
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/encore-floor-reflection-r06.js",
-      "bytes": 7928
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/legacy-finale.js",
-      "bytes": 16927
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/mass-follow.js",
-      "bytes": 813
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/music-tail-r05.js",
-      "bytes": 2233
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/opening-screen-source-r05.js",
-      "bytes": 4502
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/process-video-clock-r05.js",
-      "bytes": 3258
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/recovery-celebration-r01.js",
-      "bytes": 2158
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/recovery-cues-r01.js",
-      "bytes": 1566
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/recovery-framing-r01.js",
-      "bytes": 1882
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/recovery-volume-light-r01.js",
-      "bytes": 3232
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/stage-base.js",
-      "bytes": 8119
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/stage-character-d02-r01.js",
-      "bytes": 6853
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/stage-design.js",
-      "bytes": 8521
-    },
-    {
-      "path": "assets/r03-stage/v020-white-encore-cpu/tunable-director.js",
-      "bytes": 6949
-    },
-    {
-      "path": "assets/type/ascii-outlines.json",
-      "bytes": 16259
-    },
-    {
-      "path": "assets/type/opening-shell.svg",
-      "bytes": 14096
-    },
-    {
-      "path": "assets/type/title-glyphs.json",
-      "bytes": 143162
-    },
-    {
-      "path": "assets/vendor/addons/loaders/GLTFLoader.js",
-      "bytes": 47561
-    },
-    {
-      "path": "assets/vendor/addons/loaders/SVGLoader.js",
-      "bytes": 26242
-    },
-    {
-      "path": "assets/vendor/addons/renderers/CSS3DRenderer.js",
-      "bytes": 4101
-    },
-    {
-      "path": "assets/vendor/addons/utils/BufferGeometryUtils.js",
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/BufferGeometryUtils.js",
       "bytes": 14033
     },
     {
-      "path": "assets/vendor/addons/utils/SkeletonUtils.js",
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/GLTFLoader.js",
+      "bytes": 47547
+    },
+    {
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/SkeletonUtils.js",
       "bytes": 4360
     },
     {
-      "path": "assets/vendor/MESHOPT-LICENSE.md",
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/three.core.js",
+      "bytes": 403251
+    },
+    {
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v011/DotSharedWeb/vendor/three.module.js",
+      "bytes": 378790
+    },
+    {
+      "path": "assets-b7490c9fc05d/dot/model/frozen/r07d/editable-stage/resources/v020-white-encore-cpu/controlled-animation.js",
+      "bytes": 11101
+    },
+    {
+      "path": "assets-b7490c9fc05d/dot/runtime/accepted-driver.js",
+      "bytes": 12390
+    },
+    {
+      "path": "assets-b7490c9fc05d/dot/runtime/contract.js",
+      "bytes": 2202
+    },
+    {
+      "path": "assets-b7490c9fc05d/dot/runtime/default-document.js",
+      "bytes": 9508
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/CREDITS.md",
+      "bytes": 674
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/REACT-BITS-LICENSE.md",
+      "bytes": 2060
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/archive.webp",
+      "bytes": 50804
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/ascii-lab-demo-poster.webp",
+      "bytes": 29016
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/ascii-lab-demo.mp4",
+      "bytes": 207209
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/ascii-lab.webp",
+      "bytes": 58462
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/ascii-user-00-poster.webp",
+      "bytes": 33608
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/ascii-user-00.mp4",
+      "bytes": 2342451
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/batch-delivery.webp",
+      "bytes": 86418
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/dot-design-process.webp",
+      "bytes": 25974
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/dot-render-compare.webp",
+      "bytes": 96774
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/feedback-dot.webp",
+      "bytes": 56982
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/feedback-sketch.webp",
+      "bytes": 2194
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/frame-failed.webp",
+      "bytes": 28630
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/g1-boxing-poster.webp",
+      "bytes": 7822
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/g1-boxing.mp4",
+      "bytes": 75195
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/g1-collision.webp",
+      "bytes": 74934
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/g1-kick-poster.webp",
+      "bytes": 35408
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/g1-kick.mp4",
+      "bytes": 350810
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/g1-material.webp",
+      "bytes": 35946
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/mood-catch.webp",
+      "bytes": 75594
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/mood-monsters.webp",
+      "bytes": 91672
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/mood-rog.webp",
+      "bytes": 30282
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/pr-timeline.webp",
+      "bytes": 177478
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/react-gradient-poster.webp",
+      "bytes": 55466
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/react-gradient.mp4",
+      "bytes": 168760
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/react-terminal-poster.webp",
+      "bytes": 154646
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/react-terminal.mp4",
+      "bytes": 444203
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/rubin-board.webp",
+      "bytes": 215728
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/rubin-die.webp",
+      "bytes": 53624
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/storyboard.webp",
+      "bytes": 186694
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/style-drive.webp",
+      "bytes": 196850
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/style-move.webp",
+      "bytes": 392140
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/style-products.webp",
+      "bytes": 63648
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/su7-blue.webp",
+      "bytes": 115374
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/su7-halftone.webp",
+      "bytes": 160210
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/su7-seedance-poster.webp",
+      "bytes": 23756
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/su7-seedance.mp4",
+      "bytes": 402887
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/su7-wing.webp",
+      "bytes": 87408
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/versions.webp",
+      "bytes": 52184
+    },
+    {
+      "path": "assets-b7490c9fc05d/editorial/workbench.webp",
+      "bytes": 51506
+    },
+    {
+      "path": "assets-b7490c9fc05d/favicon.svg",
+      "bytes": 221
+    },
+    {
+      "path": "assets-b7490c9fc05d/fonts/IdeaSans-Bold.woff",
+      "bytes": 192524
+    },
+    {
+      "path": "assets-b7490c9fc05d/fonts/IdeaSans-Regular.woff",
+      "bytes": 188388
+    },
+    {
+      "path": "assets-b7490c9fc05d/game-logos/ae.svg",
+      "bytes": 1284
+    },
+    {
+      "path": "assets-b7490c9fc05d/game-logos/blender-icon.svg",
+      "bytes": 3796
+    },
+    {
+      "path": "assets-b7490c9fc05d/game-logos/blender.svg",
+      "bytes": 8420
+    },
+    {
+      "path": "assets-b7490c9fc05d/game-logos/html.svg",
+      "bytes": 678
+    },
+    {
+      "path": "assets-b7490c9fc05d/game-logos/seedance-user-reference.webp",
+      "bytes": 9506
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/bgm/stream/intro.m4a",
+      "bytes": 333667
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/bgm/stream/loop.m4a",
+      "bytes": 1110873
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/bgm/stream/manifest.json",
+      "bytes": 3028
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/bgm/stream/outro.m4a",
+      "bytes": 381649
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/bgm/tank-b-loop.json",
+      "bytes": 7316
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/film-hd/manifest.json",
+      "bytes": 1972
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/film-hd/parts/film-hd-404595b9184c.part-001.bin",
+      "bytes": 4194304
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/film-hd/parts/film-hd-404595b9184c.part-002.bin",
+      "bytes": 4194304
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/film-hd/parts/film-hd-404595b9184c.part-003.bin",
+      "bytes": 4194304
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/film-hd/parts/film-hd-404595b9184c.part-004.bin",
+      "bytes": 3279394
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/film-hd/parts/film-mobile-028542980583.part-001.bin",
+      "bytes": 4194304
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/film-hd/parts/film-mobile-028542980583.part-002.bin",
+      "bytes": 1380911
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/film-preview.jpg",
+      "bytes": 100159
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/sfx/CREDITS.md",
+      "bytes": 1274
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/sfx/glass-b-air.wav",
+      "bytes": 619774
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/sfx/glass-b-bank.wav",
+      "bytes": 276558
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/sfx/glass-b.json",
+      "bytes": 700
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/sfx/sand-body.wav",
+      "bytes": 214074
+    },
+    {
+      "path": "assets-b7490c9fc05d/media/sfx/sand-fine.wav",
+      "bytes": 115278
+    },
+    {
+      "path": "assets-b7490c9fc05d/products/G1.glb",
+      "bytes": 1045156
+    },
+    {
+      "path": "assets-b7490c9fc05d/products/Rubin.glb",
+      "bytes": 1383488
+    },
+    {
+      "path": "assets-b7490c9fc05d/products/S11-source-licenses.txt",
+      "bytes": 18478
+    },
+    {
+      "path": "assets-b7490c9fc05d/products/SU7.glb",
+      "bytes": 1879016
+    },
+    {
+      "path": "assets-b7490c9fc05d/products/VisionPro.glb",
+      "bytes": 2521052
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/document-source.json",
+      "bytes": 35719
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/lighting-cpu/candidate/lighting-adjustment.js",
+      "bytes": 2425
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/recovery-actions/spirit-motions.js",
+      "bytes": 38439
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v011/DotSharedWeb/animation.js",
+      "bytes": 10373
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v011/DotSharedWeb/editor.js",
+      "bytes": 29770
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v011/DotSharedWeb/stage-architecture.js",
+      "bytes": 1387
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v011/DotSharedWeb/stage-background.js",
+      "bytes": 4671
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v011/DotSharedWeb/stage-focus.js",
+      "bytes": 3935
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v011/DotSharedWeb/stage-reflection.js",
+      "bytes": 5798
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v011/DotSharedWeb/stage.js",
+      "bytes": 6769
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v011/DotSharedWeb/vendor/gsap/gsap-core.js",
+      "bytes": 57079
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v013-stage-bridge/bridge-director.js",
+      "bytes": 6050
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v013-stage-bridge/c2-motion.js",
+      "bytes": 2244
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v013-stage-bridge/content-backdrop.js",
+      "bytes": 4736
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v013-stage-bridge/screen-aware-focus.js",
+      "bytes": 5979
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/concert-encore-timing-r05.js",
+      "bytes": 1039
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/concert-physics-r04.js",
+      "bytes": 2172
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/concert-revision-r05.js",
+      "bytes": 7105
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/concert-side-fx-cdx.js",
+      "bytes": 3411
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/concert-v024.js",
+      "bytes": 19744
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/concert-venue-r06.js",
+      "bytes": 12915
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/controlled-animation.js",
+      "bytes": 11222
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/document.js",
+      "bytes": 10067
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/encore-cues.js",
+      "bytes": 1608
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/encore-floor-reflection-r06.js",
+      "bytes": 7825
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/legacy-finale.js",
+      "bytes": 16824
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/mass-follow.js",
+      "bytes": 710
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/music-tail-r05.js",
+      "bytes": 2233
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/opening-screen-source-r05.js",
+      "bytes": 4399
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/process-video-clock-r05.js",
+      "bytes": 3258
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/recovery-celebration-r01.js",
+      "bytes": 2055
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/recovery-cues-r01.js",
+      "bytes": 1566
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/recovery-framing-r01.js",
+      "bytes": 1779
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/recovery-volume-light-r01.js",
+      "bytes": 3129
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/stage-base.js",
+      "bytes": 8016
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/stage-character-d02-r01.js",
+      "bytes": 6750
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/stage-design.js",
+      "bytes": 8418
+    },
+    {
+      "path": "assets-b7490c9fc05d/r03-stage/v020-white-encore-cpu/tunable-director.js",
+      "bytes": 6846
+    },
+    {
+      "path": "assets-b7490c9fc05d/type/ascii-outlines.json",
+      "bytes": 16259
+    },
+    {
+      "path": "assets-b7490c9fc05d/type/opening-shell.svg",
+      "bytes": 14096
+    },
+    {
+      "path": "assets-b7490c9fc05d/type/title-glyphs.json",
+      "bytes": 143162
+    },
+    {
+      "path": "assets-b7490c9fc05d/vendor/MESHOPT-LICENSE.md",
       "bytes": 1079
     },
     {
-      "path": "assets/vendor/meshopt_decoder.js",
-      "bytes": 29019
-    },
-    {
-      "path": "assets/vendor/THREE-LICENSE.txt",
+      "path": "assets-b7490c9fc05d/vendor/THREE-LICENSE.txt",
       "bytes": 1102
     },
     {
+      "path": "assets-b7490c9fc05d/vendor/addons/loaders/GLTFLoader.js",
+      "bytes": 47561
+    },
+    {
+      "path": "assets-b7490c9fc05d/vendor/addons/loaders/SVGLoader.js",
+      "bytes": 26242
+    },
+    {
+      "path": "assets-b7490c9fc05d/vendor/addons/renderers/CSS3DRenderer.js",
+      "bytes": 4101
+    },
+    {
+      "path": "assets-b7490c9fc05d/vendor/addons/utils/BufferGeometryUtils.js",
+      "bytes": 14033
+    },
+    {
+      "path": "assets-b7490c9fc05d/vendor/addons/utils/SkeletonUtils.js",
+      "bytes": 4360
+    },
+    {
+      "path": "assets-b7490c9fc05d/vendor/meshopt_decoder.js",
+      "bytes": 29019
+    },
+    {
+      "path": "deployment-check.html",
+      "bytes": 1153
+    },
+    {
+      "path": "deployment-check.js",
+      "bytes": 17677
+    },
+    {
       "path": "index.html",
-      "bytes": 13058
+      "bytes": 13287
     },
     {
       "path": "src/asset-prefetch.js",
-      "bytes": 607
+      "bytes": 620
     },
     {
       "path": "src/audio-master.js",
@@ -845,15 +854,15 @@
     },
     {
       "path": "src/bgm-stream.js",
-      "bytes": 10323
+      "bytes": 10336
     },
     {
       "path": "src/bgm.js",
-      "bytes": 7238
+      "bytes": 7264
     },
     {
       "path": "src/boot-guard.js",
-      "bytes": 4746
+      "bytes": 7447
     },
     {
       "path": "src/bubble-emphasis.js",
@@ -869,19 +878,19 @@
     },
     {
       "path": "src/chat-r07.js",
-      "bytes": 3177
+      "bytes": 3785
     },
     {
       "path": "src/companion-actions.js",
-      "bytes": 2236
+      "bytes": 2249
     },
     {
       "path": "src/config.js",
-      "bytes": 1021
+      "bytes": 1047
     },
     {
       "path": "src/content.js",
-      "bytes": 35457
+      "bytes": 36198
     },
     {
       "path": "src/dot-foreground.js",
@@ -889,7 +898,7 @@
     },
     {
       "path": "src/dot-stage-r07.js",
-      "bytes": 9089
+      "bytes": 9102
     },
     {
       "path": "src/film-media.js",
@@ -921,7 +930,7 @@
     },
     {
       "path": "src/games-products.js",
-      "bytes": 11735
+      "bytes": 11761
     },
     {
       "path": "src/games-rules.js",
@@ -929,7 +938,7 @@
     },
     {
       "path": "src/games.js",
-      "bytes": 45936
+      "bytes": 45962
     },
     {
       "path": "src/listening-gate.js",
@@ -937,7 +946,7 @@
     },
     {
       "path": "src/main.js",
-      "bytes": 59952
+      "bytes": 60633
     },
     {
       "path": "src/opening-assembly.js",
@@ -953,11 +962,15 @@
     },
     {
       "path": "src/opening-r08.js",
-      "bytes": 7316
+      "bytes": 7329
     },
     {
       "path": "src/opening-sound.js",
-      "bytes": 4859
+      "bytes": 4872
+    },
+    {
+      "path": "src/optional-assets.js",
+      "bytes": 1531
     },
     {
       "path": "src/particle-physics.js",
@@ -993,7 +1006,7 @@
     },
     {
       "path": "src/sand-sound.js",
-      "bytes": 5920
+      "bytes": 5933
     },
     {
       "path": "src/scene-warm.js",
@@ -1013,15 +1026,15 @@
     },
     {
       "path": "src/space-utils.js",
-      "bytes": 5107
+      "bytes": 5120
     },
     {
       "path": "src/stage-r03.js",
-      "bytes": 10076
+      "bytes": 10206
     },
     {
       "path": "src/stage-screen.js",
-      "bytes": 3808
+      "bytes": 3714
     },
     {
       "path": "src/transport-r07.js",
@@ -1033,7 +1046,7 @@
     },
     {
       "path": "styles-combined.css",
-      "bytes": 66789
+      "bytes": 66815
     }
   ]
 }

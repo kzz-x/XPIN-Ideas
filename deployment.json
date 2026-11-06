@@ -14,5 +14,8 @@
   "externalRuntimeServices": [],
   "browserModuleExtension": ".js",
   "deployedPaths": "ASCII, original hierarchy; editable source paths retained",
-  "moduleCacheVersion": "source content SHA256 prefix"
+  "moduleCacheVersion": "source content SHA256 prefix",
+  "assetCacheVersion": "assets-<releasehash>/; source bytes and formats retained",
+  "optionalPresentationAssets": "UI fonts, chat decoration and opening SFX cannot block first picture",
+  "threeModuleIdentity": "document aliases three and three/core"
 }

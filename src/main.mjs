@@ -22,13 +22,15 @@ import {PresentationTransport,bindSeekControl} from './transport-r07.mjs';
 import {CONFIG} from './config.mjs';
 import {createRenderQuality} from './render-quality.mjs';
 import {createFrameLoop} from './frame-loop.mjs';
+import {boundedOptional} from './optional-assets.mjs';
 import {CHAPTERS} from './content.mjs';
 import {loadType,clamp,smooth,damp,vec,project} from './space-utils.mjs';
 
 const $=id=>document.getElementById(id),canvas=$('world'),film=$('film'),audio=$('stage-audio'),portal=$('portal');
 const ui={phase:'loading',phaseAt:0,scroll:0,target:0,scrollVelocity:0,held:false,hold:0,holdStart:0,muted:false,gameLock:false,focusLock:false,bubbleUntil:0,bubbleX:0,bubbleY:0,chapter:0,game:-1,stageEntryAt:0,frameTimes:[],blackAt:0,events:[],errors:[]};
 let opening,dot,dotForeground,games,space,renderer,scene,camera,css,key,keyTarget,quality,previous=performance.now()/1000,time=0,startedAt=previous,toastTimer;
-const runtime={ready:false,actorReady:false,stageReady:false,scrollReady:false,scrollProgress:0,scrollLabel:'正在准备空间',openingReadyAt:null,stageReadyAt:null,worldReadyAt:null,requested:false,longTasks:[]};
+const runtime={ready:false,actorReady:false,stageReady:false,scrollReady:false,scrollProgress:0,scrollLabel:'正在准备空间',openingReadyAt:null,stageReadyAt:null,worldReadyAt:null,requested:false,longTasks:[],optionalAssets:[]};
+const noteOptional=({name,status,error})=>runtime.optionalAssets.push({name,status,message:error?.message||String(error||'')});
 let actorJob,stageJob,screenReady,scrollJob,worldJob,fontsReady,rigModule,rigAssets,rigJob,stageRenderer,filmStarting=false;
 let animationReady=false;
 const renderStats={world:0,css:0,foreground:0,mode:'loading'};
@@ -41,7 +43,7 @@ function paintDiagnostics(now,mode=renderStats.mode){
   renderStats.mode=mode;if(!diagnostics||mode===diagnostics.dataset.mode&&now-lastDiagnostics<1000)return;
   lastDiagnostics=now;diagnostics.dataset.mode=mode;
   const frames=ui.frameTimes.slice(-240).sort((a,b)=>a-b),at=p=>frames.length?Number(frames[Math.min(frames.length-1,Math.floor(frames.length*p))].toFixed(2)):null;
-  diagnostics.textContent=JSON.stringify({mode,phase:ui.phase,samples:frames.length,activeFrameMs:{p50:at(.5),p95:at(.95)},renders:{...renderStats},loop:frameLoop.snapshot(),worldDrawCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles});
+  diagnostics.textContent=JSON.stringify({mode,phase:ui.phase,samples:frames.length,activeFrameMs:{p50:at(.5),p95:at(.95)},renders:{...renderStats},loop:frameLoop.snapshot(),worldDrawCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles,optionalAssets:runtime.optionalAssets,initialThree:window.bootGuard?.initialThree,moduleSources:window.bootGuard?.moduleSources?.()});
 }
 for(const type of ['pointerdown','pointerup','keydown','click','resize'])window.addEventListener(type,requestRendering,{capture:true,passive:true});
 let cueEdited=false;const media=createFilmMedia(film,{manifestURL:new URL(CONFIG.film.manifest,location.href).href,onManifest:m=>{if(!cueEdited&&Number.isFinite(m.stageAt))applyCue(m.stageAt);$('film-status').textContent=m.label+' · 同源大屏 / 整片预载';}});
@@ -60,7 +62,7 @@ async function readyAction(action,button){
   finally{if(button){button.disabled=false;if(label)button.textContent=label;}}
 }
 const audioMix=createAudioMix(),listeningGate=new ListeningGate(2),returnVisit=createReturnVisit(),returnHold=new ReturnHold(1000);let listenGeneration=0,returnGeneration=0,returnBusy=false;
-const sound=createSound({volume:audioMix.snapshot().sfx}),chatPresentation=createChatPresentation({onTyping:count=>sound.typing(count)});bindUiSound(sound);let activateSoundOnly=false;
+const sound=createSound({volume:audioMix.snapshot().sfx}),chatPresentation=createChatPresentation({onTyping:count=>sound.typing(count),onAssetIssue:noteOptional});bindUiSound(sound);let activateSoundOnly=false;
 const bgm=createStreamingBgm({getContext:()=>sound.ensureContext(),getOutput:()=>sound.musicBus,onError:toast,onChange:s=>{
   updateSoundButton();
   for(const id of ['bgm-toggle','bgm-enabled']){$(id).setAttribute('aria-pressed',String(s.enabled));$(id).setAttribute('aria-label',s.enabled?'关闭背景音乐':'开启背景音乐');}
@@ -114,12 +116,14 @@ async function init(){
   // scrolling the renderer container; card-detail keeps its own native scroll.
   css.domElement.style.overflow='clip';
   bootProgress(.12,'正在准备真实字形');
-  fontsReady=Promise.all([document.fonts.load('400 48px Idea','想法先行组织步骤资源档案'),document.fonts.load('700 48px Idea','主体构图色彩光影材质氛围')]);
+  fontsReady=boundedOptional(()=>Promise.all([document.fonts.load('400 48px Idea','想法先行组织步骤资源档案'),document.fonts.load('700 48px Idea','主体构图色彩光影材质氛围')]),{name:'界面字体',timeoutMs:1800,onIssue:noteOptional});
+  // Optional sound banks must never prevent the actual picture from opening.
+  boundedOptional(()=>sound.prepareOpening(),{name:'开场音效',timeoutMs:8000,onIssue:noteOptional});
   const environmentModule=import('../assets/r03-stage/v011/DotSharedWeb/stage.mjs');
   const rigModuleJob=import('../assets/dot/index.mjs');
   const stageModuleJob=import('./dot-stage-r07.mjs');
   opening=await createOpening({canvas,onInteract:()=>sound.play('select',{pitch:.8,intensity:.75})});resize();bootProgress(.45,'正在准备字符与光影');bgm.enter({restart:true,section:'opening'});
-  await Promise.all([fontsReady,chatPresentation.ready,sound.prepareOpening()]);portalLayout(0);await opening.prepare(renderer);bootProgress(.82,'正在准备第一帧');
+  await Promise.all([fontsReady,chatPresentation.ready]);portalLayout(0);await opening.prepare(renderer);bootProgress(.82,'正在准备第一帧');
   opening.update({time:0,dt:0,phase:'intro'});await warmScene(renderer,opening.scene,opening.camera);renderer.render(opening.scene,opening.camera);
   window.__linggan={ui,bgm,sound,audioMix,listeningGate,returnVisit,returnHold,media,scrollPointer,scene,camera,renderer,quality,opening,runtime,transport,seekControl,config:CONFIG,version:CONFIG.version,prepareWorld,prepareScroll,getSnapshot:()=>({phase:ui.phase,scroll:ui.scroll,game:ui.game,mediaTime:transport.currentTime,paused:!transport.playing,errors:[...ui.errors],frameMs:ui.frameTimes.slice(-240),rendering:{...renderStats,loop:frameLoop.snapshot()},events:[...ui.events],runtime:{...runtime},media:media.snapshot(),dot:dot?.snapshot(),bgm:bgm.snapshot(),sound:sound.snapshot(),bubble:bubbleEmphasis.snapshot(),audioMix:audioMix.snapshot(),listening:listeningGate.snapshot(),returnEntry:{...returnVisit.snapshot(),held:returnHold.held,holdProgress:returnHold.progress,busy:returnBusy},games:games?.snapshot()})};
   rigModule=await rigModuleJob;await stageModuleJob;bootProgress(.94,'正在准备连续画面');

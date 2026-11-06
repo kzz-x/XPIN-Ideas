@@ -24,7 +24,7 @@ function eventTarget() {
   };
 }
 
-function harness({phase = 'loading', beforeDOM = false} = {}) {
+function harness({phase = 'loading', beforeDOM = false, initialThree, scripts, links} = {}) {
   const status = {textContent: '正在准备画面'};
   const retry = {...eventTarget(), hidden: true};
   const elements = new Map(beforeDOM ? [] : [['loading-status', status], ['boot-retry', retry]]);
@@ -43,6 +43,9 @@ function harness({phase = 'loading', beforeDOM = false} = {}) {
       disconnect() { this.active = false; }
     }
   };
+  if (initialThree !== undefined) global.__THREE__ = initialThree;
+  if (scripts) doc.scripts = scripts;
+  if (links) doc.querySelectorAll = selector => selector === 'link[rel~="modulepreload"]' ? links : [];
   vm.runInNewContext(script, {window: global, globalThis: global});
   return {
     global, doc, status, retry, timers, observers,
@@ -173,4 +176,59 @@ test('a guard loaded after startup does not install timers or intercept later er
   assert.equal(h.global.listeners.get('unhandledrejection').length, 0);
   h.global.dispatch('error', {message: 'Not a boot error'});
   assert.equal(h.retry.hidden, true);
+});
+
+test('initial Three registration is captured without changing or creating the global marker', () => {
+  const existing = harness({initialThree: '186'});
+  assert.equal(existing.global.bootGuard.initialThree, '186');
+  assert.equal(existing.global.__THREE__, '186');
+  existing.global.__THREE__ = 'later-registration';
+  assert.equal(existing.global.bootGuard.initialThree, '186');
+  const absent = harness();
+  assert.equal(absent.global.bootGuard.initialThree, null);
+  assert.equal(Object.hasOwn(absent.global, '__THREE__'), false);
+});
+
+test('module sources keep full release identities while removing URL credentials and sensitive query values', () => {
+  const scripts = [
+    {type: '', src: 'https://user:private@example.com/site/boot-guard.js?v=release30&token=hidden'},
+    {type: 'module', src: './src/main.js?v=release30&theme=blue'},
+    {type: 'importmap', textContent: JSON.stringify({imports: {three: './assets/three.module.js?v=release30&api_key=private', 'three/addons/': './assets/addons/'}})}
+  ];
+  const links = [{rel: 'modulepreload', href: './assets/three.core.js?v=release30&signature=private'}, {rel: 'stylesheet', href: './style.css'}];
+  const h = harness({scripts, links}), sources = h.global.bootGuard.moduleSources();
+  assert.equal(sources.scripts.length, 2);
+  assert.equal(new URL(sources.scripts[0].src).searchParams.get('v'), 'release30');
+  assert.equal(new URL(sources.scripts[0].src).searchParams.get('token'), '[已隐藏]');
+  assert.equal(new URL(sources.scripts[0].src).username, '');
+  assert.equal(new URL(sources.scripts[0].src).password, '');
+  assert.equal(sources.scripts[1].src, 'https://example.com/site/src/main.js?v=release30&theme=blue');
+  assert.equal(new URL(sources.imports.three).searchParams.get('api_key'), '[已隐藏]');
+  assert.equal(sources.imports['three/addons/'], 'https://example.com/site/assets/addons/');
+  assert.equal(sources.modulepreloads.length, 1);
+  assert.equal(new URL(sources.modulepreloads[0].href).searchParams.get('signature'), '[已隐藏]');
+  assert.doesNotMatch(JSON.stringify(sources), /private|hidden|user:/);
+});
+
+test('module snapshots are fresh objects and never mutate document nodes, import maps or the Three marker', () => {
+  const scripts = [{type: 'module', src: './main.js?v=r30'}, {type: 'importmap', textContent: '{"imports":{"three":"./three.js?v=r30"}}'}];
+  const links = [{rel: 'modulepreload', href: './core.js?v=r30'}], before = JSON.stringify({scripts, links});
+  const h = harness({initialThree: '186', scripts, links}), first = h.global.bootGuard.moduleSources();
+  first.scripts[0].src = 'mutated'; first.modulepreloads[0].href = 'mutated'; first.imports.three = 'mutated';
+  const next = h.global.bootGuard.moduleSources();
+  assert.equal(next.scripts[0].src, 'https://example.com/site/main.js?v=r30');
+  assert.equal(next.modulepreloads[0].href, 'https://example.com/site/core.js?v=r30');
+  assert.equal(next.imports.three, 'https://example.com/site/three.js?v=r30');
+  assert.equal(JSON.stringify({scripts, links}), before);
+  assert.equal(h.global.__THREE__, '186');
+});
+
+test('module diagnostics tolerate missing DOM collection APIs and malformed import maps', () => {
+  const minimal = harness();
+  assert.equal(JSON.stringify(minimal.global.bootGuard.moduleSources()), '{"scripts":[],"modulepreloads":[],"imports":{}}');
+  const broken = harness({scripts: [{type: 'importmap', textContent: 'not json'}, {type: 'module', src: './main.js?v=r30'}]});
+  assert.equal(broken.global.bootGuard.moduleSources().scripts.length, 1);
+  assert.equal(JSON.stringify(broken.global.bootGuard.moduleSources().imports), '{}');
+  broken.global.bootGuard.fail('font failed');
+  assert.match(broken.status.textContent, /font failed/);
 });
