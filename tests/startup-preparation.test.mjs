@@ -46,7 +46,7 @@ test('direct return paints its cover before beginning cold scene preparation',as
  paint.resolve();await flush();assert.ok(events.includes('build-scroll'));scene.resolve();await returned;assert.equal(context.ui.phase,'scroll');
 });
 
-test('the actual listening gate waits only for startup media and decode, independently of pending scene preparation',async()=>{
+test('the listening gate completes scene preparation before decoder preflight and visible playback',async()=>{
  const buffer=deferred(),decode=deferred(),world=deferred(),events=[],label={textContent:''};
  const context={Promise,performance:{now:()=>100},ui:{phase:'chat'},listeningGate:{ready:false,reset(){this.ready=false;}},
   paintListeningProgress(){},setPhase(phase){context.ui.phase=phase;},sound:{play(){}},$:()=>label,
@@ -54,12 +54,13 @@ test('the actual listening gate waits only for startup media and decode, indepen
   prepareWorld(){events.push(['world']);return world.promise;},transport:{restoreVolumes(){events.push(['volumes']);}},toast(message){assert.fail(message);}};
  vm.runInNewContext('let listenGeneration=0;'+actualFunction('beginListening')+';globalThis.run=beginListening;',context);
  context.run();await flush();assert.equal(context.listeningGate.ready,false);assert.ok(events.some(event=>event[0]==='world'));
- buffer.resolve();await flush();assert.equal(context.listeningGate.ready,false);assert.ok(events.some(event=>event[0]==='decode'));
+ buffer.resolve();await flush();assert.equal(context.listeningGate.ready,false);assert.ok(!events.some(event=>event[0]==='decode'),'unfinished scene work cannot overlap the visible movie');
+ world.resolve();await flush();assert.ok(events.some(event=>event[0]==='decode'));
  decode.resolve();await flush();assert.equal(context.listeningGate.ready,true);assert.equal(context.ui.phase,'listen');
  assert.match(label.textContent,/准备就绪/);
 });
 
-test('the actual startFilm begins media playback while the world promise remains pending',async()=>{
+test('manual start also waits for the complete shared world before starting the film',async()=>{
  const buffer=deferred(),world=deferred(),events=[];
  const context={Promise,setTimeout:()=>1,clearTimeout(){},buffering(){},
   prepareWorld(){events.push('world');return world.promise;},
@@ -67,11 +68,11 @@ test('the actual startFilm begins media playback while the world promise remains
   transport:{started:false,async start(at){events.push(['play',at]);}},toast(message){assert.fail(message);},setPhase(phase){assert.fail(phase);}};
  vm.runInNewContext('let filmStarting=false;'+actualFunction('startFilm')+';globalThis.run=startFilm;',context);
  const started=context.run(0);await flush();assert.equal(context.transport.started,false);
- buffer.resolve();await started;assert.equal(context.transport.started,true);assert.ok(events.some(event=>Array.isArray(event)&&event[0]==='play'));
+ buffer.resolve();await flush();assert.equal(context.transport.started,false);world.resolve();await started;assert.equal(context.transport.started,true);assert.ok(events.some(event=>Array.isArray(event)&&event[0]==='play'));
 });
 
 test('a manual film start finishes an already-running decoder probe before it can rewind live playback',async()=>{
- const decode=deferred(),events=[],context={Promise,setTimeout:()=>1,clearTimeout(){},buffering(){},prepareWorld:()=>new Promise(()=>{}),
+ const decode=deferred(),events=[],context={Promise,setTimeout:()=>1,clearTimeout(){},buffering(){},prepareWorld:()=>Promise.resolve(),
   media:{preflighting:true,preparePlayback:()=>Promise.resolve(),preflightDecode(){events.push('decode');return decode.promise;},prime:()=>Promise.resolve()},
   transport:{started:false,async start(at){events.push(['play',at]);}},toast(message){assert.fail(message);},setPhase(phase){assert.fail(phase);}};
  vm.runInNewContext('let filmStarting=false;'+actualFunction('startFilm')+';globalThis.run=startFilm;',context);

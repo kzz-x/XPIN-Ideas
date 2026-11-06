@@ -8,11 +8,23 @@ export async function warmScene(renderer,scene,camera,{onProgress=()=>{}}={}){
   const total=Math.max(1,textures.size+objects.length*2+objects.filter(o=>o.castShadow).length);let completed=0;onProgress(0);
   await warmTextures(renderer,textures,{onUploaded:()=>onProgress(++completed/total)});
   const target=new T.WebGLRenderTarget(8,8,{type:T.HalfFloatType}),previous=renderer.getRenderTarget();
+  // Light-list setup traverses the lighting scene on each compile. Borrow
+  // small read-only groups without changing parentage or visible transforms.
+  const batchSize=objects.length<8?1:8;
+  async function compileObjects(list,renderTarget){
+    for(let i=0;i<list.length;i+=batchSize){
+      const children=list.slice(i,i+batchSize),root=children.length===1?children[0]:new T.Group();
+      if(children.length>1)root.children=children;
+      let compile;try{renderer.setRenderTarget(renderTarget);compile=renderer.compileAsync(root,camera,scene);}finally{renderer.setRenderTarget(previous);}
+      await compile;completed+=children.length;onProgress(completed/total);await yieldTask();
+    }
+  }
   for(const renderTarget of [null,target]){
-    for(const object of objects){let compile;try{renderer.setRenderTarget(renderTarget);compile=renderer.compileAsync(object,camera,scene);}finally{renderer.setRenderTarget(previous);}await compile;onProgress(++completed/total);await yieldTask();}
+    await compileObjects(objects,renderTarget);
   }
   const depth=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,side:T.BackSide});
-  for(const object of objects){if(!object.castShadow)continue;const proxy=object.clone(false);proxy.material=object.customDepthMaterial||depth;proxy.children=[];let compile;try{renderer.setRenderTarget(target);compile=renderer.compileAsync(proxy,camera,scene);}finally{renderer.setRenderTarget(previous);}await compile;onProgress(++completed/total);await yieldTask();}
+  const proxies=objects.filter(object=>object.castShadow).map(object=>{const proxy=object.clone(false);proxy.material=object.customDepthMaterial||depth;proxy.children=[];return proxy;});
+  await compileObjects(proxies,target);
   depth.dispose();target.dispose();onProgress(1);
 }
 

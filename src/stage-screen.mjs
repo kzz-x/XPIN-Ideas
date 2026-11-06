@@ -12,6 +12,9 @@ export async function createStageScreen(stage,config,{onFrameReady=()=>{},isPlay
   let fadeStart=config.fadeStart??1,fadeDuration=config.fadeDuration??2;
   let opening=await createOpeningScreenSource(globalThis.DOT_STAGE_OPENING_SOURCE,{onFrameReady,isPlaying,end:fadeStart+fadeDuration});
   let revision=0,lastSignature='',disposed=false;
+  // A fully white screen must not upload an invisible 1080p video texture on
+  // every frame. The original video/audio decoder remains the shared clock.
+  const whiteTexture=new T.DataTexture(new Uint8Array([255,255,255,255]),1,1);whiteTexture.needsUpdate=true;
   const uniforms={uOpeningScale:{value:new T.Vector2(1,1)},uWhiteMix:{value:0},uWhiteRadiance:{value:1},uOpeningVideo:{value:opening.texture}};
   const material=stage.screenMat,prior=material.onBeforeCompile,priorKey=material.customProgramCacheKey;
   material.onBeforeCompile=function(shader,renderer){
@@ -33,6 +36,7 @@ diffuseColor*=vec4(mix(openingFrame,vec3(uWhiteRadiance),uWhiteMix),1.);
     const input=globalThis.DOT_STAGE_OPENING_SOURCE?.element,aspect=input?.videoWidth/input?.videoHeight||16/9;
     uniforms.uOpeningScale.value.set(Math.min(1,aspect/(16/9)),Math.min(1,(16/9)/aspect));
     opening.update(time,{sync});uniforms.uWhiteMix.value=stageWhiteMix(time,fadeStart,fadeDuration);
+    uniforms.uOpeningVideo.value=uniforms.uWhiteMix.value>=1?whiteTexture:opening.texture;
     const signature=[uniforms.uWhiteMix.value,uniforms.uWhiteMix.value<1?Math.floor((input?.currentTime||0)*60):'white'].join(':');
     if(signature!==lastSignature){revision++;lastSignature=signature;stage.backdrop.invalidate();}
     return state(time);
@@ -41,6 +45,6 @@ diffuseColor*=vec4(mix(openingFrame,vec3(uWhiteRadiance),uWhiteMix),1.);
     // This adapter owns no media playback. Hiding a stage must not pause film.
     pause(){},
     async replaceOpeningSource(spec){const next=await createOpeningScreenSource(spec,{onFrameReady,isPlaying,end:fadeStart+fadeDuration});if(disposed){next.dispose();throw Error('Disposed stage screen');}const previous=opening;opening=next;uniforms.uOpeningVideo.value=next.texture;previous.dispose();lastSignature='';stage.backdrop.invalidate();onFrameReady();return next.snapshot();},
-    dispose(){disposed=true;opening.dispose();material.onBeforeCompile=prior;material.customProgramCacheKey=priorKey;material.needsUpdate=true;}
+    dispose(){disposed=true;opening.dispose();whiteTexture.dispose();material.onBeforeCompile=prior;material.customProgramCacheKey=priorKey;material.needsUpdate=true;}
   };
 }

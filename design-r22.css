@@ -38,3 +38,4 @@ body.native-reader-open #dot-foreground,body.native-reader-open #chapters{visibi
 .process-card.focused .card-detail h2{font-size:24px}
 
 body.cinema #portal{transform-style:flat;contain:layout paint}
+body[data-phase="stage"] #world,body[data-phase="transition"] #world{visibility:hidden}

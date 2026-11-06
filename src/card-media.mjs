@@ -24,7 +24,7 @@ export function prepareCardMedia(element) {
   observers.get(element)?.disconnect();
   const detail = element.querySelector('.card-detail');
   const activate = node => {
-    if (node.tagName === 'VIDEO') { node.defaultMuted = true; node.muted = true; }
+    if (node.tagName === 'VIDEO') { node.defaultMuted = true; node.muted = true; node.preload = 'auto'; }
     if (node.dataset.mediaPoster) node.poster = node.dataset.mediaPoster;
     if (node.dataset.mediaSrc && !node.hasAttribute('src')) node.src = node.dataset.mediaSrc;
   };
@@ -61,6 +61,11 @@ export function bindCardMedia(element) {
     // Article clips are silent references, including after native controls,
     // fullscreen, or reuse of a previously loaded element.
     const keepSilent = () => { if (!video.muted) video.muted = true; };
+    video.addEventListener('play', () => {
+      // Buffer nearby references while reading, but spend decoder time on one
+      // selected clip. Unopened cards still own no media source or requests.
+      element.querySelectorAll('.card-detail video').forEach(other => { if (other !== video) other.pause(); });
+    });
     for (const event of ['play','playing','volumechange']) video.addEventListener(event, keepSilent);
     video.addEventListener('loadedmetadata', () => {
     keepSilent();

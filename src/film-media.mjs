@@ -17,8 +17,10 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
   const cache=createFilmCache({enabled:cacheEnabled}),meter=createFilmTransferMeter(),fetching=new Map();
   const originalQuality=()=>manifest?.qualityPolicy==='preserve-source';
   const transfer=()=>meter.snapshot();
-  const plan=(at=0)=>planFilmStartup(manifest,{...transfer(),at,minimumSeconds:4});
-  const url=path=>new URL(path,manifestURL).href;
+  const plan=(at=0)=>planFilmStartup(manifest,{...transfer(),at,minimumSeconds:manifest?.delivery?.minimumBufferSeconds??4,safetySeconds:manifest?.delivery?.safetySeconds??2.5,rateMultiplier:manifest?.delivery?.rateMultiplier??.75});
+  const concurrency=()=>Math.max(1,Math.min(4,manifest?.delivery?.maxConcurrent||2));
+  let deliveryBase=manifestURL;
+  const url=path=>new URL(path,deliveryBase).href;
   const record=(event,detail={})=>{events.push({event,at:performance.now(),...detail});if(events.length>80)events.shift();onChange(snapshot());};
   function startupState(downloadProgress){
     const adaptive=originalQuality()&&manifest?.segments?.length,planned=adaptive?plan():null;
@@ -48,6 +50,9 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
       abort.signal.addEventListener('abort',cancel,{once:true});partial.set(path,0);const measured=!!entry&&path!==manifest.init;const started=performance.now();if(measured)meter.start(path);
       try{
         watch();const response=await fetch(url(path),{signal:request.signal,priority:'high'});if(!response.ok)throw Error('HTTP '+response.status);
+        // Reuse the manifest's actual CDN base and HTTP connection. Repeating
+        // the hosting-origin redirect for every binary costs another RTT.
+        if(path===manifestURL&&response.url&&/^https?:/.test(response.url))deliveryBase=response.url;
         if(mode==='720p-compatible'&&path===(manifest.mobileFallback||manifest.fallback))totalBytes=Number(response.headers.get('Content-Length'))||totalBytes;
         let data;
         if(response.body?.getReader){
@@ -125,10 +130,10 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
     }).finally(()=>{appending=false;drainAppends();drainChunks();});
   }
   function drainChunks(){
-    while(!aborted&&!converting&&activeChunks<2&&queue.length){
+    while(!aborted&&!converting&&activeChunks<concurrency()&&queue.length){
       // Keep raw completed fragments bounded when one earlier request stalls.
       // Timeline writes are always chronological, even for a future seek.
-      queue.sort((a,b)=>b.priority-a.priority||a.index-b.index);const eligible=queue.findIndex(task=>task.index<=nextAppendIndex+3);if(eligible<0)break;const [task]=queue.splice(eligible,1);activeChunks++;
+      queue.sort((a,b)=>b.priority-a.priority||a.index-b.index);const eligible=queue.findIndex(task=>task.index<=nextAppendIndex+concurrency()+1);if(eligible<0)break;const [task]=queue.splice(eligible,1);activeChunks++;
       const incoming=fetchBytes(manifest.segments[task.index].src).then(data=>{
         if(pending.get(task.index)!==task||aborted)return;
         task.data=data;drainAppends();
@@ -174,7 +179,7 @@ export function createFilmMedia(video,{manifestURL,onChange=()=>{},onManifest=()
   async function open(){
     if(local)return;if(opening)return opening;
     opening=(async()=>{
-      mode='preparing';error=null;record('prepare');manifest=JSON.parse(new TextDecoder().decode(await fetchBytes(manifestURL)));cache.configure(manifest.fileSha256||manifest.remuxVerification?.sourceSHA256);onManifest(manifest);
+      mode='preparing';error=null;record('prepare');manifest=JSON.parse(new TextDecoder().decode(await fetchBytes(manifestURL)));cache.configure(manifest.fileSha256||manifest.remuxVerification?.sourceSHA256);meter.configure(manifest.delivery);onManifest(manifest);
       const codec=/codecs="([^,"]+)/.exec(manifest.mime||'')?.[1]||'avc1.64002a';
       // Capability diagnostics run alongside real loading and never hold the
       // network or silently choose a lower-resolution film.

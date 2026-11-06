@@ -8,7 +8,8 @@ export class PresentationTransport{
     Object.assign(this,{video,audio,callbacks,phase:'film',absolute:0,playing:false,muted:false,generation:0,started:false,scrub:null,pendingSeek:null,awaitingPlay:null,stageRevealComplete:false,previewStage:false,impactPending:false,events:[]});
     this.abort=new AbortController();const options={signal:this.abort.signal};
     if(!callbacks.managedMedia)video.src=CONFIG.film.src;if(CONFIG.stage.impactEnabled!==false)audio.src=CONFIG.stage.src;
-    this.presentedTime=NaN;const decoded=(now,meta)=>{this.presentedTime=meta.mediaTime-this.offset;this.videoFrame=video.requestVideoFrameCallback(decoded);};if(video.requestVideoFrameCallback)this.videoFrame=video.requestVideoFrameCallback(decoded);
+    this.decodeMs=[];this.qualityBaseline=null;this.visibleFrames=0;this.visibleDropped=0;this.rebuffers=0;this.playbackStartedAt=null;
+    this.presentedTime=NaN;const decoded=(now,meta)=>{this.presentedTime=meta.mediaTime-this.offset;if(this.started&&this.phase==='film'&&Number.isFinite(meta.processingDuration)){this.decodeMs.push(meta.processingDuration*1000);if(this.decodeMs.length>3600)this.decodeMs.shift();}this.videoFrame=video.requestVideoFrameCallback(decoded);};if(video.requestVideoFrameCallback)this.videoFrame=video.requestVideoFrameCallback(decoded);
     video.addEventListener('loadedmetadata',()=>this.applySeek(),options);video.addEventListener('seeked',()=>this.settleSeek(true),options);
     video.addEventListener('ended',()=>{if(this.playing&&!this.scrub&&!video.seeking&&video.ended){this.absolute=Math.max(this.absolute,this.filmDuration);this.record('source-ended');}},options);
     video.addEventListener('error',()=>{this.pause();callbacks.onError?.('影片读取失败，请在设置中重新选择影片。');},options);
@@ -17,12 +18,12 @@ export class PresentationTransport{
     // Freeze the media clock and Dot together if decoding is unavailable.
     for(const name of ['waiting','stalled'])video.addEventListener(name,()=>{
       if(!this.playing||this.scrub||this.waitingAt||this.phase==='departure'||this.pendingSeek||callbacks.canPlayAt?.(this.absolute+this.offset)!==false)return;
-      this.waitingAt='media';video.pause();audio.pause();callbacks.onBuffering?.(true);callbacks.requestMedia?.(this.absolute);this.record('media-wait');
+      this.waitingAt='media';this.rebuffers++;video.pause();audio.pause();callbacks.onBuffering?.(true);callbacks.requestMedia?.(this.absolute);this.record('media-wait');
     },options);
   }
   get offset(){return this.callbacks.getMediaOffset?.()||0;}
   get filmDuration(){return Number.isFinite(this.video.duration)?this.video.duration-this.offset:0;}
-  get visualTime(){return !this.video.seeking&&Number.isFinite(this.presentedTime)&&Math.abs(this.presentedTime-this.absolute)<.2?this.presentedTime:this.absolute;}
+  get visualTime(){return this.phase==='film'&&!this.video.seeking&&Number.isFinite(this.presentedTime)&&Math.abs(this.presentedTime-this.absolute)<.2?this.presentedTime:this.absolute;}
   get visualStageTime(){return Math.max(0,this.visualTime-CONFIG.stage.origin);}
   get stageDuration(){return CONFIG.stage.end;}
   get duration(){return CONFIG.stage.origin+CONFIG.stage.end;}
@@ -34,7 +35,7 @@ export class PresentationTransport{
   record(event,data={}){this.events.push({event,at:performance.now(),generation:this.generation,...data});if(this.events.length>200)this.events.shift();}
   invalidate(reason){this.generation++;this.awaitingPlay=null;if(this.pendingSeek)this.pendingSeek.generation=this.generation;this.record(reason);return this.generation;}
   restoreVolumes(){const volume=Math.max(0,Math.min(1,this.callbacks.getVideoVolume?.()??CONFIG.stage.musicGain)),quiet=!!this.unlockPromise&&!this.started;this.video.volume=quiet?0:volume;this.audio.volume=quiet||CONFIG.stage.impactEnabled===false?0:Math.min(1,volume*CONFIG.stage.impactGain/CONFIG.stage.musicGain);this.video.muted=this.audio.muted=this.muted;}
-  setPhase(next,detail={}){const old=this.phase;this.phase=next;if(old===next)return;if(next==='stage')this.callbacks.onStage?.(detail);if(next==='film')this.callbacks.onFilm?.(detail);}
+  setPhase(next,detail={}){const old=this.phase;if(old===next)return;if(old==='film'){const h=this.playbackHealth();this.visibleFrames=h.frames;this.visibleDropped=h.dropped;}this.qualityBaseline=next==='film'?this.video.getVideoPlaybackQuality?.():null;this.phase=next;if(next==='stage')this.callbacks.onStage?.(detail);if(next==='film')this.callbacks.onFilm?.(detail);}
   setVideoTime(requested){this.pendingSeek={requested,target:Math.min(Math.max(0,this.filmDuration-.001),requested),generation:this.generation};this.applySeek();}
   applySeek(){const p=this.pendingSeek;if(!p||this.video.readyState<1||p.generation!==this.generation)return;p.target=Math.min(Math.max(0,this.filmDuration-.001),p.requested);try{if(!this.video.seeking&&Math.abs(this.video.currentTime-this.offset-p.target)<.001){this.pendingSeek=null;return;}this.video.currentTime=p.target+this.offset;this.settleSeek();}catch{}}
   settleSeek(seeked=false){const p=this.pendingSeek;if(p&&p.generation===this.generation&&!this.video.seeking&&(seeked||Math.abs(this.video.currentTime-this.offset-p.target)<.075))this.pendingSeek=null;}
@@ -52,7 +53,7 @@ export class PresentationTransport{
       if(this.generation!==generation||this.started)return;element.pause();try{element.currentTime=t;}catch{}this.restoreVolumes();
     })).finally(()=>{this.unlockPromise=null;this.restoreVolumes();});return this.unlockPromise;
   }
-  start(at=0){this.invalidate('start');this.waitingAt=null;this.scrub=null;this.previewStage=false;this.absolute=Math.max(0,at);this.stageRevealComplete=false;this.video.pause();this.audio.pause();this.started=true;this.playing=true;this.restoreVolumes();this.phase='film';this.setVideoTime(this.absolute);this.callbacks.onFilm?.({reason:'start'});return this.playSource();}
+  start(at=0){this.invalidate('start');this.waitingAt=null;this.scrub=null;this.previewStage=false;this.absolute=Math.max(0,at);this.stageRevealComplete=false;this.video.pause();this.audio.pause();this.qualityBaseline=this.video.getVideoPlaybackQuality?.();this.visibleFrames=0;this.visibleDropped=0;this.decodeMs=[];this.rebuffers=0;this.playbackStartedAt=performance.now();this.started=true;this.playing=true;this.restoreVolumes();this.phase='film';this.setVideoTime(this.absolute);this.callbacks.onFilm?.({reason:'start'});return this.playSource();}
   pause(){this.invalidate('pause');if(this.waitingAt==='media'){this.waitingAt=null;this.callbacks.onBuffering?.(false);}this.playing=false;if(this.scrub)this.scrub.wasPlaying=false;this.video.pause();this.audio.pause();}
   resume(){this.invalidate('resume');this.playing=true;this.restoreVolumes();this.syncImpact(true);return this.playSource();}
   toggle(){return this.playing?this.pause():this.resume();}
@@ -95,5 +96,6 @@ export class PresentationTransport{
   }
   replace(file){this.pause();this.scrub=null;this.pendingSeek=null;if(this.objectURL)URL.revokeObjectURL(this.objectURL);this.objectURL=URL.createObjectURL(file);this.video.src=this.objectURL;CONFIG.film.label='本机替换影片';this.absolute=0;this.phase='film';this.started=false;}
   snapshot(){return{visualTime:this.visualTime,visualStageTime:this.visualStageTime,waitingAt:this.waitingAt||null,phase:this.phase,time:this.time,currentTime:this.currentTime,duration:this.duration,filmDuration:this.filmDuration,playing:this.playing,muted:this.muted,generation:this.generation,isScrubbing:this.isScrubbing,scrub:this.scrub?{...this.scrub}:null,pendingSeek:this.pendingSeek,awaitingPlay:this.awaitingPlay,revealProgress:this.revealProgress,musicClock:'original video audio (continuous)',media:{videoTime:this.video.currentTime,videoPaused:this.video.paused,videoSeeking:this.video.seeking,audioTime:this.audio.currentTime,audioPaused:this.audio.paused,impactTarget:Math.max(0,this.absolute-CONFIG.stage.origin-CONFIG.stage.impactStart)},events:this.events.slice(-30)};}
+  playbackHealth(){const q=this.phase==='film'&&this.started?this.video.getVideoPlaybackQuality?.():null,base=this.qualityBaseline,total=this.visibleFrames+(q&&base?Math.max(0,q.totalVideoFrames-base.totalVideoFrames):0),dropped=this.visibleDropped+(q&&base?Math.max(0,q.droppedVideoFrames-base.droppedVideoFrames):0),samples=[...this.decodeMs].sort((a,b)=>a-b);return{scope:'visible film only; hidden warmup and audio-only stage frames excluded',frames:total,dropped,droppedPercent:total?Number((dropped/total*100).toFixed(3)):0,decodeP95Ms:samples.length?Number(samples[Math.floor((samples.length-1)*.95)].toFixed(2)):null,decodeSamples:samples.length,rebuffers:this.rebuffers,startedAt:this.playbackStartedAt};}
   dispose(){if(this.videoFrame)this.video.cancelVideoFrameCallback?.(this.videoFrame);this.pause();this.abort.abort();if(this.objectURL)URL.revokeObjectURL(this.objectURL);}
 }

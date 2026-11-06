@@ -31,7 +31,9 @@ let opening,dot,dotForeground,games,space,renderer,scene,camera,css,key,keyTarge
 const runtime={ready:false,actorReady:false,stagePrepared:false,stageReady:false,worldPreparing:false,scrollReady:false,scrollProgress:0,scrollLabel:'正在准备空间',openingReadyAt:null,stagePreparedAt:null,stageReadyAt:null,worldReadyAt:null,requested:false,longTasks:[]};
 let actorJob,stageJob,screenReady,scrollJob,worldJob,fontsReady,rigModule,rigAssets,rigJob,stageRenderer,filmStarting=false;
 let animationReady=false;
-const renderStats={world:0,css:0,foreground:0,mode:'loading'};
+const renderStats={world:0,css:0,foreground:0,mode:'loading'},cadence=new Map();
+function recordCadence(phase,ms){if(!['film','stage','departure','scroll'].includes(phase)||ms>1000)return;let row=cadence.get(phase);if(!row)cadence.set(phase,row={frames:0,over50ms:0,maxMs:0,samples:[]});row.frames++;row.over50ms+=ms>50?1:0;row.maxMs=Math.max(row.maxMs,ms);if(row.samples.length<3600)row.samples.push(ms);}
+function cadenceSummary(){return Object.fromEntries([...cadence].map(([phase,row])=>{const sorted=[...row.samples].sort((a,b)=>a-b);return[phase,{frames:row.frames,over50ms:row.over50ms,maxMs:Number(row.maxMs.toFixed(2)),p95Ms:Number(sorted[Math.floor((sorted.length-1)*.95)].toFixed(2))}];}));}
 const frameLoop=createFrameLoop({onFrame:frame,onWake:at=>{previous=at/1000;},hidden:document.hidden});
 const requestRendering=()=>{if(animationReady)frameLoop.wake();};
 const diagnostics=new URLSearchParams(location.search).get('diagnostics')==='1'?document.createElement('output'):null;
@@ -41,7 +43,7 @@ function paintDiagnostics(now,mode=renderStats.mode){
   renderStats.mode=mode;if(!diagnostics||mode===diagnostics.dataset.mode&&now-lastDiagnostics<1000)return;
   lastDiagnostics=now;diagnostics.dataset.mode=mode;
   const frames=ui.frameTimes.slice(-240).sort((a,b)=>a-b),at=p=>frames.length?Number(frames[Math.min(frames.length-1,Math.floor(frames.length*p))].toFixed(2)):null;
-  const m=media.snapshot();diagnostics.textContent=JSON.stringify({mode,phase:ui.phase,samples:frames.length,activeFrameMs:{p50:at(.5),p95:at(.95)},renders:{...renderStats},loop:frameLoop.snapshot(),worldDrawCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles,readiness:{stage:runtime.stageReady,scroll:runtime.scrollReady,handoff:!!runtime.handoffReady},media:{mode:m.mode,bytes:m.bytes,totalBytes:m.totalBytes,bufferedAhead:m.bufferedAhead,complete:m.complete,preflighting:m.preflighting},errors:ui.errors});
+  const m=media.snapshot();diagnostics.textContent=JSON.stringify({mode,phase:ui.phase,samples:frames.length,activeFrameMs:{p50:at(.5),p95:at(.95)},renders:{...renderStats},loop:frameLoop.snapshot(),worldDrawCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles,readiness:{stage:runtime.stageReady,scroll:runtime.scrollReady,handoff:!!runtime.handoffReady},media:{mode:m.mode,bytes:m.bytes,totalBytes:m.totalBytes,bufferedAhead:m.bufferedAhead,complete:m.complete,preflighting:m.preflighting},playback:transport.playbackHealth(),cadence:cadenceSummary(),preparation:{openingMs:runtime.openingReadyAt-runtime.backgroundStartedAt,mediaReadyMs:runtime.backgroundFilmReadyAt-runtime.backgroundStartedAt,worldReadyMs:runtime.worldReadyAt===null?null:runtime.worldReadyAt-runtime.backgroundStartedAt},longTasks:runtime.longTasks.filter(t=>['film','stage','departure'].includes(t.phase)),errors:ui.errors});
 }
 for(const type of ['pointerdown','pointerup','keydown','click','resize'])window.addEventListener(type,requestRendering,{capture:true,passive:true});
 const media=createFilmMedia(film,{manifestURL:new URL(CONFIG.film.manifest,location.href).href,onManifest:m=>{if(Number.isFinite(m.stageAt))applyCue(m.stageAt);}});
@@ -100,7 +102,9 @@ function setPhase(phase){requestRendering();const priorPhase=ui.phase;ui.phase=p
   if(phase==='scroll'){returnVisit.markScrollVisited();ui.target=ui.scroll=ui.scrollVelocity=0;ui.game=-1;setBubble('你好，我是 Dot。我们把这次创作慢慢展开。',7);}
   if(phase==='stage'){ui.scroll=ui.target=ui.scrollVelocity=0;ui.stageGreeting=false;}
   if(phase==='black'){ui.blackAt=performance.now();ui.events.push({event:'pure-black-start',at:ui.blackAt});}
-  if(phase==='launch')setTimeout(()=>{if(['launch','listen','black','film-wait','film'].includes(ui.phase))prepareWorld().catch(()=>{});},1100);
+  // Build behind the settled chat, before the visible movie owns the GPU.
+  if(phase==='chat')nextPaint().then(()=>prepareWorld()).catch(()=>{});
+  if(phase==='launch')setTimeout(()=>{if(['launch','listen','black','film-wait'].includes(ui.phase))prepareWorld().catch(()=>{});},1100);
   if(!scroll){ui.target=0;games?.setActiveChapter(-1);}if(!movingIntro)ui.held=false;
 }
 function setBubble(text,duration=5){if(!text)return;bubbleEmphasis.announce();$('dot-bubble-text').textContent=text;ui.bubbleUntil=time+duration;}
@@ -150,7 +154,7 @@ async function init(){
     runtime.backgroundFilmReadyAt=performance.now();transport.restoreVolumes();media.prime().catch(()=>{});
     prefetchProducts().then(()=>runtime.backgroundProductsReadyAt=performance.now()).catch(()=>{});
     Promise.all([import('./games.mjs'),import('./scroll-space.mjs')]).catch(()=>{});
-    const pictures=[...new Set(CHAPTERS.flatMap(c=>c.cards.flatMap(c=>[c.image,...(c.images||[])])))].filter(Boolean);
+    const pictures=[...new Set(CHAPTERS.flatMap(c=>c.cards.map(c=>c.image)))].filter(Boolean);
     prefetchImages(pictures).then(images=>{runtime.backgroundPictures=images;}).catch(()=>{});
     // A return visitor still preloads bytes, but does not build the cold 3D
     // scroll while the opening and its hold gesture are visibly animating.
@@ -184,7 +188,8 @@ async function prepareStage(){
     (runtime.prepTrace??=[]).push({label:'stage-shader-start',at:performance.now()});
     const mask=dot.stageCamera.layers.mask;for(const layer of [0,2]){dot.stageCamera.layers.set(layer);await warmScene(dot.source.renderer,dot.stageGroup,dot.stageCamera);await yieldTask();}dot.stageCamera.layers.mask=mask;
     runtime.prepTrace.push({label:'stage-draw-start',at:performance.now()});
-    for(const at of [0,3,9,15.7]){dot.update({time:0,dt:0,mode:'stage',stageTime:at,pixelRatio:.25});dot.renderStage();await yieldTask();}
+    // Allocate actual display-sized effect targets before the visible cut.
+    for(const at of [0,3,9,14.95,15.7]){dot.update({time:0,dt:0,mode:'stage',stageTime:at,pixelRatio:renderer.getPixelRatio()});dot.renderStage();await nextPaint();}
     dot.update({time:0,dt:0,mode:'stage',stageTime:0,pixelRatio:renderer.getPixelRatio()});await dot.source.seek(0);dot.renderStage();dot.source.hide();dot.source.renderer.domElement.style.visibility='';
     runtime.prepTrace.push({label:'stage-draw-end',at:performance.now()});runtime.stagePrepared=true;runtime.stagePreparedAt=performance.now();screenReady=Promise.resolve();
   })();return stageJob;
@@ -315,12 +320,13 @@ for(const type of ['pointerdown','keydown'])$('hold').addEventListener(type,()=>
 
 function beginListening(){
   const generation=++listenGeneration;listeningGate.reset();paintListeningProgress(media.snapshot());setPhase('listen');ui.listenStartedAt=performance.now();ui.listenFinishedAt=null;sound.play('headphones');
-  prepareWorld().catch(()=>{});media.preparePlayback(0).then(async()=>{if(generation!==listenGeneration)return;await media.preflightDecode();transport.restoreVolumes();media.prime().catch(()=>{});}).then(()=>{if(generation!==listenGeneration)return;listeningGate.ready=true;$('listening-status').textContent='准备就绪，即将开始';}).catch(error=>{if(generation===listenGeneration&&ui.phase==='listen'){toast(error.message);setPhase('chat');}});
+  Promise.all([prepareWorld(),media.preparePlayback(0)]).then(async()=>{if(generation!==listenGeneration)return;await media.preflightDecode();transport.restoreVolumes();media.prime().catch(()=>{});}).then(()=>{if(generation!==listenGeneration)return;listeningGate.ready=true;$('listening-status').textContent='准备就绪，即将开始';}).catch(error=>{if(generation===listenGeneration&&ui.phase==='listen'){toast(error.message);setPhase('chat');}});
 }
+function presentationProgress(m){const world=runtime.ready?1:runtime.stagePrepared ? .3+.65*runtime.scrollProgress : .15*runtime.scrollProgress;return .75*(m.startupProgress??m.downloadProgress)+.25*world;}
 function paintListeningProgress(m){
-  const progress=m.startupProgress??m.downloadProgress,percent=Math.floor(progress*100),bar=$('listening-fill').parentElement;
+  const progress=listeningGate.ready?1:presentationProgress(m),percent=Math.floor(progress*100),bar=$('listening-fill').parentElement;
   $('listening-fill').style.transform='scaleX('+progress+')';bar.setAttribute('aria-valuenow',String(percent));
-  const label=listeningGate.ready?'准备就绪，即将开始':progress<1?'影片播放缓冲 '+percent+'%':m.preflighting?'缓冲已就绪 · 正在预热解码':'缓冲已就绪 · 正在读取首帧';
+  const label=listeningGate.ready?'准备就绪，即将开始':(m.startupProgress??m.downloadProgress)<1?'影片播放缓冲 '+percent+'%':!runtime.ready?'影片已就绪 · 正在准备连续场景 '+percent+'%':m.preflighting?'缓冲已就绪 · 正在预热解码':'缓冲已就绪 · 正在读取首帧';
   $('listening-status').textContent=label;bar.setAttribute('aria-valuetext',label);
 }
 const listeningRange=$('listening-volume');
@@ -331,7 +337,7 @@ listeningRange.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Arro
 listeningRange.addEventListener('keyup',()=>{listeningGate.adjusting=false;listeningGate.adjusted();});
 async function startFilm(at=0){
   if(filmStarting)return;filmStarting=true;let shown=false;const timer=setTimeout(()=>{shown=true;buffering(true);},300);
-  try{prepareWorld().catch(()=>{});await media.preparePlayback(at);if(media.preflighting)await media.preflightDecode();media.prime().catch(()=>{});transport.started=true;await transport.start(at);}
+  try{await Promise.all([prepareWorld(),media.preparePlayback(at)]);if(media.preflighting)await media.preflightDecode();media.prime().catch(()=>{});transport.started=true;await transport.start(at);}
   catch(error){toast(error.message);setPhase('chat');}
   finally{clearTimeout(timer);if(shown)buffering(false);filmStarting=false;}
 }
@@ -361,7 +367,7 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
   // close/resize/UI event wakes exactly one frame and resets the elapsed clock.
   if(document.hidden){paintDiagnostics(now,'hidden');return;}
   if(ui.phase==='scroll'&&space?.readingStable&&!$('settings').open){paintDiagnostics(now,'reading-idle');return;}
-  ui.frameTimes.push(rawDt*1000);if(ui.frameTimes.length>600)ui.frameTimes.shift();const age=time-ui.phaseAt;
+  recordCadence(ui.phase,rawDt*1000);ui.frameTimes.push(rawDt*1000);if(ui.frameTimes.length>600)ui.frameTimes.shift();const age=time-ui.phaseAt;
   // Pure film playback does no scene, sound-solver or CSS3D work. Keep the
   // browser's video compositor free; the same transport owns the cut to stage.
   if(ui.phase==='film'){if(lastPhase!=='film'){portalLayout(age);css.domElement.style.visibility='hidden';dotForeground?.setActive(false);}transport.update(dt);cinemaControls.update();if(ui.phase==='film'){paintTransport(now);lastPhase='film';paintDiagnostics(now,'video-compositor');frameLoop.schedule();return;}}
@@ -371,7 +377,7 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
   if(ui.phase==='intro'){ui.hold=ui.held?clamp(current-ui.holdStart):clamp(ui.hold-dt*1.65);$('hold').style.setProperty('--hold',ui.hold);if(ui.hold>=1&&opening.prepared){sound.unlock();ui.held=false;setPhase('morph');}}
   else if(ui.phase==='morph'&&age>=OPENING_TIMING.morph&&opening.ready)setPhase('chat');
   else if(ui.phase==='launch'&&age>=4.35)beginListening();
-  else if(ui.phase==='listen'){const m=media.snapshot(),state=listeningGate.update(dt,{paused:document.hidden||$('settings').open,progress:m.startupProgress??m.downloadProgress});paintListeningProgress(m);
+  else if(ui.phase==='listen'){const m=media.snapshot(),state=listeningGate.update(dt,{paused:document.hidden||$('settings').open,progress:presentationProgress(m)});paintListeningProgress(m);
     if(state.done){ui.listenFinishedAt=performance.now();setPhase('black');requestAnimationFrame(()=>setTimeout(()=>prepareWorld().catch(()=>{}),0));}}
   else if(ui.phase==='black'&&performance.now()-ui.blackAt>=750){setPhase('film-wait');startFilm();}
   if(['film','stage','transition'].includes(ui.phase))transport.update(dt);
@@ -409,7 +415,7 @@ function frame(now){const current=now/1000,rawDt=current-previous,dt=Math.min(.0
       display('scroll-cue',ui.scroll<1.2&&!ui.focusLock);display('chapter-caption',ui.scroll>1.2&&gameIndex<0&&!ui.focusLock&&chapter<5);display('game-controls',gameIndex>=0&&!ui.focusLock,'flex');$('game-instruction').textContent=gameIndex<0?'':['拖动旋转 · 清楚停留后自动收词','把步骤板拖入六个顺序槽','拖动工具，连接适合的用途','点击模型的问题区域','先安放三项成果，再拖动印章'][gameIndex];$('position-label').textContent=String(chapter+1).padStart(2,'0')+' / 06';$('scroll-progress').firstElementChild.style.width=(ui.scroll/CONFIG.scroll.max*100)+'%';
       const body=dot.actorWorldPos.clone().add(vec(0,1.2,0));const screen=project(body,camera);const narrow=innerWidth<700;const bx=narrow?clamp(screen.x-115,55,innerWidth-205):clamp(screen.x-90,35,innerWidth-255),by=narrow?Math.max(90,innerHeight*.105):clamp(screen.y-85,90,innerHeight-180);ui.bubbleX=damp(ui.bubbleX,bx,8,dt);ui.bubbleY=damp(ui.bubbleY,by,8,dt);$('dot-bubble').style.left=ui.bubbleX+'px';$('dot-bubble').style.top=ui.bubbleY+'px';display('dot-bubble',screen.visible&&time<ui.bubbleUntil&&!ui.focusLock);
     }
-    if(ui.phase==='stage'||ui.phase==='transition'){renderer.setClearColor('#000000',1);renderer.clear();dot.renderStage();renderStats.world++;}else{camera.lookAt(look);camera.updateMatrixWorld();key.position.set(-6,18,12-ui.scroll);keyTarget.position.set(0,0,-ui.scroll-3);quality.stabilizeShadow({phase:ui.phase});games.update(dt,time);dot.beforeRender(renderer);dotForeground.renderWorld(()=>renderer.render(scene,camera));renderStats.world++;css.render(scene,camera);renderStats.css++;space.syncReading();dotForeground.render();renderStats.foreground++;}
+    if(ui.phase==='stage'||ui.phase==='transition'){dot.renderStage();renderStats.world++;}else{camera.lookAt(look);camera.updateMatrixWorld();key.position.set(-6,18,12-ui.scroll);keyTarget.position.set(0,0,-ui.scroll-3);quality.stabilizeShadow({phase:ui.phase});games.update(dt,time);dot.beforeRender(renderer);dotForeground.renderWorld(()=>renderer.render(scene,camera));renderStats.world++;css.render(scene,camera);renderStats.css++;space.syncReading();dotForeground.render();renderStats.foreground++;}
   }
   bubbleEmphasis.update($('dot-bubble').style.display!=='none');
   if(['film','transition','stage'].includes(ui.phase))paintTransport(now);
